@@ -6,6 +6,18 @@
 <body>
     <h1>Web Audio API Demo</h1>
     <button id="playSound">Play Sound</button>
+    <br>
+    <label for="attack">Attack:</label>
+    <input type="range" id="attack" name="attack" min="0.01" max="1" step="0.01" value="0.01">
+    <br>
+    <label for="decay">Decay:</label>
+    <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.5">
+    <br>
+    <label for="rootPhaseDelay">Root Phase Delay:</label>
+    <input type="range" id="rootPhaseDelay" name="rootPhaseDelay" min="-1" max="1" step="0.01" value="0">
+
+
+
 
     <script src="audio.js"></script>
 </body>

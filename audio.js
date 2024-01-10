@@ -127,8 +127,8 @@ function play(index) {
     buildBuffer(
         audioContext.sampleRate,
         rootPhaseDelay[index], //rootPhaseDelay
-        attack, //attack
-        decay //decay
+        parseFloat(document.getElementById('attack').value), //attack
+        parseFloat(document.getElementById('decay').value) //decay
     );
     let t1 = performance.now();
     console.log("Execution time: " + (t1 - t0) + " milliseconds.");
