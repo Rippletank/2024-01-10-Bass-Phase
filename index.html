@@ -1,23 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web Audio API Demo</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
     <h1>Web Audio API Demo</h1>
-    <button id="playSound">Play Sound</button>
-    <br>
-    <label for="attack">Attack:</label>
-    <input type="range" id="attack" name="attack" min="0.01" max="1" step="0.01" value="0.01">
-    <br>
-    <label for="decay">Decay:</label>
-    <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.5">
-    <br>
-    <label for="rootPhaseDelay">Root Phase Delay:</label>
-    <input type="range" id="rootPhaseDelay" name="rootPhaseDelay" min="-1" max="1" step="0.01" value="0">
+
+    <div class="slider-container">
+        <label for="freq">Frequency:</label>
+        <input type="range" id="freq" name="freq" min="20" max="200" step="1" value="50">
+        <span id="freq-value">50</span>
+    </div>
+
+    <div class="slider-container">
+        <label for="attack">Attack:</label>
+        <input type="range" id="attack" name="attack" min="0.01" max="1" step="0.01" value="0.01">
+        <span id="attack-value">0.01</span>
+    </div>
+
+    <div class="slider-container">
+        <label for="decay">Decay:</label>
+        <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.5">
+        <span id="decay-value">0.5</span>
+    </div>
+
+    <div class="slider-container">
+        <label for="even">Even Harmonics:</label>
+        <input type="range" id="even" name="even" min="-1" max="1" step="0.1" value="-1">
+        <span id="even-value">-1</span>
+    </div>
+
+    <div class="slider-container">
+        <label for="odd">Odd Harmonics:</label>
+        <input type="range" id="odd" name="odd" min="-1" max="1" step="0.1" value="1">
+        <span id="odd-value">1</span>
+    </div>
+
+    <h3>Sound A</h3>
+    <div>
+        <canvas id="waveformA" width="800" height="200"></canvas>
+    </div>
+    <div class="slider-container">
+        <label for="rootPhaseDelayA">Phase Delay (root):</label>
+        <input type="range" id="rootPhaseDelayA" name="rootPhaseDelayA" min="-1.5" max="1.5" step="0.01" value="0">
+        <span id="rootPhaseDelayA-value">0</span>
+    </div>
+    <button id="playSoundA">Play A</button>
 
 
 
+    <h3>Sound B</h3>
+    <div>
+        <canvas id="waveformB" width="800" height="200"></canvas>
+    </div>
+    <div class="slider-container">
+        <label for="rootPhaseDelayB">Phase Delay (root):</label>
+        <input type="range" id="rootPhaseDelayB" name="rootPhaseDelayB" min="-1.5" max="1.5" step="0.01" value="0">
+        <span id="rootPhaseDelayB-value">0</span>
+    </div>
+    <button id="playSoundB">Play B</button>
 
     <script src="audio.js"></script>
 </body>

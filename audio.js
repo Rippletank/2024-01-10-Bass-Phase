@@ -4,54 +4,66 @@ let audioContext = null;
 let sourceNode = null;
 
 
-let startFrequency = 100;// Hz
-let harmonics = 20;
+let harmonics = 1000;
 let attack = 0.001; //seconds
 let decay = 0.5; //seconds
 let rootPhaseDelay = [0.0]; // -1..1 => -PI..PI for phase of fundamental
 
-let audioBuffer = null;
+let audioBufferA = null;
+let audioBufferB = null;
 
 // Update method to create a buffer
 function buildBuffer(
     sampleRate, //samples per second
+    frequency, //Hz
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
+    oddLevel, //-1..1
+    evenLevel, //-1..1
     attack, //Linear time to get to max amplitude  in seconds
     decay // decay is time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
     ) {
-
+        changed = false;
     //Calculate max delay in samples
-    let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/startFrequency ;
+    let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
     let bufferSize = Math.round(sampleRate * (attack + 2 * decay) + delay); //Allow for attack and double decay time 
         
     let delay0 =rootPhaseDelay<0 ? 0 : delay;
-    let delay1 =delay * 0.5;
+    let delay1 =delay * (rootPhaseDelay<0 ?  0.75 : 0.25 ); //Delay first harmonic by 1/2 the phase delay but double the frequency
     let delayN =  rootPhaseDelay<0 ? delay : 0;
 
     //Create buffer
-    audioBuffer = new AudioBuffer({
+    let audioBuffer = new AudioBuffer({
         length: bufferSize,
         sampleRate: sampleRate,
         numberOfChannels: 1
       });
       let b = audioBuffer.getChannelData(0);
       buildEnvelopeBuffer(sampleRate, bufferSize, attack,decay);
-      let f = startFrequency;
-      let a = 0.6;
-      for (let i = 0; i < harmonics; i++) {
-            f += startFrequency;
-            a *= 0.4;
-            mixInSine(sampleRate, b, bufferSize, f, a, 
-                (i==0? delay0 : (i==1 ? delay1 : delayN))); //Only delay fundamental and first harmonic
-      }
+      buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, evenLevel, delay0, delay1, delayN);
 
-      
+      logBufferMax(b, bufferSize)
+      return audioBuffer;
+}
+
+
+function buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, evenLevel, delay0, delay1, delayN) {
+    let f = frequency;
+    let a = 0.7;
+    let nyquist = sampleRate * 0.49;//Nyquist limit less a bit
+    mixInSine(sampleRate, b, bufferSize, f, a, delay0 ); //Add fundamental
+
+    for (let i = 1; i < harmonics; i++) {
+        f += frequency;
+        if (frequency>=nyquist) return;//Nyquist limit
+        a =  a/(i+1);
+        let oe = i % 2 == 0 ? evenLevel : oddLevel;
+        mixInSine(sampleRate, b, bufferSize, f, a * oe, i == 1 ? delay1 : delayN);
+    }
 }
 
 let envelopeBuffer = null;
 const root2 = Math.sqrt(2);
 const ln1024 =Math.log(1024);
-
 function buildEnvelopeBuffer(
     sampleRate, //samples per second
     bufferSize,
@@ -97,7 +109,6 @@ function mixInSine(
     ) {
     let theta = 0;
     let w = frequency * 2 * Math.PI  / sampleRate;
-    if (w>=Math.PI) return;//Nyquist limit
     let env = 0;
     for (let i = 0; i < bufferSize; i++) {
         if (i > delay)   {
@@ -112,31 +123,79 @@ function mixInSine(
 function play(index) {
     if (!audioContext){
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        changed = true;        
     }
     if (sourceNode){  
         sourceNode.stop(0);
         sourceNode.disconnect();
-        sourceNode = null;
+        sourceNode = null;    
     }
-         
     sourceNode = audioContext.createBufferSource();
     sourceNode.connect(audioContext.destination);
+    if (changed){
 
-    //Fill buffer (with benchmark)
-    let t0 = performance.now();
-    buildBuffer(
-        audioContext.sampleRate,
-        rootPhaseDelay[index], //rootPhaseDelay
-        parseFloat(document.getElementById('attack').value), //attack
-        parseFloat(document.getElementById('decay').value) //decay
-    );
-    let t1 = performance.now();
-    console.log("Execution time: " + (t1 - t0) + " milliseconds.");
+        //Fill buffer (with benchmark)
+        let t0 = performance.now();
+        audioBufferA = buildBuffer(
+            audioContext.sampleRate,
+            parseFloat(document.getElementById('freq').value), //frequency
+            parseFloat(document.getElementById('rootPhaseDelayA').value), //rootPhaseDelayA
+            parseFloat(document.getElementById('odd').value), //odd
+            parseFloat(document.getElementById('even').value), //even
+            parseFloat(document.getElementById('attack').value), //attack
+            parseFloat(document.getElementById('decay').value) //decay
+        );        
+        paintBuffer(audioBufferA, audioBufferA.length, "waveformA")
 
+        audioBufferB = buildBuffer(
+            audioContext.sampleRate,
+            parseFloat(document.getElementById('freq').value), //frequency
+            parseFloat(document.getElementById('rootPhaseDelayB').value), //rootPhaseDelayA
+            parseFloat(document.getElementById('odd').value), //odd
+            parseFloat(document.getElementById('even').value), //even
+            parseFloat(document.getElementById('attack').value), //attack
+            parseFloat(document.getElementById('decay').value) //decay
+        );
+        paintBuffer(audioBufferB, audioBufferB.length, "waveformB")
+        let t1 = performance.now();
+        console.log("Execution time: " + (t1 - t0) + " milliseconds.");
 
-    sourceNode.buffer = audioBuffer;
+    }
+    sourceNode.buffer = index==0 ? audioBufferA : audioBufferB;
     sourceNode.start(0);
 }
+
+
+function logBufferMax(buffer, bufferSize){
+    let max = 0;
+    for (let i = 0; i < bufferSize; i++) {
+        let val = Math.abs( buffer[i]);
+        if (val>max) max = val;
+    }
+    console.log("Max Amplitude: " + max);
+}
+
+
+function paintBuffer(buffer, bufferSize, canvasId){
+    var canvas = document.getElementById(canvasId);
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    let x = 0;
+    let y = canvas.height/2;
+    let step = canvas.width / bufferSize;
+    let b = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        ctx.lineTo(x, y + b[i] * y);
+        x += step;
+    }
+    ctx.stroke();
+
+
+
+}
+
+
 
 // Stop method
 function stop() {
@@ -147,7 +206,46 @@ function stop() {
     }
 }
 
+let changed = true;
+
 // Attach play and stop methods to the button
-document.getElementById('playSound').addEventListener('click', function() {
+document.getElementById('playSoundA').addEventListener('click', function() {
     play(0);
+});
+document.getElementById('playSoundB').addEventListener('click', function() {
+    play(1);
+});
+document.getElementById('freq').addEventListener('input', function() {
+    document.getElementById('freq-value').textContent = this.value + "Hz";
+    changed=true;
+});
+
+document.getElementById('attack').addEventListener('input', function() {
+    document.getElementById('attack-value').textContent = this.value + "s";
+    changed=true;
+});
+
+document.getElementById('decay').addEventListener('input', function() {
+    document.getElementById('decay-value').textContent = this.value + "s";
+    changed=true;
+});
+
+document.getElementById('odd').addEventListener('input', function() {
+    document.getElementById('odd-value').textContent = this.value;
+    changed=true;
+});
+
+document.getElementById('even').addEventListener('input', function() {
+    document.getElementById('even-value').textContent = this.value;
+    changed=true;
+});
+
+document.getElementById('rootPhaseDelayA').addEventListener('input', function() {
+    document.getElementById('rootPhaseDelayA-value').textContent = this.value+ "π";
+    changed=true;
+});
+
+document.getElementById('rootPhaseDelayB').addEventListener('input', function() {
+    document.getElementById('rootPhaseDelayB-value').textContent = this.value+ "π";
+    changed=true;
 });
