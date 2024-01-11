@@ -47,3 +47,14 @@ canvas {
     margin: 10px;
     padding: 10px;
 }
+
+.bordered h3{
+   margin-top: 0.1em; 
+}
+.bordered button{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
