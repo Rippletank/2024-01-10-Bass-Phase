@@ -249,3 +249,60 @@ document.getElementById('rootPhaseDelayB').addEventListener('input', function() 
     document.getElementById('rootPhaseDelayB-value').textContent = this.value+ "π";
     changed=true;
 });
+
+
+
+let abxTestChoice;
+let abxCount =0;
+let abxScore =0;
+function playABX(){    
+    if (abxTestChoice === 0) {
+        play(0);
+    } else {
+        play(1);
+    }
+}
+
+document.getElementById('abxTest').addEventListener('click', function() {
+    abxTestChoice = Math.round(Math.random());
+    document.getElementById('abxButtons').style.display = 'block';
+    document.getElementById('abxTest').style.display = 'none';
+    playABX();
+});
+
+document.getElementById('play').addEventListener('click', function() {
+    playABX();
+});
+
+
+
+document.getElementById('buttonA').addEventListener('click', function() {
+    checkChoice(0);
+});
+
+document.getElementById('buttonB').addEventListener('click', function() {
+    checkChoice(1);
+});
+
+function checkChoice(choice) {
+    const results = document.getElementById('results');
+    const result = document.createElement('li');
+
+    abxCount++;
+    if (choice === abxTestChoice) {
+        abxScore++;
+        result.textContent = 'Correct! The answer was ' + (abxTestChoice === 0 ? 'A' : 'B') + '.';
+    } else {
+        result.textContent = 'Incorrect. The correct answer was ' + (abxTestChoice === 0 ? 'A' : 'B') + '.';
+    }
+
+    results.appendChild(result);
+    document.getElementById('abxButtons').style.display = 'none';
+    document.getElementById('abxTest').style.display = 'block';
+
+    const stats1 = document.getElementById('stats1');
+    stats1.textContent = 'Score: ' + abxScore + '/' + abxCount ;
+
+    const stats2 = document.getElementById('stats2');
+    stats2.textContent =' (' + Math.round(abxScore / abxCount * 100).toFixed(0) + '%)' ;
+}
