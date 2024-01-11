@@ -6,6 +6,7 @@ let audioBufferB = null;
 
 
 let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
+let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time
 
 // Update method to create a buffer
 function buildBuffer(
@@ -16,12 +17,13 @@ function buildBuffer(
     oddLevel, //-1..1
     evenLevel, //-1..1
     attack, //Linear time to get to max amplitude  in seconds
-    decay // decay is time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
+    decay, // decay is time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
+    envelopeFilter // 1-32 1 = no filter, 32 = 1/32 of heaviest filter
     ) {
         changed = false;
     //Calculate max delay in samples
     let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
-    let bufferSize = Math.round(sampleRate * (attack + 1.5 * decay) + delay); //Allow for attack and 1.5* decay time 
+    let bufferSize = Math.round(sampleRate * (attack + decayLengthFactor * decay) + delay); //Allow for attack and 1.5* decay time 
         
     let delay0 =rootPhaseDelay<0 ? 0 : delay;
     let delay1 =delay * (rootPhaseDelay<0 ?  1-SecondHarmonicRelativePhaseDelay*2 : SecondHarmonicRelativePhaseDelay*2 ); //Delay first harmonic by 1/2 the phase delay but double the frequency
@@ -34,7 +36,7 @@ function buildBuffer(
         numberOfChannels: 1
       });
       let b = audioBuffer.getChannelData(0);
-      buildEnvelopeBuffer(sampleRate, bufferSize, attack,decay);
+      buildEnvelopeBuffer(sampleRate, bufferSize, attack,decay, envelopeFilter);
       buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, evenLevel, delay0, delay1, delayN);
       return audioBuffer;
 }
@@ -63,11 +65,12 @@ function buildEnvelopeBuffer(
     bufferSize,
     attack, // 0..1  = time in seconds
     decay, // 0..1) 
+    filter // 1-32 
     ){
         //Low pass filter setup
         let x = 0;
         let y=0;  
-        let a = 1/8;
+        let a = 1/filter;
 
         let isDecay = false;
         let attackRate = 1 / (attack * sampleRate); //Linear attack
@@ -137,19 +140,20 @@ function play(index) {
         let even = parseFloat(document.getElementById('even').value);//even harmonic level
         let attack = parseFloat(document.getElementById('attack').value);//attack time 
         let decay = parseFloat(document.getElementById('decay').value);//decay time
+        let envelopeFilter = parseFloat(document.getElementById('envelopeFilter').value);//decay time
         let rootPhaseDelayA = parseFloat(document.getElementById('rootPhaseDelayA').value);//rootPhaseDelayA
         let rootPhaseDelayB = parseFloat(document.getElementById('rootPhaseDelayB').value);//rootPhaseDelayB
 
         audioBufferA = buildBuffer(
             audioContext.sampleRate, freq, 
             rootPhaseDelayA, 
-            second, odd, even, attack, decay 
+            second, odd, even, attack, decay, envelopeFilter 
         );        
 
         audioBufferB = buildBuffer(
             audioContext.sampleRate, freq, 
             rootPhaseDelayB, 
-            second, odd, even, attack, decay 
+            second, odd, even, attack, decay , envelopeFilter
         );
 
         let scale = 0.99/Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length));
@@ -159,8 +163,7 @@ function play(index) {
 
         console.log("Max amplitude: " + Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length)));
 
-        paintBuffer(audioBufferA, audioBufferA.length, "waveformA")
-        paintBuffer(audioBufferB, audioBufferB.length, "waveformB")
+        paintBuffers();
 
         let t1 = performance.now();
         console.log("Execution time: " + (t1 - t0) + " milliseconds.");
@@ -189,6 +192,12 @@ function scaleBuffer(buffer, bufferSize, scale){
     return max;
 }
 
+function paintBuffers(){
+    if (!audioBufferA || !audioBufferB) return;
+    paintBuffer(audioBufferA, audioBufferA.length, "waveformA");
+    paintBuffer(audioBufferB, audioBufferB.length, "waveformB");
+}
+
 
 function paintBuffer(buffer, bufferSize, canvasId){
     var canvas = document.getElementById(canvasId);
@@ -204,9 +213,6 @@ function paintBuffer(buffer, bufferSize, canvasId){
         x += step;
     }
     ctx.stroke();
-
-
-
 }
 
 
@@ -260,6 +266,11 @@ document.getElementById('even').addEventListener('input', function() {
     changed=true;
 });
 
+document.getElementById('envelopeFilter').addEventListener('input', function() {
+    document.getElementById('envelopeFilter-value').textContent = this.value=="1"? "off" : this.value;
+    changed=true;
+});
+
 document.getElementById('rootPhaseDelayA').addEventListener('input', function() {
     updatePhaseALabels();
     changed=true;
@@ -279,6 +290,19 @@ function updatePhaseALabels(){
     document.getElementById('rootPhaseDelayA-value').textContent = rootPhaseDelayA + "π (" + (1000 * delayA).toFixed(1) + "ms)";
     document.getElementById('rootPhaseDelayB-value').textContent = rootPhaseDelayB + "π (" + (1000 * delayB).toFixed(1) + "ms)";
 }
+
+window.addEventListener('resize', updateCanvas);
+
+function updateCanvas() {
+    let canvasA = document.getElementById('waveformA');
+    let canvasB = document.getElementById('waveformB');
+
+    canvasA.width = canvasA.offsetWidth;
+    canvasB.width = canvasB.offsetWidth;
+    paintBuffers();
+}
+
+
 
 
 let abxTestChoice;
