@@ -1,22 +1,18 @@
 // Create an AudioContext
 let audioContext = null;
-
 let sourceNode = null;
-
-
-let harmonics = 1000;
-let attack = 0.001; //seconds
-let decay = 0.5; //seconds
-let rootPhaseDelay = [0.0]; // -1..1 => -PI..PI for phase of fundamental
-
 let audioBufferA = null;
 let audioBufferB = null;
+
+
+let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
 
 // Update method to create a buffer
 function buildBuffer(
     sampleRate, //samples per second
     frequency, //Hz
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
+    SecondHarmonicRelativePhaseDelay,
     oddLevel, //-1..1
     evenLevel, //-1..1
     attack, //Linear time to get to max amplitude  in seconds
@@ -25,10 +21,10 @@ function buildBuffer(
         changed = false;
     //Calculate max delay in samples
     let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
-    let bufferSize = Math.round(sampleRate * (attack + 2 * decay) + delay); //Allow for attack and double decay time 
+    let bufferSize = Math.round(sampleRate * (attack + 1.5 * decay) + delay); //Allow for attack and 1.5* decay time 
         
     let delay0 =rootPhaseDelay<0 ? 0 : delay;
-    let delay1 =delay * (rootPhaseDelay<0 ?  0.75 : 0.25 ); //Delay first harmonic by 1/2 the phase delay but double the frequency
+    let delay1 =delay * (rootPhaseDelay<0 ?  1-SecondHarmonicRelativePhaseDelay*2 : SecondHarmonicRelativePhaseDelay*2 ); //Delay first harmonic by 1/2 the phase delay but double the frequency
     let delayN =  rootPhaseDelay<0 ? delay : 0;
 
     //Create buffer
@@ -40,8 +36,6 @@ function buildBuffer(
       let b = audioBuffer.getChannelData(0);
       buildEnvelopeBuffer(sampleRate, bufferSize, attack,decay);
       buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, evenLevel, delay0, delay1, delayN);
-
-      logBufferMax(b, bufferSize)
       return audioBuffer;
 }
 
@@ -136,27 +130,38 @@ function play(index) {
 
         //Fill buffer (with benchmark)
         let t0 = performance.now();
+
+        let freq = parseFloat(document.getElementById('freq').value);//frequency
+        let second = parseFloat(document.getElementById('second').value);//SecondHarmonicRelativePhaseDelay
+        let odd = parseFloat(document.getElementById('odd').value);//odd harmonic level
+        let even = parseFloat(document.getElementById('even').value);//even harmonic level
+        let attack = parseFloat(document.getElementById('attack').value);//attack time 
+        let decay = parseFloat(document.getElementById('decay').value);//decay time
+        let rootPhaseDelayA = parseFloat(document.getElementById('rootPhaseDelayA').value);//rootPhaseDelayA
+        let rootPhaseDelayB = parseFloat(document.getElementById('rootPhaseDelayB').value);//rootPhaseDelayB
+
         audioBufferA = buildBuffer(
-            audioContext.sampleRate,
-            parseFloat(document.getElementById('freq').value), //frequency
-            parseFloat(document.getElementById('rootPhaseDelayA').value), //rootPhaseDelayA
-            parseFloat(document.getElementById('odd').value), //odd
-            parseFloat(document.getElementById('even').value), //even
-            parseFloat(document.getElementById('attack').value), //attack
-            parseFloat(document.getElementById('decay').value) //decay
+            audioContext.sampleRate, freq, 
+            rootPhaseDelayA, 
+            second, odd, even, attack, decay 
         );        
-        paintBuffer(audioBufferA, audioBufferA.length, "waveformA")
 
         audioBufferB = buildBuffer(
-            audioContext.sampleRate,
-            parseFloat(document.getElementById('freq').value), //frequency
-            parseFloat(document.getElementById('rootPhaseDelayB').value), //rootPhaseDelayA
-            parseFloat(document.getElementById('odd').value), //odd
-            parseFloat(document.getElementById('even').value), //even
-            parseFloat(document.getElementById('attack').value), //attack
-            parseFloat(document.getElementById('decay').value) //decay
+            audioContext.sampleRate, freq, 
+            rootPhaseDelayB, 
+            second, odd, even, attack, decay 
         );
+
+        let scale = 0.99/Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length));
+
+        scaleBuffer(audioBufferA, audioBufferA.length, scale);
+        scaleBuffer(audioBufferB, audioBufferB.length, scale);
+
+        console.log("Max amplitude: " + Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length)));
+
+        paintBuffer(audioBufferA, audioBufferA.length, "waveformA")
         paintBuffer(audioBufferB, audioBufferB.length, "waveformB")
+
         let t1 = performance.now();
         console.log("Execution time: " + (t1 - t0) + " milliseconds.");
 
@@ -166,13 +171,22 @@ function play(index) {
 }
 
 
-function logBufferMax(buffer, bufferSize){
+function getBufferMax(buffer, bufferSize){
+    let b = buffer.getChannelData(0);
     let max = 0;
     for (let i = 0; i < bufferSize; i++) {
-        let val = Math.abs( buffer[i]);
+        let val = Math.abs( b[i]);
         if (val>max) max = val;
     }
-    console.log("Max Amplitude: " + max);
+    return max;
+}
+function scaleBuffer(buffer, bufferSize, scale){
+    let b = buffer.getChannelData(0);
+    let max = 0;
+    for (let i = 0; i < bufferSize; i++) {
+        b[i]*=scale;
+    }
+    return max;
 }
 
 
@@ -217,11 +231,17 @@ document.getElementById('playSoundB').addEventListener('click', function() {
 });
 document.getElementById('freq').addEventListener('input', function() {
     document.getElementById('freq-value').textContent = this.value + "Hz";
+    updatePhaseLabels();
     changed=true;
 });
 
 document.getElementById('attack').addEventListener('input', function() {
     document.getElementById('attack-value').textContent = this.value + "s";
+    changed=true;
+});
+
+document.getElementById('second').addEventListener('input', function() {
+    document.getElementById('second-value').textContent = this.value;
     changed=true;
 });
 
@@ -241,15 +261,24 @@ document.getElementById('even').addEventListener('input', function() {
 });
 
 document.getElementById('rootPhaseDelayA').addEventListener('input', function() {
-    document.getElementById('rootPhaseDelayA-value').textContent = this.value+ "π";
+    updatePhaseALabels();
     changed=true;
 });
 
 document.getElementById('rootPhaseDelayB').addEventListener('input', function() {
-    document.getElementById('rootPhaseDelayB-value').textContent = this.value+ "π";
+    updatePhaseALabels();
     changed=true;
 });
 
+function updatePhaseALabels(){
+    let invFreq = 1 / (parseFloat(document.getElementById('freq').value) *0.5);
+    let rootPhaseDelayA = document.getElementById('rootPhaseDelayA').value;
+    let rootPhaseDelayB = document.getElementById('rootPhaseDelayB').value;
+    let delayA = parseFloat(document.getElementById('rootPhaseDelayA').value) * invFreq;
+    let delayB = parseFloat(document.getElementById('rootPhaseDelayB').value) * invFreq;
+    document.getElementById('rootPhaseDelayA-value').textContent = rootPhaseDelayA + "π (" + (1000 * delayA).toFixed(1) + "ms)";
+    document.getElementById('rootPhaseDelayB-value').textContent = rootPhaseDelayB + "π (" + (1000 * delayB).toFixed(1) + "ms)";
+}
 
 
 let abxTestChoice;
@@ -267,6 +296,7 @@ document.getElementById('abxTest').addEventListener('click', function() {
     abxTestChoice = Math.round(Math.random());
     document.getElementById('abxButtons').style.display = 'block';
     document.getElementById('abxTest').style.display = 'none';
+    document.getElementById('resetTest').style.display = 'block';
     playABX();
 });
 
@@ -274,14 +304,27 @@ document.getElementById('play').addEventListener('click', function() {
     playABX();
 });
 
-
-
 document.getElementById('buttonA').addEventListener('click', function() {
     checkChoice(0);
 });
 
 document.getElementById('buttonB').addEventListener('click', function() {
     checkChoice(1);
+});
+
+document.getElementById('resetTest').addEventListener('click', function() {
+    let results = document.getElementById('results');
+    results.innerHTML = '';
+    abxCount =0;
+    abxScore =0;
+    document.getElementById('abxButtons').style.display = 'none';
+    document.getElementById('abxTest').style.display = 'block';
+    document.getElementById('resetTest').style.display = 'none';
+    const stats1 = document.getElementById('stats1');
+    stats1.textContent = '';
+
+    const stats2 = document.getElementById('stats2');
+    stats2.textContent ='' ;
 });
 
 function checkChoice(choice) {

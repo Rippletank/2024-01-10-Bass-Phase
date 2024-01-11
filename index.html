@@ -12,31 +12,37 @@
     <div class="slider-container">
         <label for="freq">Frequency:</label>
         <input type="range" id="freq" name="freq" min="20" max="200" step="1" value="50">
-        <span id="freq-value">50</span>
+        <span id="freq-value">50Hz</span>
     </div>
 
     <div class="slider-container">
         <label for="attack">Attack:</label>
         <input type="range" id="attack" name="attack" min="0.01" max="1" step="0.01" value="0.01">
-        <span id="attack-value">0.01</span>
+        <span id="attack-value">0.01s</span>
     </div>
 
     <div class="slider-container">
         <label for="decay">Decay:</label>
         <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.5">
-        <span id="decay-value">0.5</span>
+        <span id="decay-value">0.5s</span>
     </div>
 
     <div class="slider-container">
-        <label for="even">Even Harmonics:</label>
+        <label for="even">Even Harmonics Level:</label>
         <input type="range" id="even" name="even" min="-1" max="1" step="0.1" value="-1">
         <span id="even-value">-1</span>
     </div>
 
     <div class="slider-container">
-        <label for="odd">Odd Harmonics:</label>
+        <label for="odd">Odd Harmonics Level:</label>
         <input type="range" id="odd" name="odd" min="-1" max="1" step="0.1" value="1">
         <span id="odd-value">1</span>
+    </div>
+
+    <div class="slider-container">
+        <label for="second">2nd Harmonic relative Phase delay:</label>
+        <input type="range" id="second" name="second" min="0" max="1" step="0.1" value="0.5">
+        <span id="second-value">0.5</span>
     </div>
 
     <h3>Sound A</h3>
@@ -46,7 +52,7 @@
     <div class="slider-container">
         <label for="rootPhaseDelayA">Phase Delay (root):</label>
         <input type="range" id="rootPhaseDelayA" name="rootPhaseDelayA" min="-1.5" max="1.5" step="0.01" value="0">
-        <span id="rootPhaseDelayA-value">0</span>
+        <span id="rootPhaseDelayA-value">0π (0ms)</span>
     </div>
     <button id="playSoundA">Play A</button>
 
@@ -59,7 +65,7 @@
     <div class="slider-container">
         <label for="rootPhaseDelayB">Phase Delay (root):</label>
         <input type="range" id="rootPhaseDelayB" name="rootPhaseDelayB" min="-1.5" max="1.5" step="0.01" value="0">
-        <span id="rootPhaseDelayB-value">0</span>
+        <span id="rootPhaseDelayB-value">0π (0ms)</span>
     </div>
     <button id="playSoundB">Play B</button>
 
@@ -68,16 +74,18 @@
 
     <div id="centerContainer">
         <div id="abxTestContainer">
-            <h3>ABX tests</h3>
+            <h3>ABX test</h3>
             <ol id="results"></ol>
             <button id="abxTest">Test</button>
             <div id="abxButtons" style="display: none;">
-                <button id="buttonA">A</button>
+                <button id="buttonA">A?</button>
                 <button id="play">Play</button>
-                <button id="buttonB">B</button>
+                <button id="buttonB">B?</button>
             </div>
             <p id="stats1"></p>
             <p id="stats2"></p>
+            <br>
+            <button id="resetTest"  style="display: none;">Reset Test</button>
         </div>
     </div>
 
