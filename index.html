@@ -89,19 +89,26 @@
         <div id="abxTestContainer">
             <h3>ABX test</h3>
             <ol id="results"></ol>
-            <button id="abxTest">Test</button>
-            <div id="abxButtons" style="display: none;">
-                <button id="buttonA">A?</button>
-                <button id="play">Play</button>
-                <button id="buttonB">B?</button>
+            <button id="abxTest" class="testCenter">Test</button>
+            <div id="abxButtons"  style="display: none;">
+                <button id="buttonA">X is A</button>
+                <button id="play">Play X</button>
+                <button id="buttonB">X is B</button>
             </div>
-            <p id="stats1"></p>
-            <p id="stats2"></p>
+            <p id="stats" class="testCenter"></p>
             <br>
-            <button id="resetTest"  style="display: none;">Reset Test</button>
+            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
         </div>
     </div>
-
+    <div class="bordered">
+        <h3>What is it doing?</h3>
+        <p>Creates two sounds with the identical harmonic content and envelope as set by the common controls.</p>
+        <p>Each sound has the fundamental with phase shifted by the set amount (ahead or behind the other harmonics). The second harmonic can also have its phase shifted by a specified fraction of the fundamental shift.</p>
+        <p>There is an adjustable low-pass filter on the envelope to band-limit it. The envelop has linear attack and exponential decay.</p>
+        <p>The envelopes of the first and second harmonics are delayed by the same amount as the group-delay for that harmonic (this may not be the best realistic behaviour?).</p>
+        
+        
+    </div>
 
     <script src="audio.js"></script>
 </body>

@@ -4,12 +4,17 @@ let sourceNode = null;
 let audioBufferA = null;
 let audioBufferB = null;
 
+function ensureAudioContext(){
+    if (!audioContext){
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
 
 let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time
 
 // Update method to create a buffer
-function buildBuffer(
+function updateBuffer(
     sampleRate, //samples per second
     frequency, //Hz
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
@@ -20,7 +25,6 @@ function buildBuffer(
     decay, // decay is time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
     envelopeFilter // 1-32 1 = no filter, 32 = 1/32 of heaviest filter
     ) {
-        changed = false;
     //Calculate max delay in samples
     let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
     let bufferSize = Math.round(sampleRate * (attack + decayLengthFactor * decay) + delay); //Allow for attack and 1.5* decay time 
@@ -116,63 +120,50 @@ function mixInSine(
         }
     }
     }
-// Play method
-function play(index) {
-    if (!audioContext){
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        changed = true;        
-    }
-    if (sourceNode){  
-        sourceNode.stop(0);
-        sourceNode.disconnect();
-        sourceNode = null;    
-    }
-    sourceNode = audioContext.createBufferSource();
-    sourceNode.connect(audioContext.destination);
-    if (changed){
 
+   
+
+
+function updateBuffersAndDisplay() {
+    changed = false;
+    ensureAudioContext();
         //Fill buffer (with benchmark)
-        let t0 = performance.now();
+    let t0 = performance.now();
 
-        let freq = parseFloat(document.getElementById('freq').value);//frequency
-        let second = parseFloat(document.getElementById('second').value);//SecondHarmonicRelativePhaseDelay
-        let odd = parseFloat(document.getElementById('odd').value);//odd harmonic level
-        let even = parseFloat(document.getElementById('even').value);//even harmonic level
-        let attack = parseFloat(document.getElementById('attack').value);//attack time 
-        let decay = parseFloat(document.getElementById('decay').value);//decay time
-        let envelopeFilter = parseFloat(document.getElementById('envelopeFilter').value);//decay time
-        let rootPhaseDelayA = parseFloat(document.getElementById('rootPhaseDelayA').value);//rootPhaseDelayA
-        let rootPhaseDelayB = parseFloat(document.getElementById('rootPhaseDelayB').value);//rootPhaseDelayB
+    let freq = parseFloat(document.getElementById('freq').value); //frequency
+    let second = parseFloat(document.getElementById('second').value); //SecondHarmonicRelativePhaseDelay
+    let odd = parseFloat(document.getElementById('odd').value); //odd harmonic level
+    let even = parseFloat(document.getElementById('even').value); //even harmonic level
+    let attack = parseFloat(document.getElementById('attack').value); //attack time 
+    let decay = parseFloat(document.getElementById('decay').value); //decay time
+    let envelopeFilter = parseFloat(document.getElementById('envelopeFilter').value); //decay time
+    let rootPhaseDelayA = parseFloat(document.getElementById('rootPhaseDelayA').value); //rootPhaseDelayA
+    let rootPhaseDelayB = parseFloat(document.getElementById('rootPhaseDelayB').value); //rootPhaseDelayB
 
-        audioBufferA = buildBuffer(
-            audioContext.sampleRate, freq, 
-            rootPhaseDelayA, 
-            second, odd, even, attack, decay, envelopeFilter 
-        );        
+    audioBufferA = updateBuffer(
+        audioContext.sampleRate, freq,
+        rootPhaseDelayA,
+        second, odd, even, attack, decay, envelopeFilter
+    );
 
-        audioBufferB = buildBuffer(
-            audioContext.sampleRate, freq, 
-            rootPhaseDelayB, 
-            second, odd, even, attack, decay , envelopeFilter
-        );
+    audioBufferB = updateBuffer(
+        audioContext.sampleRate, freq,
+        rootPhaseDelayB,
+        second, odd, even, attack, decay, envelopeFilter
+    );
 
-        let scale = 0.99/Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length));
+    let scale = 0.99 / Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length));
 
-        scaleBuffer(audioBufferA, audioBufferA.length, scale);
-        scaleBuffer(audioBufferB, audioBufferB.length, scale);
+    scaleBuffer(audioBufferA, audioBufferA.length, scale);
+    scaleBuffer(audioBufferB, audioBufferB.length, scale);
 
-        console.log("Max amplitude: " + Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length)));
+    console.log("Max amplitude: " + Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length)));
 
-        paintBuffers();
+    updateDisplay();
 
-        let t1 = performance.now();
-        console.log("Execution time: " + (t1 - t0) + " milliseconds.");
-
-    }
-    sourceNode.buffer = index==0 ? audioBufferA : audioBufferB;
-    sourceNode.start(0);
+    let t1 = performance.now();
+    console.log("Execution time: " + (t1 - t0) + " milliseconds.");
 }
-
 
 function getBufferMax(buffer, bufferSize){
     let b = buffer.getChannelData(0);
@@ -192,7 +183,7 @@ function scaleBuffer(buffer, bufferSize, scale){
     return max;
 }
 
-function paintBuffers(){
+function updateDisplay(){
     if (!audioBufferA || !audioBufferB) return;
     paintBuffer(audioBufferA, audioBufferA.length, "waveformA");
     paintBuffer(audioBufferB, audioBufferB.length, "waveformB");
@@ -215,7 +206,24 @@ function paintBuffer(buffer, bufferSize, canvasId){
     ctx.stroke();
 }
 
+ 
+// Play method
+function play(index) {
+    ensureAudioContext();
 
+    if (sourceNode){  
+        sourceNode.stop(0);
+        sourceNode.disconnect();
+        sourceNode = null;    
+    }
+    sourceNode = audioContext.createBufferSource();
+    sourceNode.connect(audioContext.destination);
+    if (changed){
+        updateBuffersAndDisplay();
+    }
+    sourceNode.buffer = index==0 ? audioBufferA : audioBufferB;
+    sourceNode.start(0);
+}
 
 // Stop method
 function stop() {
@@ -299,7 +307,7 @@ function updateCanvas() {
 
     canvasA.width = canvasA.offsetWidth;
     canvasB.width = canvasB.offsetWidth;
-    paintBuffers();
+    updateDisplay();
 }
 
 
@@ -318,7 +326,7 @@ function playABX(){
 
 document.getElementById('abxTest').addEventListener('click', function() {
     abxTestChoice = Math.round(Math.random());
-    document.getElementById('abxButtons').style.display = 'block';
+    document.getElementById('abxButtons').style.display = 'flex';
     document.getElementById('abxTest').style.display = 'none';
     document.getElementById('resetTest').style.display = 'block';
     playABX();
@@ -344,11 +352,8 @@ document.getElementById('resetTest').addEventListener('click', function() {
     document.getElementById('abxButtons').style.display = 'none';
     document.getElementById('abxTest').style.display = 'block';
     document.getElementById('resetTest').style.display = 'none';
-    const stats1 = document.getElementById('stats1');
-    stats1.textContent = '';
-
-    const stats2 = document.getElementById('stats2');
-    stats2.textContent ='' ;
+    const stats = document.getElementById('stats1');
+    stats.textContent = '';
 });
 
 function checkChoice(choice) {
@@ -367,9 +372,8 @@ function checkChoice(choice) {
     document.getElementById('abxButtons').style.display = 'none';
     document.getElementById('abxTest').style.display = 'block';
 
-    const stats1 = document.getElementById('stats1');
-    stats1.textContent = 'Score: ' + abxScore + '/' + abxCount ;
-
-    const stats2 = document.getElementById('stats2');
-    stats2.textContent =' (' + Math.round(abxScore / abxCount * 100).toFixed(0) + '%)' ;
+    const stats = document.getElementById('stats');
+    stats.textContent = 'Score: ' + abxScore + '/' + abxCount +'  ' + Math.round(abxScore / abxCount * 100).toFixed(0) + '%' ;
 }
+
+updateBuffersAndDisplay();
