@@ -60,7 +60,7 @@
             <canvas id="waveformA" width ="800" height="200"></canvas>
         </div>
         <div class="slider-container">
-            <label for="rootPhaseDelayA">Phase Delay (root):</label>
+            <label for="rootPhaseDelayA">Root Phase Shift:</label>
             <input type="range" id="rootPhaseDelayA" name="rootPhaseDelayA" min="-1.5" max="1.5" step="0.01" value="0">
             <span id="rootPhaseDelayA-value">0π (0ms)</span>
         </div>
@@ -75,9 +75,9 @@
             <canvas id="waveformB"  width ="800" height="200"></canvas>
         </div>
         <div class="slider-container">
-            <label for="rootPhaseDelayB">Phase Delay (root):</label>
-            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelayB" min="-1.5" max="1.5" step="0.01" value="0">
-            <span id="rootPhaseDelayB-value">0π (0ms)</span>
+            <label for="rootPhaseDelayB">Root Phase Shift:</label>
+            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelayB" min="-1.5" max="1.5" step="0.01" value="0.25">
+            <span id="rootPhaseDelayB-value">0.25π (10.0ms)</span>
         </div>
         <button id="playSoundB">Play B</button>
     </div>
@@ -102,10 +102,10 @@
     </div>
     <div class="bordered">
         <h3>What is it doing?</h3>
-        <p>Creates two sounds with the identical harmonic content and envelope as set by the common controls.</p>
-        <p>Each sound has the fundamental with phase shifted by the set amount (ahead or behind the other harmonics). The second harmonic can also have its phase shifted by a specified fraction of the fundamental shift.</p>
-        <p>There is an adjustable low-pass filter on the envelope to band-limit it. The envelop has linear attack and exponential decay.</p>
-        <p>The envelopes of the first and second harmonics are delayed by the same amount as the group-delay for that harmonic (this may not be the best realistic behaviour?).</p>
+        <p>It generates two sounds with the identical harmonic content and envelope as set by the common controls.</p>
+        <p>Each sound has the phase of the fundamental shifted by the specified amount relative to the other harmonics. The second harmonic can also have its phase shifted by a specified fraction of the fundamental shift.</p>
+        <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
+        <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the best realistic behaviour?).</p>
         
         
     </div>
