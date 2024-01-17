@@ -11,7 +11,7 @@ function ensureAudioContext(){
 }
 
 let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
-let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time
+let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
 
 // Update method to create a buffer
 function updateBuffer(
@@ -20,7 +20,9 @@ function updateBuffer(
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
     SecondHarmonicRelativePhaseDelay,
     oddLevel, //-1..1
+    oddFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
     evenLevel, //-1..1
+    evenFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
     attack, //Linear time to get to max amplitude  in seconds
     decay, // decay is time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
     envelopeFilter // 1-32 1 = no filter, 32 = 1/32 of heaviest filter
@@ -41,23 +43,24 @@ function updateBuffer(
       });
       let b = audioBuffer.getChannelData(0);
       buildEnvelopeBuffer(sampleRate, bufferSize, attack,decay, envelopeFilter);
-      buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, evenLevel, delay0, delay1, delayN);
+      buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delay1, delayN);
       return audioBuffer;
 }
 
 
-function buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, evenLevel, delay0, delay1, delayN) {
+function buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delay1, delayN) {
     let f = frequency;
     let a = 0.7;
     let nyquist = sampleRate * 0.49;//Nyquist limit less a bit
     mixInSine(sampleRate, b, bufferSize, f, a, delay0 ); //Add fundamental
 
     for (let i = 1; i < harmonics; i++) {
+        let isEven = (i+1) % 2 == 0;
         f += frequency;
         if (frequency>=nyquist) return;//Nyquist limit
-        a =  a/(i+1);
-        let oe = i % 2 == 0 ? evenLevel : oddLevel;
-        mixInSine(sampleRate, b, bufferSize, f, a * oe, i == 1 ? delay1 : delayN);
+        let falloff =  Math.pow(i+1,-(isEven ? evenFalloff :oddFalloff));
+        let oe = isEven ? evenLevel : oddLevel;
+        mixInSine(sampleRate, b, bufferSize, f, a * oe * falloff, i == 1 ? delay1 : delayN);
     }
 }
 
@@ -133,7 +136,9 @@ function updateBuffersAndDisplay() {
     let freq = parseFloat(document.getElementById('freq').value); //frequency
     let second = parseFloat(document.getElementById('second').value); //SecondHarmonicRelativePhaseDelay
     let odd = parseFloat(document.getElementById('odd').value); //odd harmonic level
+    let oddFalloff = parseFloat(document.getElementById('oddFalloff').value); //odd harmonic level
     let even = parseFloat(document.getElementById('even').value); //even harmonic level
+    let evenFalloff = parseFloat(document.getElementById('evenFalloff').value); //even harmonic level
     let attack = parseFloat(document.getElementById('attack').value); //attack time 
     let decay = parseFloat(document.getElementById('decay').value); //decay time
     let envelopeFilter = parseFloat(document.getElementById('envelopeFilter').value); //decay time
@@ -143,13 +148,13 @@ function updateBuffersAndDisplay() {
     audioBufferA = updateBuffer(
         audioContext.sampleRate, freq,
         rootPhaseDelayA,
-        second, odd, even, attack, decay, envelopeFilter
+        second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
     );
 
     audioBufferB = updateBuffer(
         audioContext.sampleRate, freq,
         rootPhaseDelayB,
-        second, odd, even, attack, decay, envelopeFilter
+        second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
     );
 
     let scale = 0.99 / Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length));
@@ -269,8 +274,26 @@ document.getElementById('odd').addEventListener('input', function() {
     changed=true;
 });
 
+document.getElementById('oddFalloff').addEventListener('input', function() {
+    let value = "";
+    if (this.value==0) value = "1";
+    else if (this.value==1) value = "1/n";
+    else value = "1/n^"+ this.value;
+    document.getElementById('oddFalloff-value').textContent = value;
+    changed=true;
+});
+
 document.getElementById('even').addEventListener('input', function() {
     document.getElementById('even-value').textContent = this.value;
+    changed=true;
+});
+
+document.getElementById('evenFalloff').addEventListener('input', function() {
+    let value = "";
+    if (this.value==0) value = "1";
+    else if (this.value==1) value = "1/n";
+    else value = "1/n^"+this.value;
+    document.getElementById('evenFalloff-value').textContent = value;
     changed=true;
 });
 

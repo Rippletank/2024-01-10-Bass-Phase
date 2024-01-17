@@ -76,6 +76,15 @@ canvas {
 .bordered h3{
    margin-top: 0.1em; 
 }
+
+.bordered h4{
+   margin-top: 1.5em; 
+   margin-bottom: 1em;
+}
+
+.slider-container label{
+   margin-left: 1em; 
+}
 .bordered button{
     display: block;
     margin-left: auto;
