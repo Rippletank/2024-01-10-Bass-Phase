@@ -1,20 +1,31 @@
-// Create an AudioContext
-let audioContext = null;
-let sourceNode = null;
-let audioBufferA = null;
-let audioBufferB = null;
 
-function ensureAudioContext(){
-    if (!audioContext){
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-}
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Audio Code
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//This code is not optimised for performance - it is intended to be fairly easy to understand and modify
+//It is not intended to be used in production code
+//Copyright N.Whitehurst 2024
+//https://github.com/Rippletank/2024-01-10-Bass-Phase
+//MIT License - use as you wish, but no warranty of any kind, express or implied, is provided with this software
+//Code was written with the help of Github Copilot, particularly for UI/CSS stuff and some mundane refactoring chores
+//Web Audio API documentation: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+//Wikipedia for refresher on harmonic series and related
+//Quick IIF refresher and general approach for suitable smoothing values https://zipcpu.com/dsp/2017/08/19/simple-filter.html
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Audio Code - creates buffers with audio data according to parameters
+//No knowledge of GUI, only knows about AudioBuffer from WebAudioAPI
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
 
 // Update method to create a buffer
-function updateBuffer(
+function getAudioBuffer(
     sampleRate, //samples per second
     frequency, //Hz
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
@@ -47,10 +58,10 @@ function updateBuffer(
       return audioBuffer;
 }
 
-
+//Generate the harmonic series
 function buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delay1, delayN) {
     let f = frequency;
-    let a = 0.7;
+    let a = 1;// First harmonic, buffer will be normalised later
     let nyquist = sampleRate * 0.49;//Nyquist limit less a bit
     mixInSine(sampleRate, b, bufferSize, f, a, delay0 ); //Add fundamental
 
@@ -64,6 +75,8 @@ function buildHarmonicSeries(frequency, sampleRate, b, bufferSize, oddLevel, odd
     }
 }
 
+
+//Generate a single envelope, shared by all harmonics
 let envelopeBuffer = null;
 const root2 = Math.sqrt(2);
 const ln1024 =Math.log(1024);
@@ -102,7 +115,7 @@ function buildEnvelopeBuffer(
         envelopeBuffer = envValues;
 }
 
-
+//Generate a single sine wave and mix into the buffer
 function mixInSine(
     sampleRate, //samples per second
     buffer, 
@@ -122,17 +135,90 @@ function mixInSine(
             buffer[i] += amplitude * envelopeBuffer[env++] * Math.sin(theta) ;
         }
     }
+}
+
+function getBufferMax(buffer, bufferSize){
+    let b = buffer.getChannelData(0);
+    let max = 0;
+    for (let i = 0; i < bufferSize; i++) {
+        let val = Math.abs( b[i]);
+        if (val>max) max = val;
     }
+    return max;
+}
+
+function scaleBuffer(buffer, bufferSize, scale){
+    let b = buffer.getChannelData(0);
+    let max = 0;
+    for (let i = 0; i < bufferSize; i++) {
+        b[i]*=scale;
+    }
+    return max;
+}
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//GUI/Audio/WebAudioAPI linking code knows about each area of concern
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let audioContext = null;
+let sourceNode = null;
+let audioBufferA = null;
+let audioBufferB = null;
+
+function ensureAudioContext(){
+    if (!audioContext){
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+
+// Play method, index 0 = A, 1 = B
+function play(index) {
+    ensureAudioContext();
+    //Can't reuse source node so create a new one
+    stop();
+    sourceNode = audioContext.createBufferSource();
+    sourceNode.connect(audioContext.destination);
+    if (changed){
+        updateBuffersAndDisplay();
+    }
+    sourceNode.buffer = index==0 ? audioBufferA : audioBufferB;
+    sourceNode.start(0);
+}
+
+function stop() {
+    if (sourceNode) {
+        sourceNode.stop(0);
+        sourceNode.disconnect();
+        sourceNode = null;
+    }
+}
+
+
 
    
-
-
+// Main update method - orchestrates the creation of the buffers and their display
+//Called at startup and whenever a parameter changes
 function updateBuffersAndDisplay() {
     changed = false;
     ensureAudioContext();
-        //Fill buffer (with benchmark)
+
     let t0 = performance.now();
 
+    updateBuffers();
+    updateDisplay();
+
+    let t1 = performance.now();
+    console.log("Execution time: " + (t1 - t0) + " milliseconds.");
+}
+
+
+
+function updateBuffers() {
+    //Collect parameters from GUI
     let freq = parseFloat(document.getElementById('freq').value); //frequency
     let second = parseFloat(document.getElementById('second').value); //SecondHarmonicRelativePhaseDelay
     let odd = parseFloat(document.getElementById('odd').value); //odd harmonic level
@@ -145,47 +231,27 @@ function updateBuffersAndDisplay() {
     let rootPhaseDelayA = parseFloat(document.getElementById('rootPhaseDelayA').value); //rootPhaseDelayA
     let rootPhaseDelayB = parseFloat(document.getElementById('rootPhaseDelayB').value); //rootPhaseDelayB
 
-    audioBufferA = updateBuffer(
+    //Create buffers
+    //Inefficient to create two buffers independently - envelope and all higher harmonics are the same, but performance is acceptable and code is maintainable
+    audioBufferA = getAudioBuffer(
         audioContext.sampleRate, freq,
         rootPhaseDelayA,
         second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
     );
 
-    audioBufferB = updateBuffer(
+    audioBufferB = getAudioBuffer(
         audioContext.sampleRate, freq,
         rootPhaseDelayB,
         second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
     );
 
+    //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = 0.99 / Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length));
 
     scaleBuffer(audioBufferA, audioBufferA.length, scale);
     scaleBuffer(audioBufferB, audioBufferB.length, scale);
 
-    console.log("Max amplitude: " + Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length)));
-
-    updateDisplay();
-
-    let t1 = performance.now();
-    console.log("Execution time: " + (t1 - t0) + " milliseconds.");
-}
-
-function getBufferMax(buffer, bufferSize){
-    let b = buffer.getChannelData(0);
-    let max = 0;
-    for (let i = 0; i < bufferSize; i++) {
-        let val = Math.abs( b[i]);
-        if (val>max) max = val;
-    }
-    return max;
-}
-function scaleBuffer(buffer, bufferSize, scale){
-    let b = buffer.getChannelData(0);
-    let max = 0;
-    for (let i = 0; i < bufferSize; i++) {
-        b[i]*=scale;
-    }
-    return max;
+    //console.log("Max amplitude: " + Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length)));
 }
 
 function updateDisplay(){
@@ -212,32 +278,14 @@ function paintBuffer(buffer, bufferSize, canvasId){
 }
 
  
-// Play method
-function play(index) {
-    ensureAudioContext();
 
-    if (sourceNode){  
-        sourceNode.stop(0);
-        sourceNode.disconnect();
-        sourceNode = null;    
-    }
-    sourceNode = audioContext.createBufferSource();
-    sourceNode.connect(audioContext.destination);
-    if (changed){
-        updateBuffersAndDisplay();
-    }
-    sourceNode.buffer = index==0 ? audioBufferA : audioBufferB;
-    sourceNode.start(0);
-}
 
-// Stop method
-function stop() {
-    if (sourceNode) {
-        sourceNode.stop(0);
-        sourceNode.disconnect();
-        sourceNode = null;
-    }
-}
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//GUI wiring up Code - no knowledge of audio code
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 let changed = true;
 
@@ -322,6 +370,7 @@ function updatePhaseALabels(){
     document.getElementById('rootPhaseDelayB-value').textContent = rootPhaseDelayB + "π (" + (1000 * delayB).toFixed(1) + "ms)";
 }
 
+
 window.addEventListener('resize', updateCanvas);
 
 function updateCanvas() {
@@ -334,6 +383,17 @@ function updateCanvas() {
 }
 
 
+
+//Initialise display of waveform and audio buffers on first load
+updateBuffersAndDisplay();
+
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//ABX TEST GUI Code
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 let abxTestChoice;
@@ -399,4 +459,3 @@ function checkChoice(choice) {
     stats.textContent = 'Score: ' + abxScore + '/' + abxCount +'  ' + Math.round(abxScore / abxCount * 100).toFixed(0) + '%' ;
 }
 
-updateBuffersAndDisplay();
