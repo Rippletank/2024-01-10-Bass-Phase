@@ -435,7 +435,7 @@ document.getElementById('resetTest').addEventListener('click', function() {
     document.getElementById('abxButtons').style.display = 'none';
     document.getElementById('abxTest').style.display = 'block';
     document.getElementById('resetTest').style.display = 'none';
-    const stats = document.getElementById('stats1');
+    const stats = document.getElementById('stats');
     stats.textContent = '';
 });
 
@@ -454,7 +454,7 @@ function checkChoice(choice) {
     results.appendChild(result);
     document.getElementById('abxButtons').style.display = 'none';
     document.getElementById('abxTest').style.display = 'block';
-
+    
     const stats = document.getElementById('stats');
     stats.textContent = 'Score: ' + abxScore + '/' + abxCount +'  ' + Math.round(abxScore / abxCount * 100).toFixed(0) + '%' ;
 }
