@@ -15,6 +15,8 @@
             <label for="freq">Frequency:</label>
             <input type="range" id="freq" name="freq" min="20" max="200" step="1" value="50">
             <span id="freq-value">50Hz</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Fundamental frequency</div>
         </div>
 
         
@@ -23,22 +25,30 @@
             <label for="even">Even Level:</label>
             <input type="range" id="even" name="even" min="-1" max="1" step="0.1" value="-1">
             <span id="even-value">-1</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the polarity and amplitude of the even harmonics. Centre = 0 (off)</div>
         </div>
         <div class="slider-container">
             <label for="evenFalloff">Even Fall off:</label>
             <input type="range" id="evenFalloff" name="even" min="1" max="2" step="0.1" value="1.7">
-            <span id="evenFalloff-value">1/n^1.7</span>
+            <span id="evenFalloff-value">1/n<sup>1.7</sup></span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how loud higher harmonics are. For even harmonics, 1/n is typical of sawtooth waves.</div>
         </div>
 
         <div class="slider-container">
             <label for="odd">Odd Level:</label>
             <input type="range" id="odd" name="odd" min="-1" max="1" step="0.1" value="1">
             <span id="odd-value">1</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the polarity and amplitude of the odd harmonics. Centre = 0 (off)</div>
         </div>
         <div class="slider-container">
             <label for="oddFalloff">Odd Fall off:</label>
             <input type="range" id="oddFalloff" name="even" min="1" max="2" step="0.1" value="1.7">
-            <span id="oddFalloff-value">1/n^1.7</span>
+            <span id="oddFalloff-value">1/n<sup>1.7</sup></span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how loud higher harmonics are. For odd harmonics, 1/n is typical of square and sawtooth waves, 1/n^2 is like a triangle wave.</div>
         </div>
 
         <h4>Envelope</h4>
@@ -46,18 +56,24 @@
             <label for="attack">Attack:</label>
             <input type="range" id="attack" name="attack" min="0.001" max="0.2" step="0.001" value="0.005">
             <span id="attack-value">0.005s</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the linear attack part of the envelope</div>
         </div>
 
         <div class="slider-container">
             <label for="decay">Decay:</label>
             <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.4">
             <span id="decay-value">0.4s</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the exponential decay part of the envelope to fall to -60db</div>
         </div>
 
         <div class="slider-container">
             <label for="envelopeFilter">Smoothing:</label>
             <input type="range" id="envelopeFilter" name="envelopeFilter" min="1" max="64" step="1" value="32">
             <span id="envelopeFilter-value">32</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 64 = very low cutoff frequency</div>
         </div>
 
 
@@ -66,6 +82,8 @@
             <label for="second">Relative Phase delay:</label>
             <input type="range" id="second" name="second" min="0" max="1" step="0.1" value="0.5">
             <span id="second-value">0.5</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how much the second harmonic (if present) is delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
         </div>
     </div>
 
@@ -78,6 +96,8 @@
             <label for="rootPhaseDelayA">Root Phase Shift:</label>
             <input type="range" id="rootPhaseDelayA" name="rootPhaseDelayA" min="-1.5" max="1.5" step="0.01" value="0">
             <span id="rootPhaseDelayA-value">0π (0ms)</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
         </div>
         <button id="playSoundA">Play A</button>
     </div>
@@ -93,6 +113,8 @@
             <label for="rootPhaseDelayB">Root Phase Shift:</label>
             <input type="range" id="rootPhaseDelayB" name="rootPhaseDelayB" min="-1.5" max="1.5" step="0.01" value="0.25">
             <span id="rootPhaseDelayB-value">0.25π (10.0ms)</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Phase delay of first harmonic for Sound B. Affects 2nd harmonic according to settings in common section.</div>
         </div>
         <button id="playSoundB">Play B</button>
     </div>
@@ -120,9 +142,7 @@
         <p>It generates two sounds with the identical harmonic content and envelope as set by the common controls.</p>
         <p>Each sound has the phase of the fundamental shifted by the specified amount relative to the other harmonics. The second harmonic can also have its phase shifted by a specified fraction of the fundamental shift.</p>
         <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
-        <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the best realistic behaviour?).</p>
-        
-        
+        <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the best realistic behaviour?).</p>   
     </div>
 
     <script src="audio.js"></script>

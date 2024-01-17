@@ -326,8 +326,8 @@ document.getElementById('oddFalloff').addEventListener('input', function() {
     let value = "";
     if (this.value==0) value = "1";
     else if (this.value==1) value = "1/n";
-    else value = "1/n^"+ this.value;
-    document.getElementById('oddFalloff-value').textContent = value;
+    else value = "1/n<sup>" + this.value + "</sup>";
+    document.getElementById('oddFalloff-value').innerHTML = value;
     changed=true;
 });
 
@@ -340,8 +340,8 @@ document.getElementById('evenFalloff').addEventListener('input', function() {
     let value = "";
     if (this.value==0) value = "1";
     else if (this.value==1) value = "1/n";
-    else value = "1/n^"+this.value;
-    document.getElementById('evenFalloff-value').textContent = value;
+    else value = "1/n<sup>" + this.value + "</sup>";
+    document.getElementById('evenFalloff-value').innerHTML = value;
     changed=true;
 });
 
@@ -457,5 +457,32 @@ function checkChoice(choice) {
     
     const stats = document.getElementById('stats');
     stats.textContent = 'Score: ' + abxScore + '/' + abxCount +'  ' + Math.round(abxScore / abxCount * 100).toFixed(0) + '%' ;
+}
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Help pop up trigger code
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let helpIcons = document.querySelectorAll('.help-icon');
+
+helpIcons.forEach(function(helpIcon) {
+    helpIcon.addEventListener('click', function(event) {
+        event.stopPropagation();
+        clearHelp();
+        let helpPopup = this.nextElementSibling;
+        helpPopup.style.display = 'block';
+    });
+});
+
+document.addEventListener('click', function() {
+    clearHelp();
+});
+
+function clearHelp(){
+    let helpPopups = document.querySelectorAll('.help-popup');
+    helpPopups.forEach(function(helpPopup) {
+        helpPopup.style.display = 'none';
+    });
 }
 
