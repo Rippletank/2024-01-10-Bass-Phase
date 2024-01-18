@@ -70,18 +70,18 @@
 
         <div class="slider-container">
             <label for="envelopeFilter">Smoothing:</label>
-            <input type="range" id="envelopeFilter" name="envelopeFilter" min="1" max="64" step="1" value="32">
-            <span id="envelopeFilter-value">32</span>
+            <input type="range" id="envelopeFilter" name="envelopeFilter" min="0" max="1000" step="10" value="150">
+            <span id="envelopeFilter-value">150</span>
             <span class="help-icon">?</span>
-            <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 64 = very low cutoff frequency</div>
+            <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
         </div>
 
 
         <h4>2nd harmonic shift</h4>
         <div class="slider-container">
             <label for="second">Relative Phase delay:</label>
-            <input type="range" id="second" name="second" min="0" max="1" step="0.1" value="0.5">
-            <span id="second-value">0.5</span>
+            <input type="range" id="second" name="second" min="0" max="1" step="0.1" value="0">
+            <span id="second-value">0</span>
             <span class="help-icon">?</span>
             <div class="help-popup">Controls how much the second harmonic (if present) is delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
         </div>
@@ -144,6 +144,17 @@
         <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
         <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the best realistic behaviour?).</p>   
     </div>
+
+    
+    <div class="bordered">
+        <h3>Null test <span id="nullTestdb"></span></h3>        
+        <div>
+            <canvas id="waveformNull"  width ="800" height="200"></canvas>
+        </div>
+        <button id="playSoundNull">Play Null</button>
+        <p>Sound level of null is normalised. It should only contain the first harmonic (and second if it is delayed, too). Null test will fail if any phase shifts are negative because the algorithm delays higher frequencies in that case.</p>   
+    </div>
+
 
     <script src="audio.js"></script>
 </body>
