@@ -386,7 +386,7 @@ function updateCanvas() {
 
 //Initialise display of waveform and audio buffers on first load
 updateBuffersAndDisplay();
-
+updatePhaseLabels();
 
 
 
