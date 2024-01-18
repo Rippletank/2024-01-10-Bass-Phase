@@ -125,16 +125,17 @@ function updateBuffers() {
 }
 
 function updateDisplay(){
-    if (!audioBufferA || !audioBufferB) return;
-    paintBuffer(audioBufferA, "waveformA");
-    paintBuffer(audioBufferB, "waveformB");
-    paintBuffer(nullTestBuffer, "waveformNull");
+    if (!audioBufferA || !audioBufferB || !nullTestBuffer) return;
+    let maxLength = Math.max(audioBufferA.length, audioBufferB.length, nullTestBuffer.length);
+    paintBuffer(audioBufferA, maxLength, "waveformA");
+    paintBuffer(audioBufferB, maxLength, "waveformB");
+    paintBuffer(nullTestBuffer, maxLength, "waveformNull");
     let nullTest = document.getElementById('nullTestdb');
     nullTest.textContent = nullTestMax.toFixed(1) + "dB";
 }
 
 
-function paintBuffer(buffer, canvasId){
+function paintBuffer(buffer, maxLength, canvasId){
     let b = buffer.getChannelData(0);
     let bufferSize = buffer.length;
 
@@ -144,9 +145,10 @@ function paintBuffer(buffer, canvasId){
     ctx.beginPath();
     let x = 0;
     let y = canvas.height/2;
-    let step = canvas.width / bufferSize;
+    let step = canvas.width / maxLength;
 
-    for (let i = 0; i < bufferSize; i++) {
+    for (let i = 0; i < maxLength; i++) {
+        if (i >= bufferSize) break;
         ctx.lineTo(x, y + b[i] * y);
         x += step;
     }
@@ -182,7 +184,7 @@ function getAudioBuffer(
     ) {
     //Calculate max delay in samples
     let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
-    let bufferSize = Math.round(sampleRate * (attack + decayLengthFactor * decay) + delay); //Allow for attack and 1.5* decay time 
+    let bufferSize = Math.round(sampleRate * (attack + decayLengthFactor * decay + envelopeFilter*0.0003) + delay ); //Allow for attack and 1.5* decay time + extra for filter smoothing
         
     let delay0 =rootPhaseDelay<0 ? 0 : delay;
     let delay1 =delay * (rootPhaseDelay<0 ?  1-SecondHarmonicRelativePhaseDelay*2 : SecondHarmonicRelativePhaseDelay*2 ); //Delay first harmonic by 1/2 the phase delay but double the frequency
