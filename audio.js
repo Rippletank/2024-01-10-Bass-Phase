@@ -23,7 +23,7 @@
 
 let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
-
+let generatedSampleRate = 0;//Sample rate used to generate current buffers
 // Update method to create a buffer
 function getAudioBuffer(
     sampleRate, //samples per second
@@ -170,6 +170,8 @@ let audioBufferB = null;
 
 function ensureAudioContext(){
     if (!audioContext){
+        //Will throw a warning in some browsers if not triggered by a user action
+        //On page start up this is called anyway to get the playback samplerate to use for buffer generation
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 }
@@ -182,7 +184,7 @@ function play(index) {
     stop();
     sourceNode = audioContext.createBufferSource();
     sourceNode.connect(audioContext.destination);
-    if (changed){
+    if (changed || generatedSampleRate != audioContext.sampleRate){
         updateBuffersAndDisplay();
     }
     sourceNode.buffer = index==0 ? audioBufferA : audioBufferB;
@@ -205,7 +207,6 @@ function stop() {
 function updateBuffersAndDisplay() {
     changed = false;
     ensureAudioContext();
-
     let t0 = performance.now();
 
     updateBuffers();
@@ -230,17 +231,18 @@ function updateBuffers() {
     let envelopeFilter = parseFloat(document.getElementById('envelopeFilter').value); //decay time
     let rootPhaseDelayA = parseFloat(document.getElementById('rootPhaseDelayA').value); //rootPhaseDelayA
     let rootPhaseDelayB = parseFloat(document.getElementById('rootPhaseDelayB').value); //rootPhaseDelayB
-
+    let sampleRate = audioContext ? audioContext.sampleRate: 44100;
+    generatedSampleRate = sampleRate;//Store to check later, if changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
     //Create buffers
     //Inefficient to create two buffers independently - envelope and all higher harmonics are the same, but performance is acceptable and code is maintainable
     audioBufferA = getAudioBuffer(
-        audioContext.sampleRate, freq,
+        sampleRate, freq,
         rootPhaseDelayA,
         second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
     );
 
     audioBufferB = getAudioBuffer(
-        audioContext.sampleRate, freq,
+        sampleRate, freq,
         rootPhaseDelayB,
         second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
     );
