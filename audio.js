@@ -29,13 +29,13 @@ function getAudioBuffer(
     sampleRate, //samples per second
     frequency, //Hz
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
-    SecondHarmonicRelativePhaseDelay,
+    SecondHarmonicRelativePhaseDelay, //fraction of rootPhaseDelay for phase of second harmonic
     oddLevel, //-1..1
     oddFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
     evenLevel, //-1..1
     evenFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
     attack, //Linear time to get to max amplitude  in seconds
-    decay, // decay is time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
+    decay, // time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
     envelopeFilter // 1-32 1 = no filter, 32 = 1/32 of heaviest filter
     ) {
     //Calculate max delay in samples
@@ -363,13 +363,13 @@ document.getElementById('rootPhaseDelayB').addEventListener('input', function() 
 });
 
 function updatePhaseLabels(){
-    let invFreq = 1 / (parseFloat(document.getElementById('freq').value) *0.5);
+    let invFreq = 1000 / (parseFloat(document.getElementById('freq').value) * 2);
     let rootPhaseDelayA = document.getElementById('rootPhaseDelayA').value;
     let rootPhaseDelayB = document.getElementById('rootPhaseDelayB').value;
-    let delayA = parseFloat(document.getElementById('rootPhaseDelayA').value) * invFreq;
-    let delayB = parseFloat(document.getElementById('rootPhaseDelayB').value) * invFreq;
-    document.getElementById('rootPhaseDelayA-value').textContent = rootPhaseDelayA + "π (" + (1000 * delayA).toFixed(1) + "ms)";
-    document.getElementById('rootPhaseDelayB-value').textContent = rootPhaseDelayB + "π (" + (1000 * delayB).toFixed(1) + "ms)";
+    let delayA = parseFloat(rootPhaseDelayA) * invFreq;
+    let delayB = parseFloat(rootPhaseDelayB) * invFreq;
+    document.getElementById('rootPhaseDelayA-value').textContent = rootPhaseDelayA + "π (" + (delayA).toFixed(1) + "ms)";
+    document.getElementById('rootPhaseDelayB-value').textContent = rootPhaseDelayB + "π (" + (delayB).toFixed(1) + "ms)";
 }
 
 
