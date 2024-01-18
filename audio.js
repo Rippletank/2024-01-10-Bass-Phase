@@ -351,16 +351,16 @@ document.getElementById('envelopeFilter').addEventListener('input', function() {
 });
 
 document.getElementById('rootPhaseDelayA').addEventListener('input', function() {
-    updatePhaseALabels();
+    updatePhaseLabels();
     changed=true;
 });
 
 document.getElementById('rootPhaseDelayB').addEventListener('input', function() {
-    updatePhaseALabels();
+    updatePhaseLabels();
     changed=true;
 });
 
-function updatePhaseALabels(){
+function updatePhaseLabels(){
     let invFreq = 1 / (parseFloat(document.getElementById('freq').value) *0.5);
     let rootPhaseDelayA = document.getElementById('rootPhaseDelayA').value;
     let rootPhaseDelayB = document.getElementById('rootPhaseDelayB').value;
