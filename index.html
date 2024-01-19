@@ -152,7 +152,7 @@
             <canvas id="waveformNull"  width ="800" height="200"></canvas>
         </div>
         <button id="playSoundNull">Play Null</button>
-        <p>Sound level of null is normalised. It should only contain the first harmonic (and second if it is delayed, too). Null test will fail if any phase shifts are negative because the algorithm delays higher frequencies in that case.</p>   
+        <p>Sound level of null is normalised. It should only contain the first harmonic (and second if it is delayed, too) plus a little distortion for short attacks and lower smoothing due to offset attack starts. Null test will fail if any phase shifts are negative because the algorithm delays all the higher frequencies instead in that case.</p>   
     </div>
 
 
