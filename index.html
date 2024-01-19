@@ -148,12 +148,14 @@
     <div class="bordered">
         <h3>What is it doing?</h3>
         <p>This page was created to help investigate audibility of low frequency phase shifts.</p>
-        <p>It generates two sounds with the identical harmonic content and envelope as set by the common controls.</p>
-        <p>Each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. The second harmonic can also have its phase shifted by a specified fraction of the fundamental shift.</p>
+        <p>It generates two sounds with identical harmonic content and envelopes as set by the common controls.</p>
+        <p>Each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. The second harmonic can also be phase shifted by a specified fraction of the root phase shift.</p>
         <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
         <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the most realistic behaviour?).</p>  
         <p>The waves are normalised together so their relative size are unchanged. This is to keep to optimum loudness levels for tests, avoiding clipping or the sounds being too quiet.</p> 
+        <p>Negative phase shifts are there to allow trying to compensate for existing phase shifts in playback systems.</p>
         <p>The code is plain javascript, using the browsers own Web Audio API for playback, to allow for easy modification and review of methodology etc.</p>
+        <p>The waves are generated using additive synthesis to allow for easy and predictable setting of phases and levels.</p>
     </div>
 
     
@@ -164,10 +166,11 @@
         </div>
         <button id="playSoundNull">Play</button>
         <p>This null test is a sanity check for the generated waveforms.</p>
-        <p>Play back and image of null is of normalised version. Peak is measured before any normalising.</p> 
+        <p>Play back and image of the null test result is of the normalised version. Peak level is measured before any normalising.</p> 
         <p>The null test should only contain the first harmonic (and second if it is shifted, too) plus a little distortion for short attacks and/or low smoothing due to offset attack starts.</p>
         <p>Changes to harmonics controls should not affect the sound of the null test result (with no second harmonic shift).</p>
-        <p>The null test is messed up if either phase shift is negative because then the algorithm delays the higher harmonics instead and leaves the first harmonic at the start.</p>   
+        <p>The null test is messed up if either phase shift is negative because then the algorithm delays the higher harmonics instead and leaves the first harmonic at the start.</p>  
+        <p>The envelope offset will affect the null results. Increase the hold time to generate a constant level section to give more predictable null test results.</p> 
         <p>With a significant hold time and no second harmonic shift, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
         <p></p>
     </div>
