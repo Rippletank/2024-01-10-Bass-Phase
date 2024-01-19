@@ -61,6 +61,14 @@
         </div>
 
         <div class="slider-container">
+            <label for="hold">Hold:</label>
+            <input type="range" id="hold" name="hold" min="0.00" max="1" step="0.01" value="0.0">
+            <span id="hold-value">0s</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time held at maximum between attack and decay</div>
+        </div>
+
+        <div class="slider-container">
             <label for="decay">Decay:</label>
             <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.4">
             <span id="decay-value">0.4s</span>
@@ -142,7 +150,10 @@
         <p>It generates two sounds with the identical harmonic content and envelope as set by the common controls.</p>
         <p>Each sound has the phase of the fundamental shifted by the specified amount relative to the other harmonics. The second harmonic can also have its phase shifted by a specified fraction of the fundamental shift.</p>
         <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
-        <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the best realistic behaviour?).</p>   
+        <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the most realistic behaviour?).</p>  
+        <p>The waves are normalised together so their relative size are unchanged. This is to optimise loudness levels for tests, avoid clipping or sounds being too quiet.</p> 
+        <p>The code is plain javascript, using only Web Audio API for playback, to allow for easy review of methodology etc.</p>
+        <p>This page was created to help investigate audibility of low frequency phase shifts in headphones (and loudspeakers).</p>
     </div>
 
     
@@ -151,8 +162,14 @@
         <div>
             <canvas id="waveformNull"  width ="800" height="200"></canvas>
         </div>
-        <button id="playSoundNull">Play Null</button>
-        <p>Sound level of null is normalised. It should only contain the first harmonic (and second if it is delayed, too) plus a little distortion for short attacks and lower smoothing due to offset attack starts. Null test will fail if any phase shifts are negative because the algorithm delays all the higher frequencies instead in that case.</p>   
+        <button id="playSoundNull">Play</button>
+        <p>This null test is a sanity check for the generated waveforms.</p>
+        <p>Play back and image of null is of normalised version. Peak is measured before any normalising.</p> 
+        <p>The null test should only contain the first harmonic (and second if it is shifted, too) plus a little distortion for short attacks and/or lower smoothing due to offset attack starts.</p>
+        <p>Changes to harmonics controls should not affect the sound of the null test result (with no second harmonic shift).</p>
+        <p>The null test is messed up if either phase shift is negative because then the algorithm delays the higher harmonics instead and leaves the first harmonic at the start.</p>   
+        <p>With a significant hold time and no second harmonic, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
+        <p></p>
     </div>
 
 

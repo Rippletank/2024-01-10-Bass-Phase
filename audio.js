@@ -85,6 +85,7 @@ function updateBuffers() {
     let even = parseFloat(document.getElementById('even').value); //even harmonic level
     let evenFalloff = parseFloat(document.getElementById('evenFalloff').value); //even harmonic level
     let attack = parseFloat(document.getElementById('attack').value); //attack time 
+    let hold = parseFloat(document.getElementById('hold').value); //decay time
     let decay = parseFloat(document.getElementById('decay').value); //decay time
     let envelopeFilter = parseFloat(document.getElementById('envelopeFilter').value); //decay time
     let rootPhaseDelayA = parseFloat(document.getElementById('rootPhaseDelayA').value); //rootPhaseDelayA
@@ -96,13 +97,13 @@ function updateBuffers() {
     audioBufferA = getAudioBuffer(
         sampleRate, freq,
         rootPhaseDelayA,
-        second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
+        second, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter
     );
 
     audioBufferB = getAudioBuffer(
         sampleRate, freq,
         rootPhaseDelayB,
-        second, odd, oddFalloff, even, evenFalloff, attack, decay, envelopeFilter
+        second, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter
     );
 
     nullTestBuffer = buildNullTest(audioBufferA, audioBufferB);
@@ -120,8 +121,6 @@ function updateBuffers() {
     if (nullTestMax>-100){//avoid scaling if null test is close to silent (>-100db)
         scaleBuffer(nullTestBuffer, 0.99 / nullMax);
     }
-
-    //console.log("Max amplitude: " + Math.max(getBufferMax(audioBufferA, audioBufferA.length), getBufferMax(audioBufferB, audioBufferB.length)));
 }
 
 function updateDisplay(){
@@ -131,7 +130,7 @@ function updateDisplay(){
     paintBuffer(audioBufferB, maxLength, "waveformB");
     paintBuffer(nullTestBuffer, maxLength, "waveformNull");
     let nullTest = document.getElementById('nullTestdb');
-    nullTest.textContent = nullTestMax.toFixed(1) + "dB";
+    nullTest.textContent = " - Peak:" +nullTestMax.toFixed(1) + "dB";
 }
 
 
@@ -179,12 +178,13 @@ function getAudioBuffer(
     evenLevel, //-1..1
     evenFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
     attack, //Linear time to get to max amplitude  in seconds
+    hold, // time in seconds to hold max amplitude
     decay, // time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
     envelopeFilter // 0-1000 1 = no filter, 1000 = 1/1000 of heaviest filter
     ) {
     //Calculate max delay in samples
     let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
-    let bufferSize = Math.round(sampleRate * (attack + decayLengthFactor * decay + envelopeFilter*0.0003) + delay ); //Allow for attack and 1.5* decay time + extra for filter smoothing
+    let bufferSize = Math.round(sampleRate * (attack + hold + decayLengthFactor * decay + envelopeFilter*0.0003) + delay ); //Allow for attack and 1.5* decay time + extra for filter smoothing
         
     let delay0 =rootPhaseDelay<0 ? 0 : delay;
     let delay1 =delay * (rootPhaseDelay<0 ?  1-SecondHarmonicRelativePhaseDelay*2 : SecondHarmonicRelativePhaseDelay*2 ); //Delay first harmonic by 1/2 the phase delay but double the frequency
@@ -197,7 +197,7 @@ function getAudioBuffer(
         numberOfChannels: 1
       });
       let b = audioBuffer.getChannelData(0);
-      buildEnvelopeBuffer(sampleRate, bufferSize, attack,decay, envelopeFilter);
+      buildEnvelopeBuffer(sampleRate, bufferSize, attack, hold, decay, envelopeFilter);
       buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delay1, delayN);
       return audioBuffer;
 }
@@ -229,6 +229,7 @@ function buildEnvelopeBuffer(
     sampleRate, //samples per second
     bufferSize,
     attack, // 0..1  = time in seconds
+    hold,
     decay, // 0..1) 
     filter // 0-1000 
     ){
@@ -237,19 +238,29 @@ function buildEnvelopeBuffer(
         let y=0;  
         let a = 1/Math.max(1,filter);
 
+        let isHold = false;
+        let holdSamples = hold * sampleRate;
         let isDecay = false;
         let attackRate = 1 / (attack * sampleRate); //Linear attack
         let decayLambda = ln1024 / (decay * sampleRate); //Exponential decay -> decay is time in seconds to get to 1/1024 (-60db)of start value
         let envValues = [0]; // Array to store env values
         for (let i = 1; i < bufferSize; i++) {
-            if (isDecay){
+            if (isHold){
+                if (--holdSamples <=0){
+                    isHold = false;
+                    isDecay = true;
+                }
+            }
+            else if (isDecay){
                 x -= decayLambda*x; 
             }
             else 
             {
                 x += attackRate; 
                 if (x >= 1){
-                    isDecay = true;
+                    //switch to hold stage if hold is non zero
+                    isHold = holdSamples>0;
+                    isDecay = holdSamples==0;
                     x=1;
                 }
             }
@@ -349,15 +360,21 @@ document.getElementById('attack').addEventListener('input', function() {
     changed=true;
 });
 
+document.getElementById('decay').addEventListener('input', function() {
+    document.getElementById('decay-value').textContent = this.value + "s";
+    changed=true;
+});
+
+document.getElementById('hold').addEventListener('input', function() {
+    document.getElementById('hold-value').textContent = this.value + "s";
+    changed=true;
+});
+
 document.getElementById('second').addEventListener('input', function() {
     document.getElementById('second-value').textContent = this.value;
     changed=true;
 });
 
-document.getElementById('decay').addEventListener('input', function() {
-    document.getElementById('decay-value').textContent = this.value + "s";
-    changed=true;
-});
 
 document.getElementById('odd').addEventListener('input', function() {
     document.getElementById('odd-value').textContent = this.value;
