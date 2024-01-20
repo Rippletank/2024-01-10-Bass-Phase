@@ -37,7 +37,6 @@ function ensureAudioContext(){
         analyserNode.smoothingTimeConstant = 0.0;
         analyserNode.minDecibels = -90;
         analyserNode.maxDecibels = 0;
-        analyserNode.connect(audioContext.destination);
     }
 }
 
@@ -54,9 +53,11 @@ function play(index) {
     newSourceNode.buffer = index==0 ? audioBufferA : (index==1 ? audioBufferB: nullTestBuffer);
     if (useFFT){
         newSourceNode.connect(analyserNode);
+        analyserNode.connect(audioContext.destination);
     }
     else{
         newSourceNode.connect(audioContext.destination);
+        analyserNode.disconnect();
     }
     newSourceNode.onended = ()=>{
         if (newSourceNode==sourceNode)
