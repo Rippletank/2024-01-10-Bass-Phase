@@ -65,6 +65,7 @@ function stop() {
 function updateBuffersAndDisplay() {
     changed = false;
     ensureAudioContext();
+    ensureSine();
     let t0 = performance.now();
 
     updateBuffers();
@@ -162,6 +163,23 @@ function paintBuffer(buffer, maxLength, canvasId){
 //Audio Code - creates buffers with audio data according to parameters
 //No knowledge of GUI, only knows about AudioBuffer from WebAudioAPI
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let sineBuffer = [];
+const sineBufferSize = 20000; 
+let sineBufferConversion = sineBufferSize / (Math.PI * 2);
+
+function ensureSine(){
+    if (sineBuffer.length>0) return;
+    let step = Math.PI * 2 / sineBufferSize;
+    for (let i = 0; i < sineBufferSize; i++) {
+        sineBuffer.push(Math.sin(i * step));
+    }
+}
+function interpolatedSin(theta){
+    //Memory is not an major issue so use a large lookup table to avoid needing interpolation to increase speed
+    let x = (Math.abs(theta) * sineBufferConversion) % sineBufferSize;
+    return Math.sign(theta) * sineBuffer[Math.trunc(x)];
+}
 
 
 let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
@@ -288,7 +306,8 @@ function mixInSine(
             //Phase accumulator
             theta += w;
 
-            buffer[i] += amplitude * envelopeBuffer[env++] * Math.sin(theta) ;
+            buffer[i] += amplitude * envelopeBuffer[env++] * interpolatedSin(theta) ;
+            //buffer[i] += amplitude * envelopeBuffer[env++] * Math.sin(theta) ;
         }
     }
 }
