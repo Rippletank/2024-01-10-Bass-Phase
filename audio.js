@@ -306,8 +306,11 @@ function mixInSine(
             //Phase accumulator
             theta += w;
 
-            buffer[i] += amplitude * envelopeBuffer[env++] * interpolatedSin(theta) ;
-            //buffer[i] += amplitude * envelopeBuffer[env++] * Math.sin(theta) ;
+            //buffer[i] += amplitude  * 0.12 ;//72ms
+            //buffer[i] += amplitude * envelopeBuffer[env++] * 0.12 ;//100ms
+            //buffer[i] += amplitude * envelopeBuffer[env++] * interpolatedSin(theta) ;//600ms
+            //buffer[i] += amplitude * envelopeBuffer[env++] * Math.sin(theta) ;//500ms
+            buffer[i] += amplitude * Math.sin(theta) ;//460ms
         }
     }
 }
