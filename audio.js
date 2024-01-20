@@ -8,7 +8,7 @@
 //https://github.com/Rippletank/2024-01-10-Bass-Phase
 //MIT License - use as you wish, but no warranty of any kind, express or implied, is provided with this software
 //Code was written with the help of Github Copilot, particularly for UI/CSS stuff and some mundane refactoring chores
-//Web Audio API documentation: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+//Web Audio API documentation: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API & https://mdn.github.io/webaudio-examples/voice-change-o-matic/ for FFT
 //Wikipedia for refresher on harmonic series and related
 //Quick IIF refresher and general approach for suitable smoothing values https://zipcpu.com/dsp/2017/08/19/simple-filter.html
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -21,6 +21,7 @@
 
 let audioContext = null;
 let sourceNode = null;
+let analyserNode = null;
 let audioBufferA = null;
 let audioBufferB = null;
 let nullTestBuffer = null;
@@ -31,6 +32,12 @@ function ensureAudioContext(){
         //Will throw a warning in some browsers if not triggered by a user action
         //On page start up this is called anyway to get the playback samplerate to use for buffer generation
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyserNode = audioContext.createAnalyser();//blackman window with default smoothing 0.8
+        analyserNode.fftSize = 4096*8;
+        analyserNode.smoothingTimeConstant = 0.0;
+        analyserNode.minDecibels = -90;
+        analyserNode.maxDecibels = 0;
+        analyserNode.connect(audioContext.destination);
     }
 }
 
@@ -40,13 +47,26 @@ function play(index) {
     ensureAudioContext();
     //Can't reuse source node so create a new one
     stop();
-    sourceNode = audioContext.createBufferSource();
-    sourceNode.connect(audioContext.destination);
+    let newSourceNode = audioContext.createBufferSource();
     if (changed || generatedSampleRate != audioContext.sampleRate){
         updateBuffersAndDisplay();
     }
-    sourceNode.buffer = index==0 ? audioBufferA : (index==1 ? audioBufferB: nullTestBuffer);
-    sourceNode.start(0);
+    newSourceNode.buffer = index==0 ? audioBufferA : (index==1 ? audioBufferB: nullTestBuffer);
+    if (useFFT){
+        newSourceNode.connect(analyserNode);
+    }
+    else{
+        newSourceNode.connect(audioContext.destination);
+    }
+    newSourceNode.onended = ()=>{
+        if (newSourceNode==sourceNode)
+        {
+            stop();
+        }   
+    }
+    sourceNode = newSourceNode;
+    newSourceNode.start(0);
+    startFFT();
 }
 
 function stop() {
@@ -54,10 +74,76 @@ function stop() {
         sourceNode.stop(0);
         sourceNode.disconnect();
         sourceNode = null;
+        cancelAnimationFrame(fftFrameCall);
+        fftFrameCall = null;
+        fftClear();
     }
 }
 
+let useFFT = true;
 
+function fftClear(){
+    let canvas = document.getElementById('fftCanvas');
+    let ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.fillStyle = "rgb(240, 240, 240)";
+    ctx.fillRect(0, 0, w, h);  
+}
+
+
+
+let fftFrameCall = null;
+const fftStartF = 20;
+const fftEndF = 20000;
+function startFFT(){
+    if (fftFrameCall) return;
+    if (!useFFT) {
+        fftClear();
+        return;
+    }
+    let canvas = document.getElementById('fftCanvas');
+    let ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    const bufferLength = analyserNode.fftSize;
+    const maxLogF = Math.log2(fftEndF-fftStartF);
+    const octaveStep = maxLogF / w;
+    const freqStep = bufferLength / audioContext.sampleRate;
+    const hScale = h / 256;
+    const fft = new Uint8Array(bufferLength);
+    const bins = new Uint8Array(w);
+    const fftDraw =()=>{
+        fftFrameCall = requestAnimationFrame(fftDraw);
+        analyserNode.getByteFrequencyData(fft);  
+        ctx.fillStyle = "rgb(240, 240, 240)";
+        ctx.fillRect(0, 0, w, h);        
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = "rgb(0, 0, 0)";
+        ctx.beginPath();
+
+        let startBin = 0;
+        for (let i = 0; i < w; i++) {
+            let endOctave = (i+1) * octaveStep;
+            let endBin = Math.round((fftStartF + Math.pow(2,endOctave))  * freqStep );
+            if (endBin>startBin){
+                let max = 0;
+                for (let j = startBin; j < endBin; j++) {
+                    max = Math.max(max,fft[j]);
+                }
+                let y = h - max * hScale;
+                if (i === 0) {
+                    ctx.moveTo(i, y);
+                } else {
+                    ctx.lineTo(i, y);
+                }
+                startBin = endBin;
+            }
+        }
+        ctx.stroke();
+    }
+    fftDraw();
+}
 
    
 // Main update method - orchestrates the creation of the buffers and their display
@@ -419,6 +505,12 @@ document.getElementById('rootPhaseDelayB').addEventListener('input', function() 
     changed=true;
 });
 
+document.getElementById('hideFFT').addEventListener('click', function() {
+    useFFT = !useFFT;
+    if (!useFFT) fftClear();
+    this.textContent = useFFT ? "Hide FFT" : "Show FFT";
+});
+
 function updatePhaseLabels(){
     let invFreq = 1000 / (parseFloat(document.getElementById('freq').value) * 2);
     let rootPhaseDelayA = document.getElementById('rootPhaseDelayA').value;
@@ -446,6 +538,7 @@ function updateCanvas() {
 //Initialise display of waveform and audio buffers on first load
 updateBuffersAndDisplay();
 updatePhaseLabels();
+fftClear();
 
 
 
