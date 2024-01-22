@@ -1,0 +1,5 @@
+http://spatialaudio.net/wp-content/uploads/2019/09/SchultzHahnSpors_2019_AudibilityConstantPhase_5thICSA_IEEEStyle.pdf
+https://www.audiolabs-erlangen.de/resources/webMUSHRA
+https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations#Magnitude_(gain)%E2%80%93phase_relation
+https://courses.engr.illinois.edu/ece486/fa2021/documentation/lectures/slides/Lecture17B_BodeGainPhaseRelation.pdf
+https://en.wikipedia.org/wiki/ABX_test

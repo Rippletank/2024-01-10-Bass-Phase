@@ -83,16 +83,30 @@
             <span class="help-icon">?</span>
             <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
         </div>
+    </div>
 
 
-        <h4>2nd harmonic shift</h4>
+    <div class="bordered">
+        <h3>Test setup</h3>
+
+
+        <h4>Envelope Mode</h4>
+        <div class="mode-selection">
+            <input type="radio" id="envMode1" name="envMode" value="envelopeMode1" checked>
+            <label for="envMode1">Delay mode: Shift envelope with harmonic delay</label><br>
+            <input type="radio" id="envMode2" name="envMode" value="envelopeMode2">
+            <label for="envMode2">Fixed mode: Keep envelope same for all</label><br>
+        </div>
+
+        <h4>Higher harmonic shift</h4>
         <div class="slider-container">
             <label for="second">Relative Phase delay:</label>
             <input type="range" id="second" name="second" min="0" max="1" step="0.1" value="0">
             <span id="second-value">0</span>
             <span class="help-icon">?</span>
-            <div class="help-popup">Controls how much the second harmonic (if present) is delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
+            <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
         </div>
+
     </div>
 
 

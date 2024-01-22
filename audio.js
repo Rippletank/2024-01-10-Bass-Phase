@@ -166,7 +166,7 @@ function updateBuffersAndDisplay() {
 function updateBuffers() {
     //Collect parameters from GUI
     let freq = parseFloat(document.getElementById('freq').value); //frequency
-    let second = parseFloat(document.getElementById('second').value); //SecondHarmonicRelativePhaseDelay
+    let higherShift = parseFloat(document.getElementById('second').value); //SecondHarmonicRelativePhaseDelay
     let odd = parseFloat(document.getElementById('odd').value); //odd harmonic level
     let oddFalloff = parseFloat(document.getElementById('oddFalloff').value); //odd harmonic level
     let even = parseFloat(document.getElementById('even').value); //even harmonic level
@@ -184,13 +184,15 @@ function updateBuffers() {
     audioBufferA = getAudioBuffer(
         sampleRate, freq,
         rootPhaseDelayA,
-        second, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter
+        higherShift, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter,
+        envMode
     );
 
     audioBufferB = getAudioBuffer(
         sampleRate, freq,
         rootPhaseDelayB,
-        second, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter
+        higherShift, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter,
+        envMode
     );
 
     nullTestBuffer = buildNullTest(audioBufferA, audioBufferB);
@@ -259,7 +261,7 @@ function getAudioBuffer(
     sampleRate, //samples per second
     frequency, //Hz
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
-    SecondHarmonicRelativePhaseDelay, //fraction of rootPhaseDelay for phase of second harmonic
+    higherHarmonicRelativeShift, //fraction of rootPhaseDelay for phase of second harmonic
     oddLevel, //-1..1
     oddFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
     evenLevel, //-1..1
@@ -267,15 +269,29 @@ function getAudioBuffer(
     attack, //Linear time to get to max amplitude  in seconds
     hold, // time in seconds to hold max amplitude
     decay, // time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
-    envelopeFilter // 0-1000 1 = no filter, 1000 = 1/1000 of heaviest filter
+    envelopeFilter, // 0-1000 1 = no filter, 1000 = 1/1000 of heaviest filter
+    envMode //1,2
     ) {
     //Calculate max delay in samples
-    let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
-    let bufferSize = Math.round(sampleRate * (attack + hold + decayLengthFactor * decay + envelopeFilter*0.0003) + delay ); //Allow for attack and 1.5* decay time + extra for filter smoothing
         
-    let delay0 =rootPhaseDelay<0 ? 0 : delay;
-    let delay1 =delay * (rootPhaseDelay<0 ?  1-SecondHarmonicRelativePhaseDelay*2 : SecondHarmonicRelativePhaseDelay*2 ); //Delay first harmonic by 1/2 the phase delay but double the frequency
-    let delayN =  rootPhaseDelay<0 ? delay : 0;
+    let delay0 = 0;
+    let delayN = 0;
+    let phaseShift0 = 0;
+        
+    if (envMode==1 ){
+        //Mode1 - delay envelopes by the same as the phase delay
+        let delay = Math.abs(rootPhaseDelay) * 0.5 * sampleRate/frequency ;
+        delay0 = rootPhaseDelay<0 ? 0 : delay;
+        delayN = rootPhaseDelay<0 ? delay : 0;
+    }
+    else{
+        //Mode2 - Envelope fixed, shift phase in place
+        phaseShift0 = rootPhaseDelay * Math.PI;
+    }
+
+    let bufferSize = Math.round(sampleRate * (attack + hold + decayLengthFactor * decay + envelopeFilter*0.0003) + delay0 + delayN ); //Allow for attack and 1.5* decay time + extra for filter smoothing
+
+
 
     //Create buffer
     let audioBuffer = new AudioBuffer({
@@ -285,25 +301,26 @@ function getAudioBuffer(
       });
       let b = audioBuffer.getChannelData(0);
       buildEnvelopeBuffer(sampleRate, bufferSize, attack, hold, decay, envelopeFilter);
-      buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delay1, delayN);
+      buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delayN, phaseShift0, higherHarmonicRelativeShift);
       return audioBuffer;
 }
 
 //Generate the harmonic series
-function buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delay1, delayN) {
+function buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delayN, phaseShift0, higherRelativeShift) {
     let f = frequency;
     let a = 1;// First harmonic, buffer will be normalised later
     let nyquist = sampleRate * 0.49;//Nyquist limit less a bit
     bufferSize=b.length;
-    mixInSine(sampleRate, b, f, a, delay0 ); //Add fundamental
+    mixInSine(sampleRate, b, f, a, delay0, phaseShift0 ); //Add fundamental
 
+    let delayScale = (delay0-delayN) * frequency *higherRelativeShift;//Either Delay0 or delayN will be zero
     for (let i = 1; i < harmonics; i++) {
         let isEven = (i+1) % 2 == 0;
         f += frequency;
         if (frequency>=nyquist) return;//Nyquist limit
         let falloff =  Math.pow(i+1,-(isEven ? evenFalloff :oddFalloff));
         let oe = isEven ? evenLevel : oddLevel;
-        mixInSine(sampleRate, b, f, a * oe * falloff, i == 1 ? delay1 : delayN);
+        mixInSine(sampleRate, b, f, a * oe * falloff,delayN + delayScale/f, phaseShift0 * higherRelativeShift);
     }
 }
 
@@ -364,9 +381,10 @@ function mixInSine(
     buffer, 
     frequency, //Hz 
     amplitude, // 0..1
-    delay //in samples for this frequency
+    delay, //in samples for this frequency - envelope start will be delayed. Phase counter will not start until envelope starts
+    phaseOffset
     ) {
-    let theta = 0;
+    let theta = phaseOffset;
     let w = frequency * 2 * Math.PI  / sampleRate;
     let env = 0;
     let bufferSize = buffer.length;
@@ -425,7 +443,6 @@ function buildNullTest(bufferA, bufferB){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 let changed = true;
-
 // Attach play and stop methods to the button
 document.getElementById('playSoundA').addEventListener('click', function() {
     play(0);
@@ -533,6 +550,21 @@ function updateCanvas() {
     canvasB.width = canvasB.offsetWidth;
     updateDisplay();
 }
+
+
+let envMode=1;
+document.getElementById('envMode1').addEventListener('change', function() {
+    if (this.checked) {
+        envMode=1;
+        changed=true;
+    }
+});
+document.getElementById('envMode2').addEventListener('change', function() {
+    if (this.checked) {
+        envMode=2;
+        changed=true;
+    }
+});
 
 
 
