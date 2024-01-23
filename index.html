@@ -9,11 +9,11 @@
 <body>
     <h1>Low Frequency Phase-shift Test</h1>
 
-    <div class="bordered">
+    <div class="bordered" id="CommonSettings">
         <h3>Common Settings</h3>
         <div class="slider-container">
             <label for="freq">Frequency:</label>
-            <input type="range" id="freq" name="freq" min="20" max="200" step="1" value="50">
+            <input type="range" id="freq" name="frequency" min="20" max="200" step="1" value="50">
             <span id="freq-value">50Hz</span>
             <span class="help-icon">?</span>
             <div class="help-popup">Fundamental frequency</div>
@@ -23,16 +23,16 @@
         <h4>Harmonic Series</h4>
         <div class="slider-container">
             <label for="even">Even Level:</label>
-            <input type="range" id="even" name="even" min="-1" max="1" step="0.1" value="-1" class="mid-slider">
+            <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider">
             <label for="evenAlternating"  class="poLabel">Flip:</label>
-            <input type="range" id="evenAlternating" name="evenAlternating" min="0" max="1" step="0.1" value="0" class="short-slider">
+            <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
             <span id="even-value">-1</span>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
         </div>
         <div class="slider-container">
             <label for="evenFalloff">Even Fall off:</label>
-            <input type="range" id="evenFalloff" name="even" min="1" max="2" step="0.1" value="1.8">
+            <input type="range" id="evenFalloff" name="evenFalloff" min="1" max="2" step="0.1" value="1.8">
             <span id="evenFalloff-value">1/n<sup>1.8</sup></span>
             <span class="help-icon">?</span>
             <div class="help-popup">Controls how loud higher harmonics are. For even harmonics, 1/n is typical of sawtooth waves.</div>
@@ -40,16 +40,16 @@
 
         <div class="slider-container">
             <label for="odd">Odd Level:</label>
-            <input type="range" id="odd" name="odd" min="-1" max="1" step="0.1" value="1" class="mid-slider">
+            <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider">
             <label for="oddAlternating"  class="poLabel">Flip:</label>
-            <input type="range" id="oddAlternating" name="oddAlternating" min="0" max="1" step="0.1" value="0" class="short-slider">
+            <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
             <span id="odd-value">1</span>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
         </div>
         <div class="slider-container">
             <label for="oddFalloff">Odd Fall off:</label>
-            <input type="range" id="oddFalloff" name="even" min="1" max="2" step="0.1" value="1.8">
+            <input type="range" id="oddFalloff" name="oddFalloff" min="1" max="2" step="0.1" value="1.8">
             <span id="oddFalloff-value">1/n<sup>1.8</sup></span>
             <span class="help-icon">?</span>
             <div class="help-popup">Controls how loud higher harmonics are. For odd harmonics, 1/n is typical of square and sawtooth waves, 1/n^2 is like a triangle wave.</div>
@@ -90,22 +90,22 @@
     </div>
 
 
-    <div class="bordered">
+    <div class="bordered" id="TestSetup">
         <h3>Test setup</h3>
 
 
         <h4>Envelope Mode</h4>
         <div class="mode-selection">
-            <input type="radio" id="envMode1" name="envMode" value="envelopeMode1" checked>
+            <input type="radio" id="envMode1" name="envMode" value="1" checked>
             <label for="envMode1">Delay mode: Shift envelope start to match phase shift</label><br>
-            <input type="radio" id="envMode2" name="envMode" value="envelopeMode2">
+            <input type="radio" id="envMode2" name="envMode" value="2">
             <label for="envMode2">Fixed mode: Keep envelope same for all</label><br>
         </div>
 
         <h4>Higher harmonic shift</h4>
         <div class="slider-container">
             <label for="second">Relative Phase delay:</label>
-            <input type="range" id="second" name="second" min="0" max="1" step="0.1" value="0">
+            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0">
             <span id="second-value">0</span>
             <span class="help-icon">?</span>
             <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
@@ -114,14 +114,14 @@
     </div>
 
 
-    <div class="bordered">
+    <div class="bordered"  id="SoundASetup">
         <h3>Sound A</h3>
         <div>
             <canvas id="waveformA" width ="800" height="200"></canvas>
         </div>
         <div class="slider-container">
             <label for="rootPhaseDelayA">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelayA" name="rootPhaseDelayA" min="-2" max="2" step="0.05" value="0">
+            <input type="range" id="rootPhaseDelayA" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0">
             <span id="rootPhaseDelayA-value">0π (0ms)</span>
             <span class="help-icon">?</span>
             <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
@@ -131,14 +131,14 @@
 
 
 
-    <div class="bordered">
+    <div class="bordered" id="SoundBSetup">
         <h3>Sound B</h3>
         <div>
             <canvas id="waveformB"  width ="800" height="200"></canvas>
         </div>
         <div class="slider-container">
             <label for="rootPhaseDelayB">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelayB" min="-2" max="2" step="0.05" value="0.25">
+            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0.25">
             <span id="rootPhaseDelayB-value">0.25π (10.0ms)</span>
             <span class="help-icon">?</span>
             <div class="help-popup">Phase delay of first harmonic for Sound B. Affects 2nd harmonic according to settings in common section.</div>
@@ -204,5 +204,6 @@
     </div>
 
     <script src="audio.js"></script>
+    <script src="gui.js"></script>
 </body>
 </html>
