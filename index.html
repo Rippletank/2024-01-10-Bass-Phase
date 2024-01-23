@@ -128,8 +128,8 @@
             <canvas id="waveformA" width ="800" height="200"></canvas>
         </div>
         <div class="slider-container">
-            <label for="rootPhaseDelay">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelay" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0">
+            <label for="rootPhaseDelayA">Root Phase Shift:</label>
+            <input type="range" id="rootPhaseDelayA" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0">
             <output class="valueSpan" name="rootPhaseDelay">0π (0ms)</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
@@ -145,8 +145,8 @@
             <canvas id="waveformB"  width ="800" height="200"></canvas>
         </div>
         <div class="slider-container">
-            <label for="rootPhaseDelay">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelay" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0.25">
+            <label for="rootPhaseDelayB">Root Phase Shift:</label>
+            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0.25">
             <output class="valueSpan" name="rootPhaseDelay">0.25π (10.0ms)</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Phase delay of first harmonic for Sound B. Affects 2nd harmonic according to settings in common section.</div>
@@ -208,7 +208,7 @@
         <div>
             <canvas id="fftCanvas" width ="800" height="200"></canvas>
         </div>
-        <p>Only really useful for testing and development.</p>
+        <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
         <div class="fftPlayButtons">
             <button id="fftPlayA">Play A</button>
             <button id="fftPlayB">Play B</button>
