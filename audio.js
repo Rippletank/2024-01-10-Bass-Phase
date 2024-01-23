@@ -317,7 +317,7 @@ function buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddAlt, oddFall
     bufferSize=b.length;
     mixInSine(sampleRate, b, f, a, delay0, phaseShift0 ); //Add fundamental
 
-    //Alt needed for triangle wave
+    //Alt needed for triangle wave causing polarity to flip for each successive harmonic
     let oddAltCore = -1;//first harmonic already used
     let evenAltCore = 1;
     let delayScale = (delay0-delayN) * frequency *higherRelativeShift;//Either Delay0 or delayN will be zero
@@ -329,7 +329,7 @@ function buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddAlt, oddFall
         let oe = 0;
         if (isEven){
             oe = evenLevel * ((evenAltCore-1)*evenAlt + 1);
-            evenAlt = evenAltCore * -1;
+            evenAltCore = evenAltCore * -1;
         }
         else{
             oe=oddLevel * ((oddAltCore-1)*oddAlt + 1);            
