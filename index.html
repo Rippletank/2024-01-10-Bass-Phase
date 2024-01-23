@@ -23,10 +23,12 @@
         <h4>Harmonic Series</h4>
         <div class="slider-container">
             <label for="even">Even Level:</label>
-            <input type="range" id="even" name="even" min="-1" max="1" step="0.1" value="-1">
+            <input type="range" id="even" name="even" min="-1" max="1" step="0.1" value="-1" class="mid-slider">
+            <label for="evenAlternating"  class="poLabel">Flip:</label>
+            <input type="range" id="evenAlternating" name="evenAlternating" min="0" max="1" step="0.1" value="0" class="short-slider">
             <span id="even-value">-1</span>
             <span class="help-icon">?</span>
-            <div class="help-popup">Controls the polarity and amplitude of the even harmonics. Centre = 0 (off)</div>
+            <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
         </div>
         <div class="slider-container">
             <label for="evenFalloff">Even Fall off:</label>
@@ -38,10 +40,12 @@
 
         <div class="slider-container">
             <label for="odd">Odd Level:</label>
-            <input type="range" id="odd" name="odd" min="-1" max="1" step="0.1" value="1">
+            <input type="range" id="odd" name="odd" min="-1" max="1" step="0.1" value="1" class="mid-slider">
+            <label for="oddAlternating"  class="poLabel">Flip:</label>
+            <input type="range" id="oddAlternating" name="oddAlternating" min="0" max="1" step="0.1" value="0" class="short-slider">
             <span id="odd-value">1</span>
             <span class="help-icon">?</span>
-            <div class="help-popup">Controls the polarity and amplitude of the odd harmonics. Centre = 0 (off)</div>
+            <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
         </div>
         <div class="slider-container">
             <label for="oddFalloff">Odd Fall off:</label>

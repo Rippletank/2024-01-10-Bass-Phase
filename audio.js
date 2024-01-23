@@ -168,8 +168,10 @@ function updateBuffers() {
     let freq = parseFloat(document.getElementById('freq').value); //frequency
     let higherShift = parseFloat(document.getElementById('second').value); //SecondHarmonicRelativePhaseDelay
     let odd = parseFloat(document.getElementById('odd').value); //odd harmonic level
+    let oddAlt = parseFloat(document.getElementById('oddAlternating').value); //odd harmonic level
     let oddFalloff = parseFloat(document.getElementById('oddFalloff').value); //odd harmonic level
     let even = parseFloat(document.getElementById('even').value); //even harmonic level
+    let evenAlt = parseFloat(document.getElementById('evenAlternating').value); //even harmonic level
     let evenFalloff = parseFloat(document.getElementById('evenFalloff').value); //even harmonic level
     let attack = parseFloat(document.getElementById('attack').value); //attack time 
     let hold = parseFloat(document.getElementById('hold').value); //decay time
@@ -184,14 +186,14 @@ function updateBuffers() {
     audioBufferA = getAudioBuffer(
         sampleRate, freq,
         rootPhaseDelayA,
-        higherShift, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter,
+        higherShift, odd, oddAlt, oddFalloff, even, evenAlt, evenFalloff, attack, hold, decay, envelopeFilter,
         envMode
     );
 
     audioBufferB = getAudioBuffer(
         sampleRate, freq,
         rootPhaseDelayB,
-        higherShift, odd, oddFalloff, even, evenFalloff, attack, hold, decay, envelopeFilter,
+        higherShift, odd, oddAlt, oddFalloff, even, evenAlt, evenFalloff, attack, hold, decay, envelopeFilter,
         envMode
     );
 
@@ -262,9 +264,11 @@ function getAudioBuffer(
     frequency, //Hz
     rootPhaseDelay, //-1..1 => -PI..PI for phase of fundamental
     higherHarmonicRelativeShift, //fraction of rootPhaseDelay for phase of second harmonic
-    oddLevel, //-1..1
+    oddLevel, //0..1
+    oddAlt, //-1,0,1
     oddFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
-    evenLevel, //-1..1
+    evenLevel, //0..1
+    evenAlt, //-1,0,1
     evenFalloff,//0..2 0 = no falloff, 1 = 1/n amplitude, 2 = 1/n^2 amplitude 
     attack, //Linear time to get to max amplitude  in seconds
     hold, // time in seconds to hold max amplitude
@@ -301,25 +305,36 @@ function getAudioBuffer(
       });
       let b = audioBuffer.getChannelData(0);
       buildEnvelopeBuffer(sampleRate, bufferSize, attack, hold, decay, envelopeFilter);
-      buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delayN, phaseShift0, higherHarmonicRelativeShift);
+      buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddAlt, oddFalloff,  evenLevel, evenAlt, evenFalloff, delay0, delayN, phaseShift0, higherHarmonicRelativeShift);
       return audioBuffer;
 }
 
 //Generate the harmonic series
-function buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddFalloff, evenLevel, evenFalloff, delay0, delayN, phaseShift0, higherRelativeShift) {
+function buildHarmonicSeries(frequency, sampleRate, b, oddLevel, oddAlt, oddFalloff, evenLevel, evenAlt, evenFalloff, delay0, delayN, phaseShift0, higherRelativeShift) {
     let f = frequency;
     let a = 1;// First harmonic, buffer will be normalised later
     let nyquist = sampleRate * 0.49;//Nyquist limit less a bit
     bufferSize=b.length;
     mixInSine(sampleRate, b, f, a, delay0, phaseShift0 ); //Add fundamental
 
+    //Alt needed for triangle wave
+    let oddAltCore = -1;//first harmonic already used
+    let evenAltCore = 1;
     let delayScale = (delay0-delayN) * frequency *higherRelativeShift;//Either Delay0 or delayN will be zero
     for (let i = 1; i < harmonics; i++) {
         let isEven = (i+1) % 2 == 0;
         f += frequency;
         if (frequency>=nyquist) return;//Nyquist limit
         let falloff =  Math.pow(i+1,-(isEven ? evenFalloff :oddFalloff));
-        let oe = isEven ? evenLevel : oddLevel;
+        let oe = 0;
+        if (isEven){
+            oe = evenLevel * ((evenAltCore-1)*evenAlt + 1);
+            evenAlt = evenAltCore * -1;
+        }
+        else{
+            oe=oddLevel * ((oddAltCore-1)*oddAlt + 1);            
+            oddAltCore = oddAltCore * -1;
+        }
         mixInSine(sampleRate, b, f, a * oe * falloff,delayN + delayScale/f, phaseShift0 * higherRelativeShift);
     }
 }
@@ -481,9 +496,37 @@ document.getElementById('second').addEventListener('input', function() {
 
 
 document.getElementById('odd').addEventListener('input', function() {
-    document.getElementById('odd-value').textContent = this.value;
+    setupLevelLabel("odd", this.value, undefined)
     changed=true;
 });
+
+document.getElementById('oddAlternating').addEventListener('input', function() {
+    setupLevelLabel("odd", undefined, this.value)
+    changed=true;
+});
+
+document.getElementById('even').addEventListener('input', function() {
+    setupLevelLabel("even", this.value, undefined)
+    changed=true;
+});
+document.getElementById('evenAlternating').addEventListener('input', function() {
+    setupLevelLabel("even", undefined, this.value)
+    changed=true;
+});
+
+function setupLevelLabel(idRoot, level,polarity){
+    level = parseFloat(level ?? document.getElementById(idRoot).value);
+    polarity =parseFloat(polarity ?? document.getElementById(idRoot + "Alternating").value);
+    let value = "off"
+    if (level!=0)
+    {
+        if (polarity==0) 
+            value = level.toFixed(1);
+        else
+            value = level.toFixed(1) +"↔" + (level *(-2 * polarity +1)).toFixed(1);
+    }
+    document.getElementById(idRoot + '-value').textContent = value;
+}
 
 document.getElementById('oddFalloff').addEventListener('input', function() {
     let value = "";
@@ -494,10 +537,9 @@ document.getElementById('oddFalloff').addEventListener('input', function() {
     changed=true;
 });
 
-document.getElementById('even').addEventListener('input', function() {
-    document.getElementById('even-value').textContent = this.value;
-    changed=true;
-});
+
+
+
 
 document.getElementById('evenFalloff').addEventListener('input', function() {
     let value = "";
