@@ -384,8 +384,8 @@ function mixInSine(
     delay, //in samples for this frequency - envelope start will be delayed. Phase counter will not start until envelope starts
     phaseOffset
     ) {
-    let theta = phaseOffset;
-    let w = frequency * 2 * Math.PI  / sampleRate;
+        let w = frequency * 2 * Math.PI  / sampleRate;
+    let theta = phaseOffset + (Math.floor(delay) + 1 - delay) * w; //Phase accumulator + correction for fractional delay
     let env = 0;
     let bufferSize = buffer.length;
     for (let i = 0; i < bufferSize; i++) {
