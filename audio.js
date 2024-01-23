@@ -22,10 +22,119 @@
 //No knowledge of GUI, only knows about AudioBuffer from WebAudioAPI
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+let wavePresets = [
+    {
+        name:"default", 
+        patch:{
+            oddLevel:1,
+            oddFalloff:1.8,
+            oddAlt:0,
+            evenLevel:-1,
+            evenFalloff:1.8,
+            evenAlt:0
+        }
+    },
+    {
+        name:"square", 
+        patch:{
+            oddLevel:1,
+            oddFalloff:1,
+            oddAlt:0,
+            evenLevel:0,
+            evenFalloff:1,
+            evenAlt:0
+        }
+    },
+    {
+        name:"Saw", 
+        patch:{
+            oddLevel:1,
+            oddFalloff:1,
+            oddAlt:0,
+            evenLevel:-1,
+            evenFalloff:1,
+            evenAlt:0
+        }
+    },
+    {
+        name:"Ramp", 
+        patch:{
+            oddLevel:1,
+            oddFalloff:1,
+            oddAlt:0,
+            evenLevel:1,
+            evenFalloff:1,
+            evenAlt:0
+        }
+    },
+    {
+        name:"Triangle", 
+        patch:{
+            oddLevel:1,
+            oddFalloff:2,
+            oddAlt:1,
+            evenLevel:0,
+            evenFalloff:1,
+            evenAlt:0
+        }
+    },
+    {
+        name:"stairs", 
+        patch:{
+            oddLevel:1,
+            oddFalloff:1,
+            oddAlt:0,
+            evenLevel:1,
+            evenFalloff:1,
+            evenAlt:0.5
+        }
+    }
+];
+
+let envelopePresets = [
+    {
+        name:"default",
+        patch:{
+            attack:0.005,
+            hold:0,
+            decay:0.4,
+            envelopeFilter:150,
+        }
+    },
+    {
+        name:"Short",
+        patch:{
+            attack:0.001,
+            hold:0,
+            decay:0.1,
+            envelopeFilter:1000,
+        }
+    },
+    {
+        name:"Slow",
+        patch:{
+            attack:0.05,
+            hold:0,
+            decay:0.5,
+            envelopeFilter:150,
+        }
+    },
+    {
+        name:"Tone",
+        patch:{
+            attack:0.01,
+            hold:0.5,
+            decay:0.1,
+            envelopeFilter:0,
+        }
+    },
+
+];
+
 
 function getDefaultPatch(){
     return {
-        frequency: 20,//Hz
+        frequency: 50,//Hz
         rootPhaseDelay: 0,//-1..1 => -PI..PI for phase shift of fundamental
         higherHarmonicRelativeShift: 0,//fraction of rootPhaseDelay for phase of higher harmonics
         oddLevel: 1,//-1..1 level of odd harmonics
@@ -43,7 +152,16 @@ function getDefaultPatch(){
 }
 
 
-
+function getDefaultAPatch(){
+    let patch = getDefaultPatch();
+    patch.rootPhaseDelay=0;
+    return patch;
+}
+function getDefaultBPatch(){
+    let patch = getDefaultPatch();
+    patch.rootPhaseDelay=0.25;
+    return patch;
+}
 
 
 

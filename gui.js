@@ -154,6 +154,7 @@ function updateBuffersAndDisplay() {
 
     updateBuffers();
     updateDisplay();
+    fftClear();
 
     let t1 = performance.now();
     console.log("Execution time: " + (t1 - t0) + " milliseconds.");
@@ -162,22 +163,24 @@ function updateBuffersAndDisplay() {
 
 
 function updateBuffers() {
-    //Collect parameters from GUI
-    let patch = getDefaultPatch();
-    loadSliderValuesFrom('CommonSettings', patch);
-    loadSliderValuesFrom('TestSetup', patch);
+    //Inefficient to create two buffers independently - 
+    //envelope and all higher harmonics are the same, 
+    //but performance is acceptable and code is maintainable  
+
     let sampleRate = audioContext ? audioContext.sampleRate: 44100;
     generatedSampleRate = sampleRate;//Store to check later, if changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
-    
-    //Inefficient to create two buffers independently - envelope and all higher harmonics are the same, but performance is acceptable and code is maintainable
-    
-    loadSliderValuesFrom('SoundASetup', patch);
+     
+    //Collect parameters from GUI
+    let patch = getDefaultPatch();
+    loadSliderValuesFromContainer('CommonSettings', patch);
+    loadSliderValuesFromContainer('TestSetup', patch);
+    loadSliderValuesFromContainer('SoundASetup', patch);
     audioBufferA = getAudioBuffer(
         sampleRate, 
         patch
     );
 
-    loadSliderValuesFrom('SoundBSetup', patch);
+    loadSliderValuesFromContainer('SoundBSetup', patch);
     audioBufferB = getAudioBuffer(
         sampleRate, 
         patch
@@ -192,7 +195,7 @@ function updateBuffers() {
     scaleBuffer(audioBufferA, scale);
     scaleBuffer(audioBufferB, scale);
 
-    //normalise null test buffer if 
+    //normalise null test buffer if above threshold
     let nullMax = getBufferMax(nullTestBuffer);
     nullTestMax = 20 * Math.log10(nullMax);//convert to dB
     if (nullTestMax>-100){//avoid scaling if null test is close to silent (>-100db)
@@ -201,30 +204,6 @@ function updateBuffers() {
 }
 
 
-function loadSliderValuesFrom(id, patch) {
-    var element = document.getElementById(id);
-    var sliderContainers = element.querySelectorAll('.slider-container');
-    sliderContainers.forEach(function(sliderContainer) {
-        var rangedInputs = sliderContainer.querySelectorAll('input[type="range"]');
-        rangedInputs.forEach(function(rangedInput) {
-            var name = rangedInput.name;
-            var value = parseFloat(rangedInput.value);
-            patch[name] = value;
-        });
-    });
-
-    var modeSelectors = element.querySelectorAll('.mode-selection');
-    modeSelectors.forEach(function(modeSelector) {
-        var radioButtons = modeSelector.querySelectorAll('input[type="radio"]');
-        radioButtons.forEach(function(radioButton) {
-            if (!radioButton.checked) return;
-            var name = radioButton.name;
-            var value = parseFloat(radioButton.value);
-            patch[name] = value;
-        });
-    });
-
-}
 
 
 function updateDisplay(){
@@ -264,8 +243,10 @@ function paintBuffer(buffer, maxLength, canvasId){
 //GUI wiring up Code - no knowledge of audio code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-let changed = true;
-// Attach play and stop methods to the button
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Buttons with specific actions
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 document.getElementById('playSoundA').addEventListener('click', function() {
     play(0);
 });
@@ -275,55 +256,201 @@ document.getElementById('playSoundB').addEventListener('click', function() {
 document.getElementById('playSoundNull').addEventListener('click', function() {
     play(2);
 });
-document.getElementById('freq').addEventListener('input', function() {
-    document.getElementById('freq-value').textContent = this.value + "Hz";
-    updatePhaseLabels();
-    changed=true;
+document.getElementById('fftPlayA').addEventListener('click', function() {
+    play(0);
 });
-
-document.getElementById('attack').addEventListener('input', function() {
-    document.getElementById('attack-value').textContent = this.value + "s";
-    changed=true;
+document.getElementById('fftPlayB').addEventListener('click', function() {
+    play(1);
 });
-
-document.getElementById('decay').addEventListener('input', function() {
-    document.getElementById('decay-value').textContent = this.value + "s";
-    changed=true;
+document.getElementById('fftPlayN').addEventListener('click', function() {
+    play(2);
 });
-
-document.getElementById('hold').addEventListener('input', function() {
-    document.getElementById('hold-value').textContent = this.value + "s";
-    changed=true;
-});
-
-document.getElementById('second').addEventListener('input', function() {
-    document.getElementById('second-value').textContent = this.value;
-    changed=true;
+document.getElementById('hideFFT').addEventListener('click', function() {
+    useFFT = !useFFT;
+    if (!useFFT) fftClear();
+    this.textContent = useFFT ? "Hide FFT" : "Show FFT";
 });
 
 
-document.getElementById('odd').addEventListener('input', function() {
-    setupLevelLabel("odd", this.value, undefined)
-    changed=true;
-});
+window.addEventListener('resize', updateCanvas);
 
-document.getElementById('oddAlternating').addEventListener('input', function() {
-    setupLevelLabel("odd", undefined, this.value)
-    changed=true;
-});
+function updateCanvas() {
+    let canvasA = document.getElementById('waveformA');
+    let canvasB = document.getElementById('waveformB');
+    let canvasN = document.getElementById('waveformNull');
 
-document.getElementById('even').addEventListener('input', function() {
-    setupLevelLabel("even", this.value, undefined)
-    changed=true;
-});
-document.getElementById('evenAlternating').addEventListener('input', function() {
-    setupLevelLabel("even", undefined, this.value)
-    changed=true;
-});
+    canvasA.width = canvasA.offsetWidth;
+    canvasB.width = canvasB.offsetWidth;
+    canvasN.width = canvasN.offsetWidth;
+    updateDisplay();
+}
 
-function setupLevelLabel(idRoot, level,polarity){
-    level = parseFloat(level ?? document.getElementById(idRoot).value);
-    polarity =parseFloat(polarity ?? document.getElementById(idRoot + "Alternating").value);
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Buttons with specific actions
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+let changed = true;
+function initSliders(){
+    //Call once only at startup
+    wireUpSlidersForContainer('CommonSettings');
+    wireUpSlidersForContainer('TestSetup');
+    wireUpSlidersForContainer('SoundASetup');
+    wireUpSlidersForContainer('SoundBSetup');
+    setupPresetButtons();
+    
+    loadPreset(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch());
+
+
+    //Check at regular intervals if any sliders have changed and update display if so
+    //Add time delay to batch up changes
+    setInterval(function() {
+        if (changed && Date.now() - lastUpdate > 500) {
+            updateBuffersAndDisplay();
+        }
+    }, 200); 
+}
+
+let lastUpdate=0;
+function wireUpSlidersForContainer(id) {
+    var element = document.getElementById(id);
+    var sliderContainers = element.querySelectorAll('.slider-container');
+    sliderContainers.forEach(function(sliderContainer) {
+        var rangedInputs = sliderContainer.querySelectorAll('input[type="range"]');
+        rangedInputs.forEach(function(rangedInput) {
+            rangedInput.addEventListener('input', function() {
+                updateAllLabels();
+                changed=true;
+                lastUpdate = Date.now();
+            });
+        });
+    });
+}
+
+function loadSliderValuesFromContainer(id, patch) {
+    var element = document.getElementById(id);
+    var sliderContainers = element.querySelectorAll('.slider-container');
+    sliderContainers.forEach(function(sliderContainer) {
+        var rangedInputs = sliderContainer.querySelectorAll('input[type="range"]');
+        rangedInputs.forEach(function(rangedInput) {
+            var name = rangedInput.name;
+            var value = parseFloat(rangedInput.value);
+            patch[name] = value;
+        });
+    });
+}
+
+function setupPresetButtons(){    
+    insertPresetButtons('wavePresetButtons', wavePresets);
+    insertPresetButtons('envelopPresetButtons', envelopePresets);
+}
+
+function insertPresetButtons(id, presetList){     
+    var buttonContainer = document.getElementById(id);
+    presetList.forEach(function(preset) {
+        var button = document.createElement('button');
+        button.textContent = preset.name;
+        button.addEventListener('click', function() {
+            loadPreset(preset.patch);
+        });
+        buttonContainer.appendChild(button);
+    });
+}
+
+function loadPreset(patch, patchA, patchB) {
+    loadPatchIntoContainer('CommonSettings', patch);
+    loadPatchIntoContainer('TestSetup', patch);
+    loadPatchIntoContainer('SoundASetup', patchA ?? patch);
+    loadPatchIntoContainer('SoundBSetup', patchB ??patch);
+    updateAllLabels();
+    updateBuffersAndDisplay();
+}
+
+
+function loadPatchIntoContainer(id, patch) {
+    var element = document.getElementById(id);
+    var sliderContainers = element.querySelectorAll('.slider-container');
+    sliderContainers.forEach(function(sliderContainer) {
+        var rangedInputs = sliderContainer.querySelectorAll('input[type="range"]');
+        rangedInputs.forEach(function(rangedInput) {
+            var name = rangedInput.name;
+            rangedInput.value = patch[name] ?? rangedInput.value;
+        });
+    });
+    updateAllLabels();
+}
+
+
+function updateAllLabels(){
+    let patch = {};
+    loadSliderValuesFromContainer('CommonSettings', patch);
+    loadSliderValuesFromContainer('TestSetup', patch);
+    updateLabelsFor('CommonSettings', patch);
+    updateLabelsFor('TestSetup', patch);
+    
+    loadSliderValuesFromContainer('SoundASetup', patch);
+    updateLabelsFor('SoundASetup', patch);
+    loadSliderValuesFromContainer('SoundBSetup', patch);
+    updateLabelsFor('SoundBSetup', patch);
+}
+
+
+
+function updateLabelsFor(containerId, patch) {
+    var element = document.getElementById(containerId);
+    var valueElements = element.querySelectorAll('.valueSpan');
+    valueElements.forEach(function(ve) {
+        switch (ve.name) {
+            case "frequency": 
+                ve.textContent = patch.frequency.toFixed(0) + "Hz";
+                break;
+            case "higherHarmonicRelativeShift": 
+                ve.textContent = toPercent(patch.higherHarmonicRelativeShift);
+                break;
+            case "odd": 
+                ve.textContent = getPartialLevelLabel(patch.oddLevel,patch.oddAlt);
+                break;
+            case "even": 
+                ve.textContent = getPartialLevelLabel(patch.evenLevel, patch.evenAlt);
+                break;
+            case "oddFalloff": 
+                ve.innerHTML = toFalloffString(patch.oddFalloff);
+                break;
+            case "evenFalloff":
+                ve.innerHTML = toFalloffString(patch.evenFalloff);
+                break;
+
+                
+            case "attack": ve.textContent = patch.attack + "s";break;  
+            case "decay": ve.textContent = patch.decay + "s";break;
+            case "hold": ve.textContent = patch.hold + "s";break;
+            case "envelopeFilter": 
+                ve.textContent = patch.envelopeFilter=="1"? "off" : patch.envelopeFilter.toFixed(0);
+                break;
+
+            case "rootPhaseDelay": 
+                ve.innerHTML =getPhaseLabel(patch);break;
+        }
+    });
+}
+
+function toPercent(value){
+    return (value*100).toFixed(0) + "%";
+}   
+function toFalloffString(value){
+    let result = "";
+    if (value==0) result = "1";
+    else if (value==1) result = "1/n";
+    else result = "1/n<sup>" + value + "</sup>";
+    return result;
+}
+
+function getPartialLevelLabel(level, polarity){
+    level = level ;
+    polarity =polarity;
     let value = "off"
     if (level!=0)
     {
@@ -332,95 +459,22 @@ function setupLevelLabel(idRoot, level,polarity){
         else
             value = level.toFixed(1) +"↔" + (level *(-2 * polarity +1)).toFixed(1);
     }
-    document.getElementById(idRoot + '-value').textContent = value;
-}
-
-document.getElementById('oddFalloff').addEventListener('input', function() {
-    let value = "";
-    if (this.value==0) value = "1";
-    else if (this.value==1) value = "1/n";
-    else value = "1/n<sup>" + this.value + "</sup>";
-    document.getElementById('oddFalloff-value').innerHTML = value;
-    changed=true;
-});
-
-
-
-
-
-document.getElementById('evenFalloff').addEventListener('input', function() {
-    let value = "";
-    if (this.value==0) value = "1";
-    else if (this.value==1) value = "1/n";
-    else value = "1/n<sup>" + this.value + "</sup>";
-    document.getElementById('evenFalloff-value').innerHTML = value;
-    changed=true;
-});
-
-document.getElementById('envelopeFilter').addEventListener('input', function() {
-    document.getElementById('envelopeFilter-value').textContent = this.value=="1"? "off" : this.value;
-    changed=true;
-});
-
-document.getElementById('rootPhaseDelayA').addEventListener('input', function() {
-    updatePhaseLabels();
-    changed=true;
-});
-
-document.getElementById('rootPhaseDelayB').addEventListener('input', function() {
-    updatePhaseLabels();
-    changed=true;
-});
-
-document.getElementById('hideFFT').addEventListener('click', function() {
-    useFFT = !useFFT;
-    if (!useFFT) fftClear();
-    this.textContent = useFFT ? "Hide FFT" : "Show FFT";
-});
-
-function updatePhaseLabels(){
-    let invFreq = 1000 / (parseFloat(document.getElementById('freq').value) * 2);
-    let rootPhaseDelayA = document.getElementById('rootPhaseDelayA').value;
-    let rootPhaseDelayB = document.getElementById('rootPhaseDelayB').value;
-    let delayA = parseFloat(rootPhaseDelayA) * invFreq;
-    let delayB = parseFloat(rootPhaseDelayB) * invFreq;
-    document.getElementById('rootPhaseDelayA-value').textContent = rootPhaseDelayA + "π (" + (delayA).toFixed(1) + "ms)";
-    document.getElementById('rootPhaseDelayB-value').textContent = rootPhaseDelayB + "π (" + (delayB).toFixed(1) + "ms)";
+    return value;
 }
 
 
-window.addEventListener('resize', updateCanvas);
-
-function updateCanvas() {
-    let canvasA = document.getElementById('waveformA');
-    let canvasB = document.getElementById('waveformB');
-
-    canvasA.width = canvasA.offsetWidth;
-    canvasB.width = canvasB.offsetWidth;
-    updateDisplay();
+function getPhaseLabel(patch){
+    let invFreq = 1000 / (patch.frequency * 2);
+    let rootPhaseDelay = patch.rootPhaseDelay;
+    let delayA = rootPhaseDelay * invFreq;
+    return rootPhaseDelay.toFixed(2) + "π <br> (" + (delayA).toFixed(1) + "ms)";
 }
 
-
-let envMode=1;
-document.getElementById('envMode1').addEventListener('change', function() {
-    if (this.checked) {
-        envMode=1;
-        changed=true;
-    }
-});
-document.getElementById('envMode2').addEventListener('change', function() {
-    if (this.checked) {
-        envMode=2;
-        changed=true;
-    }
-});
 
 
 
 //Initialise display of waveform and audio buffers on first load
-updateBuffersAndDisplay();
-updatePhaseLabels();
-fftClear();
+initSliders();
 
 
 
