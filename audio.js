@@ -164,6 +164,7 @@ function buildFilterBuffer(
     ){
         let isHold = false;
         let isDecay = false;
+        let isAttack = true;
         const pi2_sr = 2 * Math.PI / sampleRate;
         let f1 = 20*Math.pow(2,patch.filterF1) * pi2_sr;
         let f2 = 20*Math.pow(2,patch.filterF2) * pi2_sr;
@@ -190,12 +191,16 @@ function buildFilterBuffer(
             }
             else if (isDecay){
                 x += decayRate; 
+                if (i >= decaySamples){
+                    isDecay = false;
+                }
             }
-            else 
+            else if (isAttack)
             {
                 x += attackRate; 
                 if (i >= attackSamples){
                     //switch to hold stage if hold is non zero
+                    isAttack=false;
                     isHold = holdSamples>0;
                     isDecay = holdSamples==0;
                     x=f2;

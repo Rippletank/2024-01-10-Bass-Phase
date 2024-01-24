@@ -158,10 +158,10 @@ function initSliders(){
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
     setInterval(function() {
-        if (changed && Date.now() - lastUpdate > 500) {
+        if (changed && Date.now() - lastUpdate > 800) {
             updateBuffersAndDisplay(cachedPatchA, cachedPatchB);
         }
-    }, 200); 
+    }, 500); 
 }
 
 let lastUpdate=0;
@@ -325,6 +325,7 @@ function updateLabelsFor(containerId, patch) {
             case "filterF1": ve.textContent = toFilterFreq(patch.filterF1);break;
             case "filterF2": ve.textContent = toFilterFreq(patch.filterF2);break;
             case "filterF3": ve.textContent = toFilterFreq(patch.filterF3);break;
+            case "filterSlope": ve.textContent = patch.filterSlope.toFixed(0)+"db/oct";break;
 
             case "rootPhaseDelay": 
                 ve.innerHTML =getPhaseLabel(patch);break;
