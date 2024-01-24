@@ -286,6 +286,14 @@ function updateLabelsFor(containerId, patch) {
             case "altOffset":
                 ve.textContent = patch.altOffset.toFixed(1)+'π';
                 break;
+                break;
+            case "sinCos":
+                let type = "&nbsp;";
+                if (patch.sinCos==0) type = "sin(t)";
+                if (patch.sinCos==-1) type = "-cos(t)";
+                if (patch.sinCos==1) type = "cos(t)";
+                ve.innerHTML = (patch.sinCos*0.5).toFixed(2)+'π<br>'+type;
+                break;
 
                 
             case "attack": ve.textContent = patch.attack + "s";break;  
