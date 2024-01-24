@@ -29,7 +29,7 @@
         <div class="slider-container">
             <label for="even">Even Level:</label>
             <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider">
-            <label for="evenAlternating"  class="flipLabel">Alternate:</label>
+            <label for="evenAlternating"  class="flipLabel">Alt Amt:</label>
             <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
             <output class="valueSpan" name="even">-1</output>
             <span class="help-icon">?</span>
@@ -46,7 +46,7 @@
         <div class="slider-container">
             <label for="odd">Odd Level:</label>
             <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider">
-            <label for="oddAlternating"  class="flipLabel">Alternate:</label>
+            <label for="oddAlternating"  class="flipLabel">Alt Amt:</label>
             <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
             <output class="valueSpan" name="odd">1</output>
             <span class="help-icon">?</span>
@@ -61,24 +61,24 @@
         </div>
         <div class="slider-container">
             <label for="SineToCos">Phase at t=0</label>
-            <input type="range" id="SineToCos" name="sinCos" min="-1" max="1" step="0.1" value="0" >
-            <output class="valueSpan" name="sinCos">0</output>
+            <input type="range" id="SineToCos" name="sinCos" min="-1" max="1" step="0.1" value="0" class="longish-slider">
+            <output class="valueSpan longOut" name="sinCos">0</output>
             <span class="help-icon">?</span>
             <div class="help-popup">A fixed phase offset for all harmonics, adjust the phase of waves at t=0. Needed for pulse waves</div>
         </div>
         <div class="slider-container">
-            <label for="altW">Alternate Freq:</label>
-            <input type="range" id="altW" name="altW" min="0" max="1" step="0.05" value="0.5">
-            <output class="valueSpan" name="altW">0</output>
+            <label for="altW">Alternation Freq:</label>
+            <input type="range" id="altW" name="altW" min="0" max="1" step="0.05" value="0.5" class="longish-slider">
+            <output class="valueSpan longOut" name="altW">0</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Alternation frequency for Flip parameter. Equivalent to the duty cycle for a pulse wave.</div>
+            <div class="help-popup">How often the polarity alternates as harmonics are added, the polarity. Usually at 2 to when set of harmonics to alternate (eg triangle). Equivalent to the duty cycle when set up for a pulse wave and values other than 2 used.</div>
         </div>
         <div class="slider-container">
-            <label for="altOffset">Alternate Offset:</label>
-            <input type="range" id="altOffset" name="altOffset" min="0" max="0.5" step="0.1" value="0.5">
-            <output class="valueSpan" name="altOffset">0</output>
+            <label for="altOffset">Alternation Offset:</label>
+            <input type="range" id="altOffset" name="altOffset" min="-1" max="1" step="0.1" value="0.0" class="longish-slider">
+            <output class="valueSpan longOut" name="altOffset">0</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Alternating offset of even from odd, again needs to be 0 for pulse, 0.5 for others.</div>
+            <div class="help-popup">Adjusts where the positive, negative and zero values of the alternations falls. When at zero, with Alternation Freq set to 2, the alternations fall on odd harmonics. Change to +/-1 to fall on even harmonics.</div>
         </div>      
         <div>
             <canvas id="wavePreview"  width ="800" height="200"></canvas>

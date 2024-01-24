@@ -34,7 +34,7 @@ let wavePresets = [
             evenAlt:0,
             sinCos:0,
             altW:0.5,
-            altOffset:0.5,
+            altOffset:0,
         }
     },
     {
@@ -48,7 +48,7 @@ let wavePresets = [
             evenAlt:0,
             sinCos:0,
             altW:0.5,
-            altOffset:0.5,
+            altOffset:0,
         }
     },
     {
@@ -62,7 +62,7 @@ let wavePresets = [
             evenAlt:0,
             sinCos:0,
             altW:0.5,
-            altOffset:0.5,
+            altOffset:0,
         }
     },
     {
@@ -76,7 +76,7 @@ let wavePresets = [
             evenAlt:0,
             sinCos:0,
             altW:0.5,
-            altOffset:0.5,
+            altOffset:0,
         }
     },
     {
@@ -90,7 +90,7 @@ let wavePresets = [
             evenAlt:0.5,
             sinCos:0,
             altW:0.5,
-            altOffset:0.5,
+            altOffset:1,
         }
     },
     {
@@ -174,7 +174,7 @@ function getDefaultPatch(){
         evenFalloff: 1.8,//1..2 How much the even harmonics fall off in amplitude as a power of 1/n,
         sinCos:0,//0..1 0 = sine wave, 1 = cosine wave, use cosine for pulse wave
         altW:0.5,//0..1 frequency of alternation - gives pulse width for pulse wave
-        altOffset:0.5,//between 0 and 0.5 - phase offset for alternation between even and odd harmonics, needed to "sync" alternations for pulse wave
+        altOffset:0,//between 0 and 0.5 - phase offset for alternation between even and odd harmonics, needed to "sync" alternations for pulse wave
 
         //Amplitude envelope
         attack: 0.005,//Linear time to get to max amplitude  in seconds
@@ -340,7 +340,7 @@ function buildHarmonicSeries(patch,  sampleRate, b, envelopeBuffer, delay0, dela
 
     //Alt needed for triangle wave causing polarity to flip for each successive harmonic
     let altW = patch.altW * Math.PI;   
-    let evenAltOffset = patch.altOffset * Math.PI; 
+    let altOffset = patch.altOffset * Math.PI *0.5; 
     let delayScale = (delay0-delayN) * rootW * patch.higherHarmonicRelativeShift;//Either Delay0 or delayN will be zero
     for (let n = 1; n < harmonics; n++) {
         let w = rootW * n;
@@ -350,11 +350,11 @@ function buildHarmonicSeries(patch,  sampleRate, b, envelopeBuffer, delay0, dela
         let delay = n==1 ? delay0 : delayN + delayScale/w;
         let phaseShift = phaseShift0 * (n==1 ? 1 :patch.higherHarmonicRelativeShift);
         if (isEven){
-            level = patch.evenLevel * ((Math.sin(n*altW - evenAltOffset)-1) * patch.evenAlt + 1) * Math.pow(n,-patch.evenFalloff );
+            level = patch.evenLevel * ((Math.sin(n*altW - altOffset)-1) * patch.evenAlt + 1) * Math.pow(n,-patch.evenFalloff );
         }
         else{
 
-            level=patch.oddLevel * ((Math.sin(n*altW)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
+            level=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
         }        
         mixInSine( b, w, envelopeBuffer, level ,delay, phaseShift + sinCos );
         if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);

@@ -281,18 +281,29 @@ function updateLabelsFor(containerId, patch) {
                 break;
                 break;
             case "altW":
-                ve.textContent = toPercent(patch.altW);
+                ve.innerHTML = "Every "+ toReciprocal(patch.altW) +"steps &nbsp;&nbsp; (Duty: " +toPercent(patch.altW)+")";
                 break;
             case "altOffset":
-                ve.textContent = patch.altOffset.toFixed(1)+'π';
-                break;
+                let isInt = Math.round(patch.altOffset) ==patch.altOffset;
+                let valText = patch.altOffset.toFixed(1);
+                if (isInt){
+                    switch(patch.altOffset){
+                        case -1: valText =valText + ' step &nbsp;&nbsp; Even -↔+ &nbsp;&nbsp; Odd 0↔0';break;
+                        case 0: valText =valText +  ' steps &nbsp;&nbsp; Even 0↔0 &nbsp;&nbsp; Odd +↔-';break;
+                        case 1: valText = valText + ' step &nbsp;&nbsp; Even +↔- &nbsp;&nbsp; Odd 0↔0';break;
+                    }
+                }
+                else{
+                    valText =valText +' steps &nbsp;&nbsp; both';
+                }
+                ve.innerHTML = valText;
                 break;
             case "sinCos":
                 let type = "&nbsp;";
                 if (patch.sinCos==0) type = "sin(t)";
                 if (patch.sinCos==-1) type = "-cos(t)";
                 if (patch.sinCos==1) type = "cos(t)";
-                ve.innerHTML = (patch.sinCos*0.5).toFixed(2)+'π<br>'+type;
+                ve.innerHTML = (patch.sinCos*0.5).toFixed(2)+'π &nbsp;&nbsp; '+type;
                 break;
 
                 
@@ -312,6 +323,14 @@ function updateLabelsFor(containerId, patch) {
 function toPercent(value){
     return (value*100).toFixed(0) + "%";
 }   
+function toReciprocal(value){
+    if (value>0.5) return (1/value).toFixed(2);
+    if (value>0.01) return (1/value).toFixed(1);
+    if (value>0.001) return (1/value).toFixed(0);
+    return "∞"
+    
+}
+
 function toFalloffString(value){
     let result = "";
     if (value==0) result = "1";

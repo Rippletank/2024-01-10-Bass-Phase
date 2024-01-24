@@ -54,16 +54,25 @@ canvas {
 
 
 .slider-container .mid-slider {
-    flex-basis: 35%;
+    flex-basis: 36%;
 }
 
 .slider-container .short-slider {
     flex-basis: 15%;
 }
+.slider-container .longish-slider {
+    flex-basis: 50%;
+}
+
 .slider-container output {
     flex-basis: 6em;
     text-align: center;
     margin-left: 6px;
+}
+.slider-container .longOut{
+    flex-basis: 26%;
+    text-align: left;
+    margin-left: 2em;
 }
 
 .slider-container .help-icon {
