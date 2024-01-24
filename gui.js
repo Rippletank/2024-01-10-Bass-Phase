@@ -281,16 +281,16 @@ function updateLabelsFor(containerId, patch) {
                 break;
                 break;
             case "altW":
-                ve.innerHTML = "Every "+ toReciprocal(patch.altW) +"steps &nbsp;&nbsp; (Duty: " +toPercent(patch.altW)+")";
+                ve.innerHTML = "Every "+ toReciprocal(patch.altW) +" steps &nbsp; (Duty: " +toPercent(patch.altW)+")";
                 break;
             case "altOffset":
                 let isInt = Math.round(patch.altOffset) ==patch.altOffset;
                 let valText = patch.altOffset.toFixed(1);
                 if (isInt){
                     switch(patch.altOffset){
-                        case -1: valText =valText + ' step &nbsp;&nbsp; Even -↔+ &nbsp;&nbsp; Odd 0↔0';break;
-                        case 0: valText =valText +  ' steps &nbsp;&nbsp; Even 0↔0 &nbsp;&nbsp; Odd +↔-';break;
-                        case 1: valText = valText + ' step &nbsp;&nbsp; Even +↔- &nbsp;&nbsp; Odd 0↔0';break;
+                        case -1: valText =valText + ' step &nbsp; Even -↔+ &nbsp; Odd 0↔0';break;
+                        case 0: valText =valText +  ' steps &nbsp; Even 0↔0 &nbsp; Odd +↔-';break;
+                        case 1: valText = valText + ' step &nbsp; Even +↔- &nbsp; Odd 0↔0';break;
                     }
                 }
                 else{

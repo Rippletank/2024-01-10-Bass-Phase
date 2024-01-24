@@ -14,8 +14,8 @@
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio/WebAudioAPI linking code knows 
-//about Audio API and Audio.js and can access canvas element by ID to draw FTT etc
+//Audio/WebAudioAPI linking code  
+//knows about Audio API, Audio.js and defaults.js. Can access canvas element by ID to draw FTT and previews etc
 //No knowledge of GUI controls or patch management
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
