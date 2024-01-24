@@ -47,6 +47,74 @@ document.getElementById('hideFFT').addEventListener('click', function() {
     this.textContent = useFFT ? "Hide FFT" : "Show FFT";
 });
 
+document.getElementById('fullButton').addEventListener('click', function() {
+    previewSpectrumFullWidth=!previewSpectrumFullWidth;
+    updatePreviewButtonState();
+    paintPreview();
+});
+
+document.getElementById('phaseButton').addEventListener('click', function() {
+    previewSpectrumShowPhase=!previewSpectrumShowPhase;
+    updatePreviewButtonState();
+    paintPreview();
+});
+
+document.getElementById('polarityButton').addEventListener('click', function() {
+    previewSpectrumPolarity=!previewSpectrumPolarity;
+    updatePreviewButtonState();
+    paintPreview();
+});
+
+let previewSubject =0;
+document.getElementById('previewD').addEventListener('click', function() {
+    previewSubject = 0;
+    updatePreviewButtonState();
+    updatePreview();
+    paintPreview();
+});
+document.getElementById('previewA').addEventListener('click', function() {
+    previewSubject = 1;
+    updatePreviewButtonState();
+    updatePreview();
+    paintPreview();
+});
+document.getElementById('previewB').addEventListener('click', function() {
+    previewSubject = 2;
+    updatePreviewButtonState();
+    updatePreview();
+    paintPreview();
+});
+
+let subjectBtns=null;
+let previewBtns = null;
+function updatePreviewButtonState(){
+    subjectBtns = subjectBtns ?? [
+        document.getElementById('previewD'),
+        document.getElementById('previewA'),
+        document.getElementById('previewB')
+    ];
+    subjectBtns.forEach(function(button) {
+        button.classList.remove('button-selected');
+        button.classList.remove('button-unselected');
+    });
+    for (let i=0; i<subjectBtns.length; i++){
+        subjectBtns[i].classList.add(i==previewSubject ? 'button-selected' : 'button-unselected');
+    }
+    previewBtns = previewBtns ?? [
+        document.getElementById('fullButton'),
+        document.getElementById('phaseButton'),
+        document.getElementById('polarityButton')
+    ];
+    previewBtns.forEach(function(button) {
+        button.classList.remove('button-selected');
+        button.classList.remove('button-unselected');
+    });
+    previewBtns[0].classList.add(previewSpectrumFullWidth ? 'button-selected' : 'button-unselected');
+    previewBtns[1].classList.add(previewSpectrumShowPhase ? 'button-selected' : 'button-unselected');
+    previewBtns[2].classList.add(previewSpectrumPolarity ? 'button-selected' : 'button-unselected');
+}
+
+
 function play(index){
     playAudio(index, cachedPatchA, cachedPatchB);   
 }
@@ -57,10 +125,12 @@ function updateCanvas() {
     let canvasA = document.getElementById('waveformA');
     let canvasB = document.getElementById('waveformB');
     let canvasN = document.getElementById('waveformNull');
+    let canvasP = document.getElementById('wavePreview');
 
     canvasA.width = canvasA.offsetWidth;
     canvasB.width = canvasB.offsetWidth;
     canvasN.width = canvasN.offsetWidth;
+    canvasP.width = canvasN.offsetWidth;
     updateDisplay();
 }
 
@@ -79,6 +149,7 @@ function initSliders(){
     wireUpSlidersForContainer('SoundASetup');
     wireUpSlidersForContainer('SoundBSetup');
     setupPresetButtons();
+    updatePreviewButtonState();
     
     loadPreset(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch());
 
@@ -103,6 +174,8 @@ function wireUpSlidersForContainer(id) {
                 updateAllLabelsAndCachePatches();
                 changed=true;
                 lastUpdate = Date.now();
+                updatePreview();
+                paintPreview();
             });
         });
     });
@@ -144,6 +217,7 @@ function loadPreset(patch, patchA, patchB) {
     loadPatchIntoContainer('SoundASetup', patchA ?? patch);
     loadPatchIntoContainer('SoundBSetup', patchB ??patch);
     updateAllLabelsAndCachePatches();
+    updatePreview();
     updateBuffersAndDisplay(cachedPatchA, cachedPatchB);
 }
 
@@ -158,9 +232,9 @@ function loadPatchIntoContainer(id, patch) {
             rangedInput.value = patch[name] ?? rangedInput.value;
         });
     });
-    updateAllLabelsAndCachePatches();
 }
 
+let cachedPatchCmn = null;
 let cachedPatchA = null;
 let cachedPatchB = null;
 function updateAllLabelsAndCachePatches(){
@@ -169,6 +243,7 @@ function updateAllLabelsAndCachePatches(){
     loadSliderValuesFromContainer('TestSetup', patch);
     updateLabelsFor('CommonSettings', patch);
     updateLabelsFor('TestSetup', patch);
+    cachedPatchCmn = {...patch};
 
     loadSliderValuesFromContainer('SoundASetup', patch);
     cachedPatchA = {...patch};
@@ -204,6 +279,32 @@ function updateLabelsFor(containerId, patch) {
             case "evenFalloff":
                 ve.innerHTML = toFalloffString(patch.evenFalloff);
                 break;
+                break;
+            case "altW":
+                ve.innerHTML = "Every "+ toReciprocal(patch.altW) +" steps &nbsp; (Duty: " +toPercent(patch.altW)+")";
+                break;
+            case "altOffset":
+                let isInt = Math.round(patch.altOffset) ==patch.altOffset;
+                let valText = patch.altOffset.toFixed(1);
+                if (isInt){
+                    switch(patch.altOffset){
+                        case -1: valText =valText + ' step &nbsp; Even -↔+ &nbsp; Odd 0↔0';break;
+                        case 0: valText =valText +  ' steps &nbsp; Even 0↔0 &nbsp; Odd +↔-';break;
+                        case 1: valText = valText + ' step &nbsp; Even +↔- &nbsp; Odd 0↔0';break;
+                    }
+                }
+                else{
+                    valText =valText +' steps &nbsp;&nbsp; both';
+                }
+                ve.innerHTML = valText;
+                break;
+            case "sinCos":
+                let type = "&nbsp;";
+                if (patch.sinCos==0) type = "sin(t)";
+                if (patch.sinCos==-1) type = "-cos(t)";
+                if (patch.sinCos==1) type = "cos(t)";
+                ve.innerHTML = (patch.sinCos*0.5).toFixed(2)+'π &nbsp;&nbsp; '+type;
+                break;
 
                 
             case "attack": ve.textContent = patch.attack + "s";break;  
@@ -222,6 +323,14 @@ function updateLabelsFor(containerId, patch) {
 function toPercent(value){
     return (value*100).toFixed(0) + "%";
 }   
+function toReciprocal(value){
+    if (value>0.5) return (1/value).toFixed(2);
+    if (value>0.01) return (1/value).toFixed(1);
+    if (value>0.001) return (1/value).toFixed(0);
+    return "∞"
+    
+}
+
 function toFalloffString(value){
     let result = "";
     if (value==0) result = "1";

@@ -15,155 +15,10 @@
 
 
 
-
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Audio Code - creates buffers with audio data according to parameters
-//No knowledge of GUI, only knows about AudioBuffer from WebAudioAPI
+//No knowledge of GUI, only knows about AudioBuffer from WebAudioAPI and default values in defaults.js
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-let wavePresets = [
-    {
-        name:"default", 
-        patch:{
-            oddLevel:1,
-            oddFalloff:1.8,
-            oddAlt:0,
-            evenLevel:-1,
-            evenFalloff:1.8,
-            evenAlt:0
-        }
-    },
-    {
-        name:"square", 
-        patch:{
-            oddLevel:1,
-            oddFalloff:1,
-            oddAlt:0,
-            evenLevel:0,
-            evenFalloff:1,
-            evenAlt:0
-        }
-    },
-    {
-        name:"Saw", 
-        patch:{
-            oddLevel:1,
-            oddFalloff:1,
-            oddAlt:0,
-            evenLevel:-1,
-            evenFalloff:1,
-            evenAlt:0
-        }
-    },
-    {
-        name:"Ramp", 
-        patch:{
-            oddLevel:1,
-            oddFalloff:1,
-            oddAlt:0,
-            evenLevel:1,
-            evenFalloff:1,
-            evenAlt:0
-        }
-    },
-    {
-        name:"Triangle", 
-        patch:{
-            oddLevel:1,
-            oddFalloff:2,
-            oddAlt:1,
-            evenLevel:0,
-            evenFalloff:1,
-            evenAlt:0
-        }
-    },
-    {
-        name:"stairs", 
-        patch:{
-            oddLevel:1,
-            oddFalloff:1,
-            oddAlt:0,
-            evenLevel:1,
-            evenFalloff:1,
-            evenAlt:0.5
-        }
-    }
-];
-
-let envelopePresets = [
-    {
-        name:"default",
-        patch:{
-            attack:0.005,
-            hold:0,
-            decay:0.4,
-            envelopeFilter:150,
-        }
-    },
-    {
-        name:"Short",
-        patch:{
-            attack:0.001,
-            hold:0,
-            decay:0.1,
-            envelopeFilter:1000,
-        }
-    },
-    {
-        name:"Slow",
-        patch:{
-            attack:0.05,
-            hold:0,
-            decay:0.5,
-            envelopeFilter:150,
-        }
-    },
-    {
-        name:"Tone",
-        patch:{
-            attack:0.01,
-            hold:0.5,
-            decay:0.1,
-            envelopeFilter:0,
-        }
-    },
-
-];
-
-
-function getDefaultPatch(){
-    return {
-        frequency: 50,//Hz
-        rootPhaseDelay: 0,//-1..1 => -PI..PI for phase shift of fundamental
-        higherHarmonicRelativeShift: 0,//fraction of rootPhaseDelay for phase of higher harmonics
-        oddLevel: 1,//-1..1 level of odd harmonics
-        oddAlt: 0,//0..1 How much the odd harmonics alternate in polarity
-        oddFalloff: 1.8,//1..2 How much the odd harmonics fall off in amplitude as a power of 1/n
-        evenLevel: -1,//-1..1 level of even harmonics
-        evenAlt: 0,//0..1 How much the even harmonics alternate in polarity
-        evenFalloff: 1.8,//1..2 How much the even harmonics fall off in amplitude as a power of 1/n
-        attack: 0.005,//Linear time to get to max amplitude  in seconds
-        hold: 0,// time in seconds to hold max amplitude
-        decay: 0.4,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
-        envelopeFilter: 150,// 0-1000 1 = no filter, 1000 = 1/1000 of heaviest filter
-        envMode: 1//1,2 - 1 = delay envelope by same as phase delay, 2 = envelope fixed, shift phase in place
-    }
-}
-
-
-function getDefaultAPatch(){
-    let patch = getDefaultPatch();
-    patch.rootPhaseDelay=0;
-    return patch;
-}
-function getDefaultBPatch(){
-    let patch = getDefaultPatch();
-    patch.rootPhaseDelay=0.25;
-    return patch;
-}
-
-
 
 
 let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
@@ -203,16 +58,50 @@ function getAudioBuffer(
         numberOfChannels: 1
       });
       let b = audioBuffer.getChannelData(0);
-      buildEnvelopeBuffer(sampleRate, bufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
-      buildHarmonicSeries(patch, sampleRate, b, delay0, delayN, phaseShift0);
+      let envelopeBuffer =buildEnvelopeBuffer(sampleRate, bufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
+      buildHarmonicSeries(patch, sampleRate, b, envelopeBuffer, delay0, delayN, phaseShift0);
       return audioBuffer;
+}
+
+//Return object with 3 float arrays,
+// samples - the audio samples for one complete cycle
+// magnitude - the magnitude of each harmonic
+// phase - the phase of each harmonic
+function getPreview(referencePatch){
+    let defaultPatch = getDefaultPatch();
+    let patch = {
+        ...defaultPatch,
+        ...referencePatch
+    };
+    let sampleRate = 1000;
+    patch.frequency = 1;
+    let bufferSize = sampleRate; //Allow for attack and 1.5* decay time + extra for filter smoothing
+    let envelopeBuffer =[];
+    let b = [];
+    for (let i = 0; i < bufferSize; i++) {
+        envelopeBuffer.push(1);
+        b.push(0);
+    }
+    let magnitude = [];
+    let phase = [];
+    let postProcessor = (n, w, level, phaseShift)=>{
+        magnitude.push(level);
+        phase.push(phaseShift);
+    }
+    buildHarmonicSeries(patch, sampleRate, b, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
+    return {
+        samples:b,
+        magnitude:magnitude,
+        phase:phase,
+        mean:b.reduce((a, b) => a + b, 0) / b.length, //average value
+        max:Math.max(...b),
+        min:Math.min(...b)
+    };
 }
 
 
 
-
 //Generate a single envelope, shared by all harmonics
-let envelopeBuffer = null;
 const root2 = Math.sqrt(2);
 const ln1024 =Math.log(1024);
 function buildEnvelopeBuffer(
@@ -258,55 +147,57 @@ function buildEnvelopeBuffer(
             y +=  a * (x - y);
             envValues.push(y);
         }
-        envelopeBuffer = envValues;
+        return envValues;
 }
 
 
 //Generate the harmonic series
-function buildHarmonicSeries(patch,  sampleRate, b, delay0, delayN, phaseShift0) {
-    let f = patch.frequency;
-    let nyquist = sampleRate * 0.49;//Nyquist limit less a bit
+function buildHarmonicSeries(patch,  sampleRate, b, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
+    let nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
+    let rootW = patch.frequency * 2 * Math.PI  / sampleRate;
+    let sinCos = patch.sinCos*Math.PI/2;
+    if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
     bufferSize=b.length;
-    mixInSine(sampleRate, b, f, 1, delay0, phaseShift0 ); //Add fundamental, level = 1 it will be normalised later
 
     //Alt needed for triangle wave causing polarity to flip for each successive harmonic
-    let oddAltCore = -1;//first harmonic already used
-    let evenAltCore = 1;
-    let delayScale = (delay0-delayN) * patch.frequency * patch.higherHarmonicRelativeShift;//Either Delay0 or delayN will be zero
-    for (let i = 1; i < harmonics; i++) {
-        f += patch.frequency;
-        if (f>=nyquist) return;//Nyquist limit
+    let altW = patch.altW * Math.PI;   
+    let altOffset = patch.altOffset * Math.PI *0.5; 
+    let delayScale = (delay0-delayN) * rootW * patch.higherHarmonicRelativeShift;//Either Delay0 or delayN will be zero
+    for (let n = 1; n < harmonics; n++) {
+        let w = rootW * n;
+        if (w>=nyquistW) return;//Nyquist limit
         let level = 0;
-        let isEven = (i+1) % 2 == 0;
+        let isEven = n % 2 == 0;
+        let delay = n==1 ? delay0 : delayN + delayScale/w;
+        let phaseShift = phaseShift0 * (n==1 ? 1 :patch.higherHarmonicRelativeShift);
         if (isEven){
-            level = patch.evenLevel * ((evenAltCore-1) * patch.evenAlt + 1) * Math.pow(i+1,-patch.evenFalloff );
-            evenAltCore = evenAltCore * -1;
+            level = patch.evenLevel * ((Math.sin(n*altW - altOffset)-1) * patch.evenAlt + 1) * Math.pow(n,-patch.evenFalloff );
         }
         else{
-            level=patch.oddLevel * ((oddAltCore-1) * patch.oddAlt + 1) * Math.pow(i+1,-patch.oddFalloff);        
-            oddAltCore = oddAltCore * -1;
-        }
-        mixInSine(sampleRate, b, f, level ,delayN + delayScale/f, phaseShift0 * patch.higherHarmonicRelativeShift);
+
+            level=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
+        }        
+        mixInSine( b, w, envelopeBuffer, level ,delay, phaseShift + sinCos );
+        if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);
     }
 }
 
 
 //Generate a single sine wave and mix into the buffer
 function mixInSine(
-    sampleRate, //samples per second
     buffer, 
-    frequency, //Hz 
+    w, //Hz 
+    envelopeBuffer,
     amplitude, // 0..1
     delay, //in samples for this frequency - envelope start will be delayed. Phase counter will not start until envelope starts
     phaseOffset
     ) {
         if (amplitude==0) return;
-        let w = frequency * 2 * Math.PI  / sampleRate;
     let theta = phaseOffset + (Math.floor(delay) + 1 - delay) * w; //Phase accumulator + correction for fractional delay
     let env = 0;
     let bufferSize = buffer.length;
     for (let i = 0; i < bufferSize; i++) {
-        if (i > delay)   {
+        if (i >= delay)   {
             //Phase accumulator
             theta += w;
 

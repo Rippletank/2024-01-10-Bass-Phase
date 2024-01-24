@@ -9,117 +9,8 @@
 <body>
     <h1>Low Frequency Phase-shift Test</h1>
 
-    <div class="bordered" id="CommonSettings">
-        <h3>Sound Settings</h3>
-        <div class="slider-container">
-            <label for="freq">Frequency:</label>
-            <input type="range" id="freq" name="frequency" min="20" max="200" step="1" value="50">
-            <output  class="valueSpan" name="frequency">50Hz</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Fundamental frequency</div>
-        </div>
-
-        
-        <div class="presetHeader">
-            <h4>Harmonic Series</h4>
-            <div id="wavePresetButtons" class="PresetButtons"></div>
-        </div>
-        <div class="slider-container">
-            <label for="even">Even Level:</label>
-            <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider">
-            <label for="evenAlternating"  class="flipLabel">Flip:</label>
-            <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
-            <output class="valueSpan" name="even">-1</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
-        </div>
-        <div class="slider-container">
-            <label for="evenFalloff">Even Fall off:</label>
-            <input type="range" id="evenFalloff" name="evenFalloff" min="1" max="2" step="0.1" value="1.8">
-            <output class="valueSpan" name="evenFalloff">1/n<sup>1.8</sup></output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls how loud higher harmonics are. For even harmonics, 1/n is typical of sawtooth waves.</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="odd">Odd Level:</label>
-            <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider">
-            <label for="oddAlternating"  class="flipLabel">Flip:</label>
-            <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
-            <output class="valueSpan" name="odd">1</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
-        </div>
-        <div class="slider-container">
-            <label for="oddFalloff">Odd Fall off:</label>
-            <input type="range" id="oddFalloff" name="oddFalloff" min="1" max="2" step="0.1" value="1.8">
-            <output class="valueSpan" name="oddFalloff">1/n<sup>1.8</sup></output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls how loud higher harmonics are. For odd harmonics, 1/n is typical of square and sawtooth waves, 1/n^2 is like a triangle wave.</div>
-        </div>
-
-        <div class="presetHeader">
-            <h4>Envelope</h4>
-            <div id="envelopPresetButtons" class="PresetButtons"></div>
-        </div>
-        <div class="slider-container">
-            <label for="attack">Attack:</label>
-            <input type="range" id="attack" name="attack" min="0.001" max="0.2" step="0.001" value="0.005">
-            <output class="valueSpan" name="attack">0.005s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time for the linear attack part of the envelope</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="hold">Hold:</label>
-            <input type="range" id="hold" name="hold" min="0.00" max="1" step="0.01" value="0.0">
-            <output class="valueSpan" name="hold">0s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time held at maximum between attack and decay</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="decay">Decay:</label>
-            <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.4">
-            <output class="valueSpan" name="decay">0.4s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time for the exponential decay part of the envelope to fall to -60db</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="envelopeFilter">Smoothing:</label>
-            <input type="range" id="envelopeFilter" name="envelopeFilter" min="0" max="1000" step="10" value="150">
-            <output class="valueSpan" name="envelopeFilter">150</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
-        </div>
-    </div>
 
 
-    <div class="bordered" id="TestSetup">
-        <h3>Phase settings</h3>
-
-
-        <h4>Envelope Mode</h4>
-
-        <div class="slider-container">
-            <label for="envMode"   class="modeLabel modeLabelLeft">Delay envelope with phase-shift</label>
-            <input type="range" id="envMode" name="envMode" min="1" max="2" step="1" value="1" class="short-slider">
-            <span   class="modeLabel modeLabelRight">Fixed envelope for all harmonics</span>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls whether the envelope of a each harmonic is shifted so the it starts with phase=0 of the harmonic or if all harmonics start at the same time but with shifted phases</div>
-        </div>
-
-        <h4>Higher harmonic shift</h4>
-        <div class="slider-container">
-            <label for="second">Relative Phase delay:</label>
-            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0">
-            <output class="valueSpan" name="higherHarmonicRelativeShift">0</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
-        </div>
-
-    </div>
 
 
     <div class="bordered"  id="SoundASetup">
@@ -173,18 +64,157 @@
         </div>
     </div>
     <div class="bordered">
-        <h3>What is it doing?</h3>
-        <p>This page was created to help investigate audibility of low frequency phase shifts.</p>
-        <p>It generates two sounds with identical harmonic content and envelopes as set by the common controls.</p>
-        <p>Each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. The second harmonic can also be phase shifted by a specified fraction of the root phase shift.</p>
-        <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
-        <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the most realistic behaviour?).</p>  
-        <p>The waves are normalised together so their relative size are unchanged. This is to keep to optimum loudness levels for tests, avoiding clipping or the sounds being too quiet.</p> 
-        <p>Negative phase shifts are there to allow trying to compensate for existing phase shifts in playback systems.</p>
-        <p>The code is plain javascript, using the browsers own Web Audio API for playback, to allow for easy modification and review of methodology etc.</p>
-        <p>The waves are generated using additive synthesis to allow for easy and predictable setting of phases and levels.</p>
+        <h3>Background info - see <a href="#Notes1">notes</a></h3>
     </div>
 
+
+    
+    <div class="bordered" id="CommonSettings">
+        <h3>Sound Settings</h3>
+        <div class="slider-container">
+            <label for="freq">Frequency:</label>
+            <input type="range" id="freq" name="frequency" min="20" max="200" step="1" value="50">
+            <output  class="valueSpan" name="frequency">50Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Fundamental frequency</div>
+        </div>
+
+        
+        <div class="presetHeader">
+            <h4>Harmonic Series</h4>
+            <div id="wavePresetButtons" class="PresetButtons"></div>
+        </div>
+        <div class="slider-container">
+            <label for="even">Even Level:</label>
+            <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider">
+            <label for="evenAlternating"  class="flipLabel">Alt Amt:</label>
+            <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
+            <output class="valueSpan" name="even">-1</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
+        </div>
+        <div class="slider-container">
+            <label for="evenFalloff">Even Fall off:</label>
+            <input type="range" id="evenFalloff" name="evenFalloff" min="1" max="2" step="0.1" value="1.8">
+            <output class="valueSpan" name="evenFalloff">1/n<sup>1.8</sup></output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how loud higher harmonics are. For even harmonics, 1/n is typical of sawtooth waves.</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="odd">Odd Level:</label>
+            <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider">
+            <label for="oddAlternating"  class="flipLabel">Alt Amt:</label>
+            <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
+            <output class="valueSpan" name="odd">1</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
+        </div>
+        <div class="slider-container">
+            <label for="oddFalloff">Odd Fall off:</label>
+            <input type="range" id="oddFalloff" name="oddFalloff" min="1" max="2" step="0.1" value="1.8">
+            <output class="valueSpan" name="oddFalloff">1/n<sup>1.8</sup></output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how loud higher harmonics are. For odd harmonics, 1/n is typical of square and sawtooth waves, 1/n^2 is like a triangle wave.</div>
+        </div>
+        <div class="slider-container">
+            <label for="SineToCos">Phase at t=0</label>
+            <input type="range" id="SineToCos" name="sinCos" min="-1" max="1" step="0.1" value="0" class="longish-slider">
+            <output class="valueSpan longOut" name="sinCos">0</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">A fixed phase offset for all harmonics, adjust the phase of waves at t=0. Needed for pulse waves</div>
+        </div>
+        <div class="slider-container">
+            <label for="altW">Alternation Freq:</label>
+            <input type="range" id="altW" name="altW" min="0" max="1" step="0.05" value="0.5" class="longish-slider">
+            <output class="valueSpan longOut" name="altW">0</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">How often the polarity alternates as harmonics are added, the polarity. Usually at 2 to when set of harmonics to alternate (eg triangle). Equivalent to the duty cycle when set up for a pulse wave and values other than 2 used.</div>
+        </div>
+        <div class="slider-container">
+            <label for="altOffset">Alternation Offset:</label>
+            <input type="range" id="altOffset" name="altOffset" min="-1" max="1" step="0.1" value="0.0" class="longish-slider">
+            <output class="valueSpan longOut" name="altOffset">0</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Adjusts where the positive, negative and zero values of the alternations falls. When at zero, with Alternation Freq set to 2, the alternations fall on odd harmonics. Change to +/-1 to fall on even harmonics.</div>
+        </div>      
+        <div>
+            <canvas id="wavePreview"  width ="800" height="200"></canvas>
+        </div>
+        <div class ="previewButtons">
+            <div class="previewButtons previewL">
+                <button id="previewD" class = "previewButton">def</button>
+                <button id="previewA" class = "previewButton">A</button>
+                <button id="previewB" class = "previewButton">B</button>
+            </div>
+
+            <div class="previewButtons">
+                <button id="fullButton" class = "previewButton">Full</button>
+                <button id="phaseButton" class = "previewButton">Φ</button>
+                <button id="polarityButton" class = "previewButton">+/-</button>
+            </div>
+        </div>
+
+        <div class="presetHeader">
+            <h4>Envelope</h4>
+            <div id="envelopPresetButtons" class="PresetButtons"></div>
+        </div>
+        <div class="slider-container">
+            <label for="attack">Attack:</label>
+            <input type="range" id="attack" name="attack" min="0.001" max="0.2" step="0.001" value="0.005">
+            <output class="valueSpan" name="attack">0.005s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the linear attack part of the envelope</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="hold">Hold:</label>
+            <input type="range" id="hold" name="hold" min="0.00" max="1" step="0.01" value="0.0">
+            <output class="valueSpan" name="hold">0s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time held at maximum between attack and decay</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="decay">Decay:</label>
+            <input type="range" id="decay" name="decay" min="0.01" max="2" step="0.01" value="0.4">
+            <output class="valueSpan" name="decay">0.4s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the exponential decay part of the envelope to fall to -60db</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="envelopeFilter">Smoothing:</label>
+            <input type="range" id="envelopeFilter" name="envelopeFilter" min="0" max="1000" step="10" value="150">
+            <output class="valueSpan" name="envelopeFilter">150</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
+        </div>
+    </div>
+
+
+    <div class="bordered" id="TestSetup">
+        <h3>Phase shift settings</h3>
+
+        <h4>Envelope Mode</h4>
+        <div class="slider-container">
+            <label for="envMode"   class="modeLabel modeLabelLeft">Delay envelope with phase-shift</label>
+            <input type="range" id="envMode" name="envMode" min="1" max="2" step="1" value="1" class="short-slider">
+            <span   class="modeLabel modeLabelRight">Fixed envelope for all harmonics</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls whether the envelope of a each harmonic is shifted so the it starts with phase=0 of the harmonic or if all harmonics start at the same time but with shifted phases</div>
+        </div>
+
+        <h4>Higher harmonic shift</h4>
+        <div class="slider-container">
+            <label for="second">Relative Phase delay:</label>
+            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0">
+            <output class="valueSpan" name="higherHarmonicRelativeShift">0</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
+        </div>
+
+    </div>
     
     <div class="bordered">
         <h3>Null test <span id="nullTestdb"></span></h3>        
@@ -192,16 +222,9 @@
             <canvas id="waveformNull"  width ="800" height="200"></canvas>
         </div>
         <button id="playSoundNull">Play</button>
-        <p>This null test is a sanity check for the generated waveforms.</p>
-        <p>Play back and image of the null test result is of the normalised version. Peak level is measured before any normalising.</p> 
-        <p>The null test should only contain the first harmonic (and second if it is shifted, too) plus a little distortion for short attacks and/or low smoothing due to offset attack starts.</p>
-        <p>Changes to harmonics controls should not affect the sound of the null test result (with no second harmonic shift).</p>
-        <p>The null test is messed up if either phase shift is negative because then the algorithm delays the higher harmonics instead and leaves the first harmonic at the start.</p>  
-        <p>The envelope offset will affect the null results. Increase the hold time to generate a constant level section to give more predictable null test results.</p> 
-        <p>With a significant hold time and no second harmonic shift, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
-        <p></p>
+        <p>See <a href="#Notes1">explanation of Null Test</a></p>
     </div>
-
+    
     <div class="bordered">
         <h3>FFT</h3>
         <button id="hideFFT">Hide FFT</button>
@@ -216,6 +239,30 @@
         </div>
     </div>
 
+    <div id="Notes1" class="bordered">
+        <h3>Notes: Background</h3>
+        <p>This page was created to help investigate audibility of low frequency phase shifts.</p>
+        <p>It generates two sounds with identical harmonic content and envelopes as set by the common controls.</p>
+        <p>Each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. The second harmonic can also be phase shifted by a specified fraction of the root phase shift.</p>
+        <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
+        <p>The envelopes of the first and second harmonics are delayed by the same amount as the phase delay for that harmonic (this may not be the most realistic behaviour?).</p>  
+        <p>The waves are normalised together so their relative size are unchanged. This is to keep to optimum loudness levels for tests, avoiding clipping or the sounds being too quiet.</p> 
+        <p>Negative phase shifts are there to allow trying to compensate for existing phase shifts in playback systems.</p>
+        <p>The code is plain javascript, using the browsers own Web Audio API for playback, to allow for easy modification and review of methodology etc.</p>
+        <p>The waves are generated using additive synthesis to allow for easy and predictable setting of phases and levels.</p>
+    </div>
+    
+    <div id="Notes2" class="bordered">
+        <h3>Notes: Null test</h3>
+        <p>This null test is a sanity check for the generated waveforms.</p>
+        <p>Play back and image of the null test result is of the normalised version. Peak level is measured before any normalising.</p> 
+        <p>The null test should only contain the first harmonic (and second if it is shifted, too) plus a little distortion for short attacks and/or low smoothing due to offset attack starts.</p>
+        <p>Changes to harmonics controls should not affect the sound of the null test result (with no second harmonic shift).</p>
+        <p>The null test is messed up if either phase shift is negative because then the algorithm delays the higher harmonics instead and leaves the first harmonic at the start.</p>  
+        <p>The envelope offset will affect the null results. Increase the hold time to generate a constant level section to give more predictable null test results.</p> 
+        <p>With a significant hold time and no second harmonic shift, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
+    </div>
+    <script src="defaults.js"></script>
     <script src="audio.js"></script>
     <script src="audioAPI.js"></script>
     <script src="gui.js"></script>
