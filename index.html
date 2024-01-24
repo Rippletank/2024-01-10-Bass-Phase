@@ -217,6 +217,20 @@
     </div>
     
     <div class="bordered">
+        <h3>FFT</h3>
+        <div class="fftPlayButtons">
+            <button id="fftPlayA">Play A</button>
+            <button id="fftPlayB">Play B</button>
+            <button id="fftPlayN">Play Null</button>
+        </div>
+        <div>
+            <canvas id="fftCanvas" width ="800" height="200"></canvas>
+        </div>
+        <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
+        <button id="hideFFT">Hide FFT</button>
+    </div>
+
+    <div class="bordered">
         <h3>Null test <span id="nullTestdb"></span></h3>        
         <div>
             <canvas id="waveformNull"  width ="800" height="200"></canvas>
@@ -225,19 +239,6 @@
         <p>See <a href="#Notes1">explanation of Null Test</a></p>
     </div>
     
-    <div class="bordered">
-        <h3>FFT</h3>
-        <button id="hideFFT">Hide FFT</button>
-        <div>
-            <canvas id="fftCanvas" width ="800" height="200"></canvas>
-        </div>
-        <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
-        <div class="fftPlayButtons">
-            <button id="fftPlayA">Play A</button>
-            <button id="fftPlayB">Play B</button>
-            <button id="fftPlayN">Play Null</button>
-        </div>
-    </div>
 
     <div id="Notes1" class="bordered">
         <h3>Notes: Background</h3>
