@@ -145,6 +145,7 @@ function updateCanvas() {
 function initSliders(){
     //Call once only at startup
     wireUpSlidersForContainer('CommonSettings');
+    wireUpSlidersForContainer('FilterSetup');
     wireUpSlidersForContainer('TestSetup');
     wireUpSlidersForContainer('SoundASetup');
     wireUpSlidersForContainer('SoundBSetup');
@@ -213,6 +214,7 @@ function insertPresetButtons(id, presetList){
 
 function loadPreset(patch, patchA, patchB) {
     loadPatchIntoContainer('CommonSettings', patch);
+    loadPatchIntoContainer('FilterSetup', patch);
     loadPatchIntoContainer('TestSetup', patch);
     loadPatchIntoContainer('SoundASetup', patchA ?? patch);
     loadPatchIntoContainer('SoundBSetup', patchB ??patch);
@@ -240,8 +242,10 @@ let cachedPatchB = null;
 function updateAllLabelsAndCachePatches(){
     let patch = {};
     loadSliderValuesFromContainer('CommonSettings', patch);
+    loadSliderValuesFromContainer('FilterSetup', patch);
     loadSliderValuesFromContainer('TestSetup', patch);
     updateLabelsFor('CommonSettings', patch);
+    updateLabelsFor('FilterSetup', patch);
     updateLabelsFor('TestSetup', patch);
     cachedPatchCmn = {...patch};
 
@@ -314,6 +318,14 @@ function updateLabelsFor(containerId, patch) {
                 ve.textContent = patch.envelopeFilter=="1"? "off" : patch.envelopeFilter.toFixed(0);
                 break;
 
+
+            case "attackF": ve.textContent = patch.attackF + "s";break;  
+            case "decayF": ve.textContent = patch.decayF + "s";break;
+            case "holdF": ve.textContent = patch.holdF + "s";break;
+            case "filterF1": ve.textContent = toFilterFreq(patch.filterF1);break;
+            case "filterF2": ve.textContent = toFilterFreq(patch.filterF2);break;
+            case "filterF3": ve.textContent = toFilterFreq(patch.filterF3);break;
+
             case "rootPhaseDelay": 
                 ve.innerHTML =getPhaseLabel(patch);break;
         }
@@ -361,7 +373,9 @@ function getPhaseLabel(patch){
     return rootPhaseDelay.toFixed(2) + "π <br> (" + (delayA).toFixed(1) + "ms)";
 }
 
-
+function toFilterFreq(x){
+    return (20 * Math.pow(2,x)).toFixed(0) + "Hz";
+}
 
 
 //Initialise display of waveform and audio buffers on first load

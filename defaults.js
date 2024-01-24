@@ -180,7 +180,16 @@ function getDefaultPatch(){
         hold: 0,// time in seconds to hold max amplitude
         decay: 0.4,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
         envelopeFilter: 150,// 0-1000 1 = no filter, 1000 = 1/1000 of heaviest filter
-        envMode: 1//1,2 - 1 = delay envelope by same as phase delay, 2 = envelope fixed, shift phase in place
+        envMode: 1,//1,2 - 1 = delay envelope by same as phase delay, 2 = envelope fixed, shift phase in place
+
+        filterF1:10,// 0..10 20*2^(x)
+        filterF2:10,// 0..10 20*2^(x)
+        filterF3:5,// 0..10 20*2^(x)
+        attackF: 0.005,//Linear time to get to max amplitude  in seconds
+        holdF: 0,// time in seconds to hold max amplitude
+        decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
+        filterSlope:12,//db/octave
+        filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
     }
 }
 
