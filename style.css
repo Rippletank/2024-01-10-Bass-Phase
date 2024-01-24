@@ -32,8 +32,9 @@ canvas {
 }
 
 .slider-container .flipLabel {
-   flex-basis: 5%;
-   margin-left: 1em; 
+   flex-basis: 15%;
+   margin-right: 1em;
+   text-align: right; 
 }
 
 .slider-container .modeLabel {
@@ -53,7 +54,7 @@ canvas {
 
 
 .slider-container .mid-slider {
-    flex-basis: 50%;
+    flex-basis: 35%;
 }
 
 .slider-container .short-slider {
@@ -64,6 +65,7 @@ canvas {
     text-align: center;
     margin-left: 6px;
 }
+
 .slider-container .help-icon {
     flex-basis: 20px;
     cursor: pointer;
@@ -117,6 +119,48 @@ canvas {
     padding-top: 0.5em;
     padding-bottom: 0.5em;
 }
+
+#wavePreview{
+ margin-top: 2em;
+ margin-bottom: 0.5em;
+}
+
+.previewButtons {
+    margin-top: 0em;
+    width: 95%;
+    margin-left:auto;
+    margin-right: auto;
+    display: flex;
+    justify-content:right;
+}
+
+.previewButtons .previewL{
+    margin-right:auto;
+    justify-content:left;
+}
+
+.previewButtons .previewButton{
+    margin-top: 0em;
+    margin-bottom: 0.5em;
+    margin-left: 1em;
+    margin-right: 1em;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+    font-size: x-small;
+}
+
+.button-selected {
+    background-color: #007B00; /* Change to the color you want */
+    color: white; /* Change to the color you want */
+    border-radius: 5px;
+}
+
+.button-unselected {
+    background-color: white; /* Change to the color you want */
+    color: #000000; /* Change to the color you want */
+    border-radius: 5px;
+}
+
 
 #centerContainer {
     display: flex;

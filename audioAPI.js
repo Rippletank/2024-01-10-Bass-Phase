@@ -203,12 +203,14 @@ function updateBuffers(patchA, patchB) {
 
 
 
+
 function updateDisplay(){
     if (!audioBufferA || !audioBufferB || !nullTestBuffer) return;
     let maxLength = Math.max(audioBufferA.length, audioBufferB.length, nullTestBuffer.length);
     paintBuffer(audioBufferA, maxLength, "waveformA");
     paintBuffer(audioBufferB, maxLength, "waveformB");
     paintBuffer(nullTestBuffer, maxLength, "waveformNull");
+    paintPreview()
     let nullTest = document.getElementById('nullTestdb');
     nullTest.textContent = " - Peak:" +nullTestMax.toFixed(1) + "dB";
 }
@@ -228,8 +230,169 @@ function paintBuffer(buffer, maxLength, canvasId){
 
     for (let i = 0; i < maxLength; i++) {
         if (i >= bufferSize) break;
-        ctx.lineTo(x, y + b[i] * y);
+        ctx.lineTo(x, y - b[i] * y);//Minus to ensure positive is up
         x += step;
     }
     ctx.stroke();
+}
+
+
+let previewResult = null;
+function updatePreview(patch){
+    switch(previewSubject){
+        case 0: 
+            previewResult = getPreview(cachedPatchCmn);
+            break;
+        case 1: 
+            previewResult = getPreview(cachedPatchA);
+            break;  
+        case 2: 
+            previewResult = getPreview(cachedPatchB);
+            break;  
+    }
+}
+
+let previewSpectrumFullWidth =false;
+let previewSpectrumPolarity = true;
+let previewSpectrumShowPhase = true;
+function paintPreview(){
+    if (!previewResult) return;
+    let canvas = document.getElementById('wavePreview');
+    let ctx = canvas.getContext("2d");
+    let w=canvas.width;
+    let h=canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    //Waveform Preview - left side square
+    let wpCorner= h/16;
+    let wpSize = wpCorner*14;
+    ctx.fillStyle = "rgb(240, 240, 240)";
+    ctx.fillRect(0, 0, wpSize+wpCorner*2, wpSize+wpCorner*2);  
+    ctx.beginPath();    
+    let waveScale = 1/Math.max(Math.abs(previewResult.min),Math.abs(previewResult.max));
+    //waveForm axis lines
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = "rgb(150, 150, 150)";
+    ctx.moveTo(wpCorner, wpCorner + 0.5 * wpSize);
+    ctx.lineTo(wpCorner + wpSize, wpCorner + 0.5 * wpSize); 
+    ctx.moveTo(wpCorner+ 0.5 * wpSize, wpCorner );
+    ctx.lineTo(wpCorner + 0.5 * wpSize, wpCorner + wpSize); 
+    ctx.stroke();
+  
+    //Waveform preview
+    ctx.beginPath();    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(0, 0, 0)";
+    for(let i=0;i<previewResult.samples.length;i++){
+        let x =wpCorner + i * wpSize / previewResult.samples.length;
+        let y =wpCorner + (0.5-0.5 * waveScale * previewResult.samples[i]) * wpSize;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+
+
+    //Spectrum Amplitude preview - right side rectangle
+    let min = -100/20;//db/20 - optimise out the *20 from the db calculation
+    //Spectrum Amplitude preview - right side rectangle
+    let spL= wpCorner*3+wpSize;
+    let spW = w - spL;
+    let spT = 0;
+    let spB = h*( previewSpectrumShowPhase ? 0.75: 1);
+    let spH = (spB-spT) * (previewSpectrumPolarity ? 0.5 : 1);
+    let sp0 = spT+spH;
+    let spScale = spH /min;
+    let count = previewSpectrumFullWidth ? previewResult.magnitude.length : Math.min(previewResult.magnitude.length/2,50);
+    
+    //Spectrum Amplitude axis lines
+    ctx.beginPath(); 
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = "rgb(150, 150, 150)";
+    ctx.moveTo(spL, sp0);
+    ctx.lineTo(spL + spW, sp0); 
+    ctx.moveTo(spL, spT );
+    ctx.lineTo(spL , spB); 
+    ctx.stroke();
+
+
+    ctx.beginPath();    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(0, 0, 200)";
+    for (let i = 0; i < count; i++) {
+        let x =spL + i * spW / count;
+        let mag = previewResult.magnitude[i];
+        let polarity = previewSpectrumPolarity ? Math.sign(mag) : 1;
+        let offset = spH - polarity*spH; //either 0 or spH*2 
+        let y =spT +offset + polarity * Math.max(min, Math.log10( Math.abs(mag))) * spScale;
+        ctx.moveTo(x, sp0);
+        ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    if (!previewSpectrumFullWidth)
+    {
+        //Draw dots to show harmonics on zoomed in view        
+        ctx.fillStyle = "rgb(0, 0, 100)";
+        for (let i = 0; i < count; i++) {
+            let x =spL + i * spW / count;
+            ctx.fillRect(x-0.5, sp0-0.5, 1, 1); 
+        }
+    }
+
+    if (!previewSpectrumShowPhase) return;
+    //Spectrum Phase preview - right side rectangle
+    let pL= spL;
+    let pW = spW;
+    let pT = spB + h*0.05;//Small gap between amplitude and phase graphs
+    let pB = h;
+    let pH =(pB-pT)*0.5;
+    let p0 = pT+pH;
+    let pScale = pH / Math.PI;
+    
+    //Spectrum Phase axis lines
+    ctx.beginPath(); 
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = "rgb(150, 150, 150)";
+    ctx.moveTo(pL, p0);
+    ctx.lineTo(pL + pW, p0); 
+    ctx.moveTo(pL, pT );
+    ctx.lineTo(pL , pB); 
+    ctx.stroke();
+
+
+    ctx.beginPath();    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(100, 0, 0)";
+    //Spectrum preview - right side rectangle
+    for (let i = 0; i < count; i++) {
+        let x =pL + i * pW / count;
+        let phase = -previewResult.phase[i];
+        if(!previewSpectrumPolarity) {
+            let mag = previewResult.magnitude[i];
+            if (mag<0) phase+=Math.PI;
+        }
+        //Scale to +/- PI
+        let nos2Pis = phase/(2*Math.PI);
+        phase -= Math.floor(nos2Pis)*2*Math.PI; //Floor works for negative numbers too (floor(-1.5)=-2)
+        if (phase>=Math.PI) phase-=2*Math.PI;
+        let y =p0 + phase * pScale;
+        ctx.moveTo(x, p0);
+        ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    if (!previewSpectrumFullWidth)
+    {
+        //Draw dots to show harmonics on zoomed in view        
+        ctx.fillStyle = "rgb(50, 0, 0)";
+        for (let i = 0; i < count; i++) {
+            let x =pL + i * pW / count;
+            ctx.fillRect(x-0.5, p0-0.5, 1, 1); 
+        }
+    }
+
+
 }
