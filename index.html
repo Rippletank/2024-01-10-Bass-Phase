@@ -10,62 +10,37 @@
     <h1>Low Frequency Phase-shift Test</h1>
 
 
+    <datalist id="ticksPlus1ZeroMinus1">
+        <option value="-1">
+        <option value="0">
+        <option value="1">
+    </datalist>
+
+    <datalist id="ticksPlus2ZeroMinus2">
+        <option value="-2" label="">
+        <option value="-1.5" label="">
+        <option value="-1" label="-π">
+        <option value="-0.5" label="">
+        <option value="0"  label="0">
+        <option value="0.5" label="">
+        <option value="1"  label="π">
+        <option value="1.5" label="">
+        <option value="2" label="">
+    </datalist>
 
 
 
-    <div class="bordered"  id="SoundASetup">
-        <h3>Sound A</h3>
-        <div>
-            <canvas id="waveformA" width ="800" height="200"></canvas>
-        </div>
-        <div class="slider-container">
-            <label for="rootPhaseDelayA">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelayA" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0">
-            <output class="valueSpan" name="rootPhaseDelay">0π (0ms)</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
-        </div>
-        <button id="playSoundA">Play A</button>
-    </div>
 
+    <datalist id="ticksPlus1Zero">
+        <option value="0">
+        <option value="1">
+    </datalist>
 
-
-    <div class="bordered" id="SoundBSetup">
-        <h3>Sound B</h3>
-        <div>
-            <canvas id="waveformB"  width ="800" height="200"></canvas>
-        </div>
-        <div class="slider-container">
-            <label for="rootPhaseDelayB">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0.25">
-            <output class="valueSpan" name="rootPhaseDelay">0.25π (10.0ms)</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Phase delay of first harmonic for Sound B. Affects 2nd harmonic according to settings in common section.</div>
-        </div>
-        <button id="playSoundB">Play B</button>
-    </div>
-
-    <br>
-
-
-    <div id="centerContainer">
-        <div id="abxTestContainer">
-            <h3>ABX test</h3>
-            <ol id="results"></ol>
-            <button id="abxTest" class="testCenter">Test</button>
-            <div id="abxButtons"  style="display: none;">
-                <button id="buttonA">X is A</button>
-                <button id="play">Play X</button>
-                <button id="buttonB">X is B</button>
-            </div>
-            <p id="stats" class="testCenter"></p>
-            <br>
-            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
-        </div>
-    </div>
-    <div class="bordered">
-        <h3>Background info - see <a href="#Notes1">notes</a></h3>
-    </div>
+    <datalist id="ticks0half1">
+        <option value="0">
+        <option value="0.5">
+        <option value="1">
+    </datalist>
 
 
     
@@ -86,9 +61,9 @@
         </div>
         <div class="slider-container">
             <label for="even">Even Level:</label>
-            <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider">
+            <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider" list="ticksPlus1ZeroMinus1">
             <label for="evenAlternating"  class="flipLabel">Alt Amt:</label>
-            <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
+            <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
             <output class="valueSpan" name="even">-1</output>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
@@ -103,9 +78,9 @@
 
         <div class="slider-container">
             <label for="odd">Odd Level:</label>
-            <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider">
+            <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
             <label for="oddAlternating"  class="flipLabel">Alt Amt:</label>
-            <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider">
+            <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
             <output class="valueSpan" name="odd">1</output>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
@@ -119,21 +94,21 @@
         </div>
         <div class="slider-container">
             <label for="SineToCos">Phase at t=0</label>
-            <input type="range" id="SineToCos" name="sinCos" min="-1" max="1" step="0.1" value="0" class="longish-slider">
+            <input type="range" id="SineToCos" name="sinCos" min="-1" max="1" step="0.1" value="0" class="longish-slider" list="ticksPlus1ZeroMinus1">
             <output class="valueSpan longOut" name="sinCos">0</output>
             <span class="help-icon">?</span>
             <div class="help-popup">A fixed phase offset for all harmonics, adjust the phase of waves at t=0. Needed for pulse waves</div>
         </div>
         <div class="slider-container">
             <label for="altW">Alternation Freq:</label>
-            <input type="range" id="altW" name="altW" min="0" max="1" step="0.05" value="0.5" class="longish-slider">
+            <input type="range" id="altW" name="altW" min="0" max="1" step="0.05" value="0.5" class="longish-slider" list="ticks0half1">
             <output class="valueSpan longOut" name="altW">0</output>
             <span class="help-icon">?</span>
             <div class="help-popup">How often the polarity alternates as harmonics are added, the polarity. Usually at 2 to when set of harmonics to alternate (eg triangle). Equivalent to the duty cycle when set up for a pulse wave and values other than 2 used.</div>
         </div>
         <div class="slider-container">
             <label for="altOffset">Alternation Offset:</label>
-            <input type="range" id="altOffset" name="altOffset" min="-1" max="1" step="0.1" value="0.0" class="longish-slider">
+            <input type="range" id="altOffset" name="altOffset" min="-1" max="1" step="0.1" value="0.0" class="longish-slider" list="ticksPlus1ZeroMinus1">
             <output class="valueSpan longOut" name="altOffset">0</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Adjusts where the positive, negative and zero values of the alternations falls. When at zero, with Alternation Freq set to 2, the alternations fall on odd harmonics. Change to +/-1 to fall on even harmonics.</div>
@@ -219,9 +194,9 @@
     <div class="bordered">
         <h3>FFT</h3>
         <div class="fftPlayButtons">
-            <button id="fftPlayA">Play A</button>
-            <button id="fftPlayB">Play B</button>
-            <button id="fftPlayN">Play Null</button>
+            <button id="fftPlayA" class="fftPlayButton">Play A</button>
+            <button id="fftPlayB" class="fftPlayButton">Play B</button>
+            <button id="fftPlayN" class="fftPlayButton">Play Null</button>
         </div>
         <div>
             <canvas id="fftCanvas" width ="800" height="200"></canvas>
@@ -229,6 +204,7 @@
         <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
         <button id="hideFFT">Hide FFT</button>
     </div>
+
 
     <div class="bordered">
         <h3>Null test <span id="nullTestdb"></span></h3>        
@@ -238,6 +214,62 @@
         <button id="playSoundNull">Play</button>
         <p>See <a href="#Notes1">explanation of Null Test</a></p>
     </div>
+
+    <div class="bordered"  id="SoundASetup">
+        <h3>Sound A</h3>
+        <div>
+            <canvas id="waveformA" width ="800" height="200"></canvas>
+        </div>
+        <div class="slider-container">
+            <label for="rootPhaseDelayA">Root Phase Shift:</label>
+            <input type="range" id="rootPhaseDelayA" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0" list="ticksPlus2ZeroMinus2">
+            <output class="valueSpan" name="rootPhaseDelay">0π (0ms)</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
+        </div>
+        <button id="playSoundA">Play A</button>
+    </div>
+
+
+
+    <div class="bordered" id="SoundBSetup">
+        <h3>Sound B</h3>
+        <div>
+            <canvas id="waveformB"  width ="800" height="200"></canvas>
+        </div>
+        <div class="slider-container">
+            <label for="rootPhaseDelayB">Root Phase Shift:</label>
+            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0.25" list="ticksPlus2ZeroMinus2">
+            <output class="valueSpan" name="rootPhaseDelay">0.25π (10.0ms)</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Phase delay of first harmonic for Sound B. Affects 2nd harmonic according to settings in common section.</div>
+        </div>
+        <button id="playSoundB">Play B</button>
+    </div>
+
+    <br>
+
+
+    <div id="centerContainer">
+        <div id="abxTestContainer">
+            <h3>ABX test</h3>
+            <ol id="results"></ol>
+            <button id="abxTest" class="testCenter">Test</button>
+            <div id="abxButtons"  style="display: none;">
+                <button id="buttonA">X is A</button>
+                <button id="play">Play X</button>
+                <button id="buttonB">X is B</button>
+            </div>
+            <p id="stats" class="testCenter"></p>
+            <br>
+            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
+        </div>
+    </div>
+    <div class="bordered">
+        <h3>Background info - see <a href="#Notes1">notes</a></h3>
+    </div>
+
+
     
 
     <div id="Notes1" class="bordered">
