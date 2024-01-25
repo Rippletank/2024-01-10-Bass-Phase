@@ -159,7 +159,7 @@ let envelopePresets = [
 
 let filterPresets = [
     {   
-        name:"default",
+        name:"open",
         patch:{
             filterF1:10,
             filterF2:10,
@@ -168,7 +168,7 @@ let filterPresets = [
             holdF:0,
             decayF:0.2,
             filterSlope:12,
-            filterPeak:0,
+            filterPeak:24,
         }
     },    
     {   
@@ -183,6 +183,19 @@ let filterPresets = [
             filterSlope:24,
             filterPeak:0,
         }
+    },      
+    {   
+        name:"Bop",
+        patch:{
+            filterF1:2,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.05,
+            holdF:0,
+            decayF:0.1,
+            filterSlope:24,
+            filterPeak:0,
+        }
     },    
     {   
         name:"Test",
@@ -193,7 +206,7 @@ let filterPresets = [
             attackF:0.04,
             holdF:0,
             decayF:0.08,
-            filterSlope:24,
+            filterSlope:48,
             filterPeak:0,
         }
     },    
@@ -244,7 +257,7 @@ function getDefaultPatch(){
         attackF: 0.005,//Linear time to get to max amplitude  in seconds
         holdF: 0,// time in seconds to hold max amplitude
         decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
-        filterSlope:12,//db/octave, 0=off
+        filterSlope:0,//db/octave, 0=off
         filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
     }
 }

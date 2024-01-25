@@ -316,7 +316,14 @@ function updateLabelsFor(containerId, patch) {
             case "decay": ve.textContent = patch.decay + "s";break;
             case "hold": ve.textContent = patch.hold + "s";break;
             case "envelopeFilter": 
-                ve.textContent = patch.envelopeFilter=="1"? "off" : patch.envelopeFilter.toFixed(0);
+                if (patch.envelopeFilter==0) 
+                    {
+                        ve.innerHTML = "<b>OFF</b>";
+                    }
+                    else
+                    {
+                        ve.textContent = patch.envelopeFilter.toFixed(0);
+                    }
                 break;
 
 
@@ -326,7 +333,16 @@ function updateLabelsFor(containerId, patch) {
             case "filterF1": ve.textContent = toFilterFreq(patch.filterF1);break;
             case "filterF2": ve.textContent = toFilterFreq(patch.filterF2);break;
             case "filterF3": ve.textContent = toFilterFreq(patch.filterF3);break;
-            case "filterSlope": ve.textContent =patch.filterSlope==0? "off" : patch.filterSlope.toFixed(0)+"db/oct";break;
+            case "filterSlope": 
+            if (patch.filterSlope==0) 
+                {
+                    ve.innerHTML = "<b>OFF</b>";
+                }
+                else
+                {
+                    ve.textContent = patch.filterSlope.toFixed(0)+"db/oct";
+                }
+            break;
 
             case "rootPhaseDelay": 
                 ve.innerHTML =getPhaseLabel(patch);break;

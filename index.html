@@ -174,7 +174,15 @@
         </div>
 
         <div class="slider-container">
-            <label for="filterF1">Start Freq:</label>
+            <label for="filterSlope">Slope</label>
+            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12">
+            <output class="valueSpan" name="filterSlope">12db/octave</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Slope of filter after cut-off</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterF1">Frequency f1:</label>
             <input type="range" id="filterF1" name="filterF1" min="0" max="10" step="0.01" value="10">
             <output class="valueSpan" name="filterF1">20000Hz</output>
             <span class="help-icon">?</span>
@@ -182,15 +190,7 @@
         </div>
 
         <div class="slider-container">
-            <label for="attackF">Attack:</label>
-            <input type="range" id="attackF" name="attackF" min="0.001" max="0.2" step="0.001" value="0.005">
-            <output class="valueSpan" name="attackF">0.005s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time for the linear (in frequency) attack of filter envelope</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="filterF2">Hold Freq:</label>
+            <label for="filterF2">Frequency f2:</label>
             <input type="range" id="filterF2" name="filterF2" min="0" max="10" step="0.01" value="10">
             <output class="valueSpan" name="filterF2">20000Hz</output>
             <span class="help-icon">?</span>
@@ -198,23 +198,7 @@
         </div>
 
         <div class="slider-container">
-            <label for="holdF">Hold:</label>
-            <input type="range" id="holdF" name="holdF" min="0.00" max="1" step="0.01" value="0.0">
-            <output class="valueSpan" name="holdF">0s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time filter held at maximum between attack and decay</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="decayF">Decay:</label>
-            <input type="range" id="decayF" name="decayF" min="0.01" max="2" step="0.01" value="0.4">
-            <output class="valueSpan" name="decayF">0.4s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time for the linear (in frequency) decay of filter envelope</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="filterF3">End Freq:</label>
+            <label for="filterF3">Frequency f3:</label>
             <input type="range" id="filterF3" name="filterF3" min="0" max="10" step="0.01" value="10">
             <output class="valueSpan" name="filterF3">20000Hz</output>
             <span class="help-icon">?</span>
@@ -222,11 +206,27 @@
         </div>
 
         <div class="slider-container">
-            <label for="filterSlope">Slope</label>
-            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12">
-            <output class="valueSpan" name="filterSlope">12db/octave</output>
+            <label for="attackF">Attack (f1→f2):</label>
+            <input type="range" id="attackF" name="attackF" min="0.001" max="0.2" step="0.001" value="0.005">
+            <output class="valueSpan" name="attackF">0.005s</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Slope of filter after cut-off</div>
+            <div class="help-popup">Controls the time for the linear (in frequency) attack of filter envelope</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="holdF">Hold (f2):</label>
+            <input type="range" id="holdF" name="holdF" min="0.00" max="1" step="0.01" value="0.0">
+            <output class="valueSpan" name="holdF">0s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time filter held at maximum between attack and decay</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="decayF">Decay (f2→f3):</label>
+            <input type="range" id="decayF" name="decayF" min="0.01" max="2" step="0.01" value="0.4">
+            <output class="valueSpan" name="decayF">0.4s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the linear (in frequency) decay of filter envelope</div>
         </div>
 
     </div>

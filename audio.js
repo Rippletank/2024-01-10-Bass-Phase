@@ -173,9 +173,9 @@ function buildFilter(
         let isDecay = false;
         let isAttack = true;
         const pi2_sr = 2 * Math.PI / sampleRate;
-        const f1 = 20*Math.pow(2,patch.filterF1) * pi2_sr;
-        const f2 = 20*Math.pow(2,patch.filterF2) * pi2_sr;
-        const f3 = 20*Math.pow(2,patch.filterF3) * pi2_sr;
+        const f1 = patch.filterF1 ;
+        const f2 = patch.filterF2;
+        const f3 = patch.filterF3;
         const attackSamples = patch.attackF * sampleRate;
         const attackRate = (f2-f1) / attackSamples; //Linear attack
         const holdSamples =attackSamples + patch.holdF * sampleRate;
@@ -188,8 +188,8 @@ function buildFilter(
         let y=f1;
         const a = 1/Math.max(1,patch.envelopeFilter);
 
-        let envValues = [1/y]; // Array to store env values
-        for (let i = 1; i < bufferSize; i++) {
+        let envValues = []; // Array to store env values
+        for (let i = 0; i < bufferSize; i++) {
             if (isHold){
                 if (i >= holdSamples){
                     isHold = false;
@@ -215,7 +215,7 @@ function buildFilter(
             }
             //Band limit envelope 1-pole IIR low pass
             y +=  a * (x - y);
-            envValues.push(1/y);
+            envValues.push(1/(20*Math.pow(2,y) * pi2_sr));// convert to rads/sample freq = 20*Math.pow(2,y), w0 = 2piF/sampleRate then store 1/w0
         }
         let order2 = patch.filterSlope/6*2; //2n, n=filterOrder, filterOrder = filterSlope/6
         return {
@@ -287,8 +287,8 @@ function mixInSine(
             if (l<zeroLevel) continue;
             if (filter){
                 let c=w *filter.invW0[env];
-                //if (c>filter.stopBandEnd) continue;
-                //if (c>filter.passBandEnd)
+                if (c>filter.stopBandEnd) continue;
+                if (c>filter.passBandEnd)
                 {
                     l*=Math.pow(1 + Math.pow(c,filter.order2),-0.5); 
                 }
