@@ -62,7 +62,13 @@ function playAudio(index, patchA, patchB) {
     newSourceNode.onended = ()=>{
         if (newSourceNode==sourceNode)
         {
-            stop();
+            //delay stop to allow fft to finish decay
+            setInterval(function() {
+                if (newSourceNode==sourceNode) {
+                    stop();
+                }
+            }, 500); 
+            
         }   
     }
     sourceNode = newSourceNode;

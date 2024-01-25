@@ -198,14 +198,14 @@ let filterPresets = [
         }
     },    
     {   
-        name:"Test",
+        name:"Sweep",
         patch:{
             filterF1:0,
             filterF2:10,
             filterF3:2,
             attackF:0.04,
             holdF:0,
-            decayF:0.08,
+            decayF:0.37,
             filterSlope:48,
             filterPeak:0,
         }
