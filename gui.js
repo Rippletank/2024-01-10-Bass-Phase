@@ -23,6 +23,7 @@
 //Buttons with specific actions
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+//Play buttons
 document.getElementById('playSoundA').addEventListener('click', function() {
     play(0);
 });
@@ -41,12 +42,32 @@ document.getElementById('fftPlayB').addEventListener('click', function() {
 document.getElementById('fftPlayN').addEventListener('click', function() {
     play(2);
 });
+
+function play(index){
+    playAudio(index, cachedPatchA, cachedPatchB);   
+}
+
+//FFT buttons
 document.getElementById('hideFFT').addEventListener('click', function() {
     useFFT = !useFFT;
     if (!useFFT) fftClear();
     this.textContent = useFFT ? "Hide FFT" : "Show FFT";
 });
 
+//Waveform overlay buttons
+document.getElementById('waveformShowF').addEventListener('click', function() {
+    showBufferFilterOverlay=!showBufferFilterOverlay;
+    updatePreviewButtonState();
+    updateDisplay();
+});
+document.getElementById('waveformShowEG').addEventListener('click', function() {
+    showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
+    updatePreviewButtonState();
+    updateDisplay();
+});
+
+
+//Harmonics Preview option buttons
 document.getElementById('fullButton').addEventListener('click', function() {
     previewSpectrumFullWidth=!previewSpectrumFullWidth;
     updatePreviewButtonState();
@@ -96,17 +117,6 @@ document.getElementById('previewF3').addEventListener('click', function() {
     DoFullPreviewUpdate();
 });
 
-document.getElementById('waveformShowF').addEventListener('click', function() {
-    showBufferFilterOverlay=!showBufferFilterOverlay;
-    updatePreviewButtonState();
-    updateDisplay();
-});
-document.getElementById('waveformShowEG').addEventListener('click', function() {
-    showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
-    updatePreviewButtonState();
-    updateDisplay();
-});
-
 function DoFullPreviewUpdate(){
     updatePreviewButtonState();
     updatePreview();
@@ -143,7 +153,21 @@ function updatePreviewButtonState(){
     previewBtns[1].classList.add(previewSpectrumShowPhase ? 'button-selected' : 'button-unselected');
     previewBtns[2].classList.add(previewSpectrumPolarity ? 'button-selected' : 'button-unselected');
 
-    bufferPreviewBtns = filterPreBtns ?? [
+    filterPreBtns = filterPreBtns ?? [
+        document.getElementById('previewF0'),
+        document.getElementById('previewF1'),
+        document.getElementById('previewF2'),
+        document.getElementById('previewF3')
+    ];
+    filterPreBtns.forEach(function(button) {
+        button.classList.remove('button-selected');
+        button.classList.remove('button-unselected');
+    });
+    for (let i=0; i<filterPreBtns.length; i++){
+        filterPreBtns[i].classList.add(i==filterPreviewSubject ? 'button-selected' : 'button-unselected');
+    }    
+
+    bufferPreviewBtns = bufferPreviewBtns ?? [
         document.getElementById('waveformShowF'),
         document.getElementById('waveformShowEG')
     ];
@@ -157,12 +181,8 @@ function updatePreviewButtonState(){
 }
 
 
-function play(index){
-    playAudio(index, cachedPatchA, cachedPatchB);   
-}
-
+//Canvas resize handler
 window.addEventListener('resize', updateCanvas);
-
 function updateCanvas() {
     let canvasA = document.getElementById('waveformA');
     let canvasB = document.getElementById('waveformB');
@@ -178,7 +198,7 @@ function updateCanvas() {
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Buttons with specific actions
+//Generally methods for sliders and preset buttons
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -194,7 +214,7 @@ function initSliders(){
     setupPresetButtons();
     updatePreviewButtonState();
     
-    loadPreset(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch());
+    loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), defaultTestSubjectList);
 
 
     //Check at regular intervals if any sliders have changed and update display if so
@@ -211,17 +231,23 @@ function wireUpSlidersForContainer(id) {
     var element = document.getElementById(id);
     var sliderContainers = element.querySelectorAll('.slider-container');
     sliderContainers.forEach(function(sliderContainer) {
-        var rangedInputs = sliderContainer.querySelectorAll('input[type="range"]');
-        rangedInputs.forEach(function(rangedInput) {
-            rangedInput.addEventListener('input', function() {
-                updateAllLabelsAndCachePatches();
-                changed=true;
-                lastUpdate = Date.now();
-                updatePreview();
-                paintPreview();
-            });
+        setupNewSliderContainer(sliderContainer);
+    });
+}
+function setupNewSliderContainer(sliderContainer) {
+    var rangedInputs = sliderContainer.querySelectorAll('input[type="range"]');
+    rangedInputs.forEach(function(rangedInput) {
+        rangedInput.addEventListener('input', function() {
+            handleValueChange();
         });
     });
+}
+function handleValueChange() {
+    updateAllLabelsAndCachePatches();
+    changed=true;
+    lastUpdate = Date.now();
+    updatePreview();
+    paintPreview();
 }
 
 function loadSliderValuesFromContainer(id, patch) {
@@ -249,16 +275,20 @@ function insertPresetButtons(id, presetList){
         var button = document.createElement('button');
         button.textContent = preset.name;
         button.addEventListener('click', function() {
-            loadPreset(preset.patch);
+            loadPatches(preset.patch);
         });
         buttonContainer.appendChild(button);
     });
 }
 
-function loadPreset(patch, patchA, patchB) {
+function loadPatches(patch, patchA, patchB, testSubjectList) {
     loadPatchIntoContainer('CommonSettings', patch);
     loadPatchIntoContainer('FilterSetup', patch);
     loadPatchIntoContainer('TestSetup', patch);
+    if(testSubjectList)
+    {
+        loadTestSubjectList(testSubjectList);
+    }
     loadPatchIntoContainer('SoundASetup', patchA ?? patch);
     loadPatchIntoContainer('SoundBSetup', patchB ??patch);
     updateAllLabelsAndCachePatches();
@@ -302,7 +332,8 @@ function updateAllLabelsAndCachePatches(){
 }
 
 
-
+//Main method for displaying values on GUI
+//Only method that knows specifics about the values of sliders and their meaning
 function updateLabelsFor(containerId, patch) {
     var element = document.getElementById(containerId);
     var valueElements = element.querySelectorAll('.valueSpan');
@@ -438,12 +469,134 @@ function toFilterFreq(x){
 }
 
 
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Setup which variables are going to be changeable individually for sounds
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Select all divs with the 'slider-container' class
+let sliderContainers = [];
+let SoundSetups = [                
+    {
+        container:document.getElementById('SoundASetup'),
+        button:document.getElementById('playSoundA')
+    },
+    {
+        container: document.getElementById('SoundBSetup'),
+        button:document.getElementById('playSoundB')
+    }
+];
+
+// For each div
+document.querySelectorAll('.slider-container').forEach((div) => {
+    let sliders = div.querySelectorAll('input[type=range]');
+    let labels = div.querySelectorAll('label');
+    let outputs = div.querySelectorAll('output');
+
+    let name = sliders[0].name;
+    div.setAttribute('data-name',name);
+
+    let checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.setAttribute('data-target', name);
+    checkbox.addEventListener('change', () => {
+        // If checkbox is checked
+        if (checkbox.checked) {
+            SoundSetups.forEach((setup) => {                
+                let copy = div.cloneNode(true);
+                setupNewSliderContainer(copy);
+                // Change the ID of labels and ranges
+                copy.querySelectorAll('label').forEach((label) => {
+                    label.htmlFor += 'A';
+                });
+                copy.querySelectorAll('input[type=range]').forEach((input)=>{
+                    input.id += 'A';
+                });
+                copy.querySelectorAll('input[type=checkbox]').forEach((input)=>{
+                    input.classList.add('hiddenCheckbox');
+                });
+
+                // Add the copies to 'SoundASetup' and 'SoundBSetup'
+                if (!setup.container.querySelector('[data-name="'+name+'"]')){
+                    setup.container.insertBefore(copy, setup.button);
+                }
+            })
+            
+            // Disable the div
+            sliders.forEach((input)=>{
+                input.style.pointerEvents = 'none';
+                input.style.opacity = '0.3';
+            });
+            labels.forEach((input)=>{
+                input.style.opacity = '0.4';
+            });
+            outputs.forEach((input)=>{
+                input.style.opacity = '0.3';
+            });
+        } else {
+            // Enable the div
+            sliders.forEach((input)=>{
+                input.style.pointerEvents = 'auto';
+                input.style.opacity = '1';
+            });
+            labels.forEach((input)=>{
+                input.style.opacity = '1';
+            });
+            outputs.forEach((input)=>{
+                input.style.opacity ='1';
+            });
+            
+            // Remove the copies from 'SoundASetup' and 'SoundBSetup'
+            SoundSetups.forEach((setup) => {
+                let copy = setup.container.querySelector('[data-name="'+name+'"]');
+                copy && copy.parentNode.removeChild(copy);
+            });
+        }
+        handleValueChange();
+    });
+
+    // Add the checkbox to the div
+    div.insertBefore(checkbox, div.firstChild);
+    sliderContainers.push(
+        {
+            name:name,
+            div:div,
+            checkbox:checkbox
+        });
+});
+
+
+function loadTestSubjectList(list)
+{
+    if (!list) return;
+    sliderContainers.forEach(
+        (container)=>{
+            const startV =container.checkbox.checked;
+            container.checkbox.checked = list.includes(container.name);
+            if (startV != container.checkbox.checked)
+            {
+                const event = new Event('change');
+                container.checkbox.dispatchEvent(event);
+            }
+        }
+    );
+}
+
+function getTestSubjectList(){
+    let list = [];
+    sliderContainers.forEach(
+        (container)=>{
+            if (container.checkbox.checked) list.push(container.name);
+        }
+    );
+    return list;
+}
+
 //Initialise display of waveform and audio buffers on first load
 initSliders();
 
-
-
-
+console.log("TestSubjectList: " + getTestSubjectList());    
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //ABX TEST GUI Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -52,6 +52,13 @@ canvas {
     flex-basis: 70%;
 }
 
+.slider-container input[type=checkbox] {
+    flex-basis: 2%;
+    opacity: 0.7;
+}
+.slider-container .hiddenCheckbox {
+    display: none;
+}
 
 .slider-container .mid-slider {
     flex-basis: 36%;
@@ -238,4 +245,8 @@ canvas {
     margin-right: auto;
     margin-top: 2em;
     margin-bottom: 1em;
+}
+
+.waveformCanvas {
+    margin-bottom: 2em;
 }

@@ -21,6 +21,12 @@
 //Default values and presets - no knowledge of anything else in the code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+let defaultTestSubjectList = 
+[
+    "rootPhaseDelay"
+];
+
+
 let wavePresets = [
     {
         name:"default", 
@@ -159,16 +165,16 @@ let envelopePresets = [
 
 let filterPresets = [
     {   
-        name:"open",
+        name:"default",
         patch:{
             filterF1:10,
             filterF2:10,
-            filterF3:5,
+            filterF3:10,
             attackF:0.005,
             holdF:0,
             decayF:0.2,
             filterSlope:12,
-            filterPeak:24,
+            filterPeak:12,
         }
     },    
     {   
@@ -185,7 +191,7 @@ let filterPresets = [
         }
     },      
     {   
-        name:"Bop",
+        name:"Beep",
         patch:{
             filterF1:2,
             filterF2:10,
@@ -253,7 +259,7 @@ function getDefaultPatch(){
 
         filterF1:10,// 0..10 20*2^(x)
         filterF2:10,// 0..10 20*2^(x)
-        filterF3:5,// 0..10 20*2^(x)
+        filterF3:10,// 0..10 20*2^(x)
         attackF: 0.005,//Linear time to get to max amplitude  in seconds
         holdF: 0,// time in seconds to hold max amplitude
         decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
