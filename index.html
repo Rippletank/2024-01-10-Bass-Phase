@@ -43,6 +43,59 @@
     </datalist>
 
 
+    <!--**********************************************************************-->
+    <!--*****************  Start ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
+
+    <div class="bordered"  id="SoundASetup">
+        <h3>Sound A</h3>
+        <div>
+            <canvas id="waveformA"  class="waveformCanvas" width ="800" height="200"></canvas>
+        </div>
+        <button id="playSoundA">Play A</button>
+    </div>
+
+
+
+    <div class="bordered" id="SoundBSetup">
+        <h3>Sound B</h3>
+        <div>
+            <canvas id="waveformB"  class="waveformCanvas" width ="800" height="200"></canvas>
+        </div>
+        <button id="playSoundB">Play B</button>
+    </div>
+
+    <br>
+
+
+    <div id="centerContainer">
+        <div id="abxTestContainer">
+            <h3>ABX test</h3>
+            <ol id="results"></ol>
+            <button id="abxTest" class="testCenter">Test</button>
+            <div id="abxButtons"  style="display: none;">
+                <button id="buttonA">X is A</button>
+                <button id="play">Play X</button>
+                <button id="buttonB">X is B</button>
+            </div>
+            <p id="stats" class="testCenter"></p>
+            <br>
+            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
+        </div>
+    </div>
+    <div class="bordered">
+        <h3>Background info - see <a href="#Notes1">notes</a></h3>
+        <div class ="previewButtons">
+            <div class="previewButtons">
+                <button id="waveformShowF" class = "previewButton">Filter overlays</button>
+                <button id="waveformShowEG" class = "previewButton">Envelope overlays</button>
+            </div>
+        </div>
+    </div>
+
+    <!--**********************************************************************-->
+    <!--*******************  End ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
     
     <div class="bordered" id="CommonSettings">
         <h3>Sound Settings</h3>
@@ -122,6 +175,12 @@
                 <button id="previewA" class = "previewButton">A</button>
                 <button id="previewB" class = "previewButton">B</button>
             </div>
+            <div class="previewButtons previewC">
+                <button id="previewF0" class = "previewButton">off</button>
+                <button id="previewF1" class = "previewButton">F1</button>
+                <button id="previewF2" class = "previewButton">F2</button>
+                <button id="previewF3" class = "previewButton">F3</button>
+            </div>
 
             <div class="previewButtons">
                 <button id="fullButton" class = "previewButton">Full</button>
@@ -166,10 +225,81 @@
             <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
         </div>
     </div>
+    <div class="bordered" id="FilterSetup">
+        <h3>Filter Settings</h3>
+        <div class="presetHeader">
+            <h4>Filter</h4>
+            <div id="filterPresetButtons" class="PresetButtons"></div>
+        </div>
 
+        <div class="slider-container">
+            <label for="filterSlope">Slope</label>
+            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12">
+            <output class="valueSpan" name="filterSlope">12db/octave</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Slope of filter after cut-off</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterF1">Frequency f1:</label>
+            <input type="range" id="filterF1" name="filterF1" min="0" max="10" step="0.01" value="10">
+            <output class="valueSpan" name="filterF1">20000Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Start frequency of filter</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterF2">Frequency f2:</label>
+            <input type="range" id="filterF2" name="filterF2" min="0" max="10" step="0.01" value="10">
+            <output class="valueSpan" name="filterF2">20000Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Hold (or end of attack) frequency of filter</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterF3">Frequency f3:</label>
+            <input type="range" id="filterF3" name="filterF3" min="0" max="10" step="0.01" value="10">
+            <output class="valueSpan" name="filterF3">20000Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">End frequency of filter</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="attackF">Attack (f1→f2):</label>
+            <input type="range" id="attackF" name="attackF" min="0.001" max="0.2" step="0.001" value="0.005">
+            <output class="valueSpan" name="attackF">0.005s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the linear (in frequency) attack of filter envelope</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="holdF">Hold (f2):</label>
+            <input type="range" id="holdF" name="holdF" min="0.00" max="1" step="0.01" value="0.0">
+            <output class="valueSpan" name="holdF">0s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time filter held at maximum between attack and decay</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="decayF">Decay (f2→f3):</label>
+            <input type="range" id="decayF" name="decayF" min="0.01" max="2" step="0.01" value="0.4">
+            <output class="valueSpan" name="decayF">0.4s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the linear (in frequency) decay of filter envelope</div>
+        </div>
+
+    </div>
 
     <div class="bordered" id="TestSetup">
         <h3>Phase shift settings</h3>
+        <h4>Root Phase shift</h4>
+        <div class="slider-container">
+            <label for="rootPhaseDelay">Root Phase Shift:</label>
+            <input type="range" id="rootPhaseDelay" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0" list="ticksPlus2ZeroMinus2">
+            <output class="valueSpan" name="rootPhaseDelay">0π (0ms)</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
+        </div>
 
         <h4>Envelope Mode</h4>
         <div class="slider-container">
@@ -209,64 +339,10 @@
     <div class="bordered">
         <h3>Null test <span id="nullTestdb"></span></h3>        
         <div>
-            <canvas id="waveformNull"  width ="800" height="200"></canvas>
+            <canvas id="waveformNull" width ="800" height="200"></canvas>
         </div>
         <button id="playSoundNull">Play</button>
         <p>See <a href="#Notes1">explanation of Null Test</a></p>
-    </div>
-
-    <div class="bordered"  id="SoundASetup">
-        <h3>Sound A</h3>
-        <div>
-            <canvas id="waveformA" width ="800" height="200"></canvas>
-        </div>
-        <div class="slider-container">
-            <label for="rootPhaseDelayA">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelayA" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0" list="ticksPlus2ZeroMinus2">
-            <output class="valueSpan" name="rootPhaseDelay">0π (0ms)</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
-        </div>
-        <button id="playSoundA">Play A</button>
-    </div>
-
-
-
-    <div class="bordered" id="SoundBSetup">
-        <h3>Sound B</h3>
-        <div>
-            <canvas id="waveformB"  width ="800" height="200"></canvas>
-        </div>
-        <div class="slider-container">
-            <label for="rootPhaseDelayB">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelayB" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0.25" list="ticksPlus2ZeroMinus2">
-            <output class="valueSpan" name="rootPhaseDelay">0.25π (10.0ms)</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Phase delay of first harmonic for Sound B. Affects 2nd harmonic according to settings in common section.</div>
-        </div>
-        <button id="playSoundB">Play B</button>
-    </div>
-
-    <br>
-
-
-    <div id="centerContainer">
-        <div id="abxTestContainer">
-            <h3>ABX test</h3>
-            <ol id="results"></ol>
-            <button id="abxTest" class="testCenter">Test</button>
-            <div id="abxButtons"  style="display: none;">
-                <button id="buttonA">X is A</button>
-                <button id="play">Play X</button>
-                <button id="buttonB">X is B</button>
-            </div>
-            <p id="stats" class="testCenter"></p>
-            <br>
-            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
-        </div>
-    </div>
-    <div class="bordered">
-        <h3>Background info - see <a href="#Notes1">notes</a></h3>
     </div>
 
 
@@ -276,13 +352,14 @@
         <h3>Notes: Background</h3>
         <p>This page was created to help investigate audibility of low frequency phase shifts.</p>
         <p>It generates two sounds with identical harmonic content and envelopes as set by the common controls.</p>
-        <p>Each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. Higher harmonic can also be phase shifted by a specified fraction of the root phase shift.</p>
+        <p>By default, each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. Higher harmonic can also be phase shifted by a specified fraction of the root phase shift.</p>
         <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
         <p>By default, the envelopes of the first (and other if specified) harmonics are delayed by the same amount as the phase delay for that harmonic but this delay can be removed.</p>  
         <p>The waves are normalised together so their relative size are unchanged. This is to keep to optimum loudness levels for tests, avoiding clipping or the sounds being too quiet.</p> 
         <p>Negative phase shifts are there to allow trying to compensate for existing phase shifts in playback systems.</p>
         <p>The code is plain javascript, using the browsers own Web Audio API for playback, to allow for easy modification and review of methodology etc.</p>
         <p>The waves are generated using additive synthesis to allow for easy and predictable setting of phases and levels.</p>
+        <p>The filter is a simulated Butterworth response but with no phase shift. It is intended just for altering harmonic content to try out different sounds The filter envelope is linear but moves the frequency as if it were an exponential control.</p>
     </div>
     
     <div id="Notes2" class="bordered">

@@ -59,43 +59,87 @@ function getAudioBuffer(
       });
       let b = audioBuffer.getChannelData(0);
       let envelopeBuffer =buildEnvelopeBuffer(sampleRate, bufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
-      buildHarmonicSeries(patch, sampleRate, b, envelopeBuffer, delay0, delayN, phaseShift0);
-      return audioBuffer;
+      let filter =null;
+      if (patch.filterSlope!=0) 
+      {
+        filter = buildFilter(sampleRate, bufferSize, patch);
+      }
+      buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0);
+      return {
+            buffer:audioBuffer,
+            envelope:envelopeBuffer,
+            filter:filter
+      }
+
 }
 
 //Return object with 3 float arrays,
 // samples - the audio samples for one complete cycle
 // magnitude - the magnitude of each harmonic
 // phase - the phase of each harmonic
-function getPreview(referencePatch){
+function getPreview(referencePatch, filterPreviewSubject){
     let defaultPatch = getDefaultPatch();
     let patch = {
         ...defaultPatch,
         ...referencePatch
     };
-    let sampleRate = 1000;
-    patch.frequency = 1;
-    let bufferSize = sampleRate; //Allow for attack and 1.5* decay time + extra for filter smoothing
+    let bufferSize = 1000; //Number of samples
+    let sampleRate = bufferSize * patch.frequency;//Ensure is one complete per cycle
     let envelopeBuffer =[];
     let b = [];
     for (let i = 0; i < bufferSize; i++) {
         envelopeBuffer.push(1);
         b.push(0);
     }
+
+    let filter =null;
+    if (patch.filterSlope>0 && filterPreviewSubject>0){
+        let f=0;
+        switch (filterPreviewSubject){
+            case 1:
+                f=patch.filterF1;
+                break;
+            case 2:
+                f=patch.filterF2;
+                break;
+            case 3:
+                f=patch.filterF3;
+                break;
+        }
+        patch.filterF1=f;
+        patch.filterF2=f;
+        patch.filterF3=f;
+        filter = buildFilter(sampleRate, bufferSize, patch);
+    }
     let magnitude = [];
     let phase = [];
     let postProcessor = (n, w, level, phaseShift)=>{
-        magnitude.push(level);
+        let l = level;
+        if (filter){
+            let c=w *filter.invW0[filter.invW0.length/2];
+            if (c>=filter.stopBandEnd) 
+            {
+                l=0;
+            }
+            else if (c>filter.passBandEnd)
+            {
+                //Use lookup table for filter response in transition band
+                l*=filter.lut[Math.trunc((c-filter.passBandEnd)*filter.lutScale)]; 
+            }
+        }
+        magnitude.push(l);
         phase.push(phaseShift);
     }
-    buildHarmonicSeries(patch, sampleRate, b, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
+    buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
     return {
         samples:b,
         magnitude:magnitude,
         phase:phase,
         mean:b.reduce((a, b) => a + b, 0) / b.length, //average value
         max:Math.max(...b),
-        min:Math.min(...b)
+        min:Math.min(...b),
+        filter:filter,
+        patch:patch
     };
 }
 
@@ -115,14 +159,14 @@ function buildEnvelopeBuffer(
         //Low pass filter setup
         let x = 0;
         let y=0;  
-        let a = 1/Math.max(1,filter);
+        const a = 1/Math.max(1,filter);
 
         let isHold = false;
         let holdSamples = hold * sampleRate;
         let isDecay = false;
-        let attackRate = 1 / (attack * sampleRate); //Linear attack
-        let decayLambda = ln1024 / (decay * sampleRate); //Exponential decay -> decay is time in seconds to get to 1/1024 (-60db)of start value
-        let envValues = [0]; // Array to store env values
+        const attackRate = 1 / (attack * sampleRate); //Linear attack
+        const decayLambda = ln1024 / (decay * sampleRate); //Exponential decay -> decay is time in seconds to get to 1/1024 (-60db)of start value
+        let envValues = [0]; // Array to store env values - ensure starts at zero
         for (let i = 1; i < bufferSize; i++) {
             if (isHold){
                 if (--holdSamples <=0){
@@ -151,18 +195,98 @@ function buildEnvelopeBuffer(
 }
 
 
+//Generate envelope of filter with cutoff frequency in radians per sample, w
+//Don't worry if longer than bufferSize since audio level will be at zero by then
+function buildFilter(
+    sampleRate, //samples per second
+    bufferSize,
+    patch
+    ){
+        let isHold = false;
+        let isDecay = false;
+        let isAttack = true;
+        const pi2_sr = 2 * Math.PI / sampleRate;
+        const f1 = patch.filterF1 ;
+        const f2 = patch.filterF2;
+        const f3 = patch.filterF3;
+        const attackSamples = patch.attackF * sampleRate;
+        const attackRate = (f2-f1) / attackSamples; //Linear attack
+        const holdSamples =attackSamples + patch.holdF * sampleRate;
+        let decaySamples = patch.decayF * sampleRate;
+        const decayRate = (f3-f2) / (decaySamples); //Linear attack
+        decaySamples += holdSamples;
+        
+        //Envelope Smoothing filter
+        let x=f1;
+        let y=f1;
+        const a = 1/Math.max(1,patch.envelopeFilter);
+
+        let envValues = []; // Array to store env values
+        for (let i = 0; i < bufferSize; i++) {
+            if (isHold){
+                if (i >= holdSamples){
+                    isHold = false;
+                    isDecay = true;
+                }
+            }
+            else if (isDecay){
+                x += decayRate; 
+                if (i >= decaySamples){
+                    isDecay = false;
+                }
+            }
+            else if (isAttack)
+            {
+                x += attackRate; 
+                if (i >= attackSamples){
+                    //switch to hold stage if hold is non zero
+                    isAttack=false;
+                    isHold = holdSamples>0;
+                    isDecay = holdSamples==0;
+                    x=f2;
+                }
+            }
+            //Band limit envelope 1-pole IIR low pass
+            y +=  a * (x - y);
+            envValues.push(1/(20*Math.pow(2,y) * pi2_sr));// convert to rads/sample freq = 20*Math.pow(2,y), w0 = 2piF/sampleRate then store 1/w0
+        }
+        let order2 = patch.filterSlope/6*2; //2n, n=filterOrder, filterOrder = filterSlope/6
+        const passBandEnd = Math.pow(1/(0.994*0.994)-1,1/order2); //inverse of butterworth equation, 0.994 is point where response is down -0.05db
+        const stopBandEnd= Math.pow(1/(zeroLevel*zeroLevel)-1,1/order2); //inverse of butterworth equation, zeroLevel when response is consider zero
+        
+        const lutSize = 10000;
+        let lut = [];
+        const scale = (stopBandEnd-passBandEnd)/lutSize;
+        for (let i = 0; i < lutSize; i++) {
+            lut.push(Math.pow(1 + Math.pow(passBandEnd + i*scale ,order2),-0.5));
+        }
+        
+        return {
+           invW0: envValues, //array of 1/w0 for each sample w0 = 2*pi*f/sampleRate
+           order2:order2,
+           lut:lut,
+           lutScale:1/scale,
+           sampleRate:sampleRate,//makes it easier for drawing the filter response
+           passBandEnd: passBandEnd,
+           stopBandEnd: stopBandEnd
+        };
+}
+
+
+
+
 //Generate the harmonic series
-function buildHarmonicSeries(patch,  sampleRate, b, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
-    let nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
-    let rootW = patch.frequency * 2 * Math.PI  / sampleRate;
-    let sinCos = patch.sinCos*Math.PI/2;
+function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
+    const nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
+    const rootW = patch.frequency * 2 * Math.PI  / sampleRate;
+    const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
     bufferSize=b.length;
 
     //Alt needed for triangle wave causing polarity to flip for each successive harmonic
-    let altW = patch.altW * Math.PI;   
-    let altOffset = patch.altOffset * Math.PI *0.5; 
-    let delayScale = (delay0-delayN) * rootW * patch.higherHarmonicRelativeShift;//Either Delay0 or delayN will be zero
+    const altW = patch.altW * Math.PI;   
+    const altOffset = patch.altOffset * Math.PI *0.5; 
+    const delayScale = (delay0-delayN) * rootW * patch.higherHarmonicRelativeShift;//Either Delay0 or delayN will be zero
     for (let n = 1; n < harmonics; n++) {
         let w = rootW * n;
         if (w>=nyquistW) return;//Nyquist limit
@@ -177,31 +301,45 @@ function buildHarmonicSeries(patch,  sampleRate, b, envelopeBuffer, delay0, dela
 
             level=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
         }        
-        mixInSine( b, w, envelopeBuffer, level ,delay, phaseShift + sinCos );
+        mixInSine( b, w, filter,  envelopeBuffer, level ,delay, phaseShift + sinCos );
         if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);
     }
 }
 
 
 //Generate a single sine wave and mix into the buffer
+const smallestLevel=-100;//db
+const zeroLevel=Math.pow(10,smallestLevel/20);//-100db
 function mixInSine(
     buffer, 
     w, //Hz 
+    filter,
     envelopeBuffer,
     amplitude, // 0..1
     delay, //in samples for this frequency - envelope start will be delayed. Phase counter will not start until envelope starts
     phaseOffset
     ) {
-        if (amplitude==0) return;
+        if (Math.abs(amplitude)<zeroLevel) return;
     let theta = phaseOffset + (Math.floor(delay) + 1 - delay) * w; //Phase accumulator + correction for fractional delay
-    let env = 0;
-    let bufferSize = buffer.length;
+    let env = -1;
+    const bufferSize = buffer.length;
     for (let i = 0; i < bufferSize; i++) {
         if (i >= delay)   {
+            env++;//call here to advance even if level is zero
             //Phase accumulator
             theta += w;
-
-            buffer[i] += amplitude * envelopeBuffer[env++] * Math.sin(theta) ;
+            let l=envelopeBuffer[env];
+            if (l<zeroLevel) continue;
+            if (filter){
+                let c=w *filter.invW0[env];
+                if (c>=filter.stopBandEnd) continue;
+                if (c>filter.passBandEnd)
+                {
+                    //Use lookup table for filter response in transition band
+                    l*=filter.lut[Math.trunc((c-filter.passBandEnd)*filter.lutScale)]; 
+                }
+            }
+            buffer[i] += amplitude * l * Math.sin(theta) ;
         }
     }
 }

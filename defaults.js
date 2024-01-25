@@ -21,6 +21,12 @@
 //Default values and presets - no knowledge of anything else in the code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+let defaultTestSubjectList = 
+[
+    "rootPhaseDelay"
+];
+
+
 let wavePresets = [
     {
         name:"default", 
@@ -157,6 +163,75 @@ let envelopePresets = [
 
 ];
 
+let filterPresets = [
+    {   
+        name:"default",
+        patch:{
+            filterF1:10,
+            filterF2:10,
+            filterF3:8,
+            attackF:0.005,
+            holdF:0,
+            decayF:0.2,
+            filterSlope:12,
+            filterPeak:12,
+        }
+    },    
+    {   
+        name:"Chirp",
+        patch:{
+            filterF1:10,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.005,
+            holdF:0,
+            decayF:0.01,
+            filterSlope:24,
+            filterPeak:0,
+        }
+    },      
+    {   
+        name:"Beep",
+        patch:{
+            filterF1:2,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.05,
+            holdF:0,
+            decayF:0.1,
+            filterSlope:24,
+            filterPeak:0,
+        }
+    },    
+    {   
+        name:"Sweep",
+        patch:{
+            filterF1:0,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.04,
+            holdF:0,
+            decayF:0.37,
+            filterSlope:24,
+            filterPeak:0,
+        }
+    },    
+    {   
+        name:"off",
+        patch:{
+            filterF1:10,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.005,
+            holdF:0,
+            decayF:0.01,
+            filterSlope:0,
+            filterPeak:0,
+        }
+    }
+
+
+]
 
 function getDefaultPatch(){
     return {
@@ -180,7 +255,16 @@ function getDefaultPatch(){
         hold: 0,// time in seconds to hold max amplitude
         decay: 0.4,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
         envelopeFilter: 150,// 0-1000 1 = no filter, 1000 = 1/1000 of heaviest filter
-        envMode: 1//1,2 - 1 = delay envelope by same as phase delay, 2 = envelope fixed, shift phase in place
+        envMode: 1,//1,2 - 1 = delay envelope by same as phase delay, 2 = envelope fixed, shift phase in place
+
+        filterF1:10,// 0..10 20*2^(x)
+        filterF2:10,// 0..10 20*2^(x)
+        filterF3:8,// 0..10 20*2^(x)
+        attackF: 0.005,//Linear time to get to max amplitude  in seconds
+        holdF: 0,// time in seconds to hold max amplitude
+        decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
+        filterSlope:12,//db/octave, 0=off
+        filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
     }
 }
 
