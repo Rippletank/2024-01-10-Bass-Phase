@@ -169,7 +169,7 @@ let filterPresets = [
         patch:{
             filterF1:10,
             filterF2:10,
-            filterF3:10,
+            filterF3:8,
             attackF:0.005,
             holdF:0,
             decayF:0.2,
@@ -259,7 +259,7 @@ function getDefaultPatch(){
 
         filterF1:10,// 0..10 20*2^(x)
         filterF2:10,// 0..10 20*2^(x)
-        filterF3:10,// 0..10 20*2^(x)
+        filterF3:8,// 0..10 20*2^(x)
         attackF: 0.005,//Linear time to get to max amplitude  in seconds
         holdF: 0,// time in seconds to hold max amplitude
         decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay

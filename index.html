@@ -43,6 +43,59 @@
     </datalist>
 
 
+    <!--**********************************************************************-->
+    <!--*****************  Start ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
+
+    <div class="bordered"  id="SoundASetup">
+        <h3>Sound A</h3>
+        <div>
+            <canvas id="waveformA"  class="waveformCanvas" width ="800" height="200"></canvas>
+        </div>
+        <button id="playSoundA">Play A</button>
+    </div>
+
+
+
+    <div class="bordered" id="SoundBSetup">
+        <h3>Sound B</h3>
+        <div>
+            <canvas id="waveformB"  class="waveformCanvas" width ="800" height="200"></canvas>
+        </div>
+        <button id="playSoundB">Play B</button>
+    </div>
+
+    <br>
+
+
+    <div id="centerContainer">
+        <div id="abxTestContainer">
+            <h3>ABX test</h3>
+            <ol id="results"></ol>
+            <button id="abxTest" class="testCenter">Test</button>
+            <div id="abxButtons"  style="display: none;">
+                <button id="buttonA">X is A</button>
+                <button id="play">Play X</button>
+                <button id="buttonB">X is B</button>
+            </div>
+            <p id="stats" class="testCenter"></p>
+            <br>
+            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
+        </div>
+    </div>
+    <div class="bordered">
+        <h3>Background info - see <a href="#Notes1">notes</a></h3>
+        <div class ="previewButtons">
+            <div class="previewButtons">
+                <button id="waveformShowF" class = "previewButton">Filter overlays</button>
+                <button id="waveformShowEG" class = "previewButton">Envelope overlays</button>
+            </div>
+        </div>
+    </div>
+
+    <!--**********************************************************************-->
+    <!--*******************  End ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
     
     <div class="bordered" id="CommonSettings">
         <h3>Sound Settings</h3>
@@ -280,12 +333,6 @@
         </div>
         <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
         <button id="hideFFT">Hide FFT</button>
-        <div class ="previewButtons">
-            <div class="previewButtons">
-                <button id="waveformShowF" class = "previewButton">Filter overlays</button>
-                <button id="waveformShowEG" class = "previewButton">Envelope overlays</button>
-            </div>
-        </div>
     </div>
 
 
@@ -298,46 +345,6 @@
         <p>See <a href="#Notes1">explanation of Null Test</a></p>
     </div>
 
-    <div class="bordered"  id="SoundASetup">
-        <h3>Sound A</h3>
-        <div>
-            <canvas id="waveformA"  class="waveformCanvas" width ="800" height="200"></canvas>
-        </div>
-        <button id="playSoundA">Play A</button>
-    </div>
-
-
-
-    <div class="bordered" id="SoundBSetup">
-        <h3>Sound B</h3>
-        <div>
-            <canvas id="waveformB"  class="waveformCanvas" width ="800" height="200"></canvas>
-        </div>
-        <button id="playSoundB">Play B</button>
-    </div>
-
-    <br>
-
-
-    <div id="centerContainer">
-        <div id="abxTestContainer">
-            <h3>ABX test</h3>
-            <ol id="results"></ol>
-            <button id="abxTest" class="testCenter">Test</button>
-            <div id="abxButtons"  style="display: none;">
-                <button id="buttonA">X is A</button>
-                <button id="play">Play X</button>
-                <button id="buttonB">X is B</button>
-            </div>
-            <p id="stats" class="testCenter"></p>
-            <br>
-            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
-        </div>
-    </div>
-    <div class="bordered">
-        <h3>Background info - see <a href="#Notes1">notes</a></h3>
-    </div>
-
 
     
 
@@ -345,13 +352,14 @@
         <h3>Notes: Background</h3>
         <p>This page was created to help investigate audibility of low frequency phase shifts.</p>
         <p>It generates two sounds with identical harmonic content and envelopes as set by the common controls.</p>
-        <p>Each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. Higher harmonic can also be phase shifted by a specified fraction of the root phase shift.</p>
+        <p>By default, each sound has the phase of the first harmonic shifted by the specified amount relative to the other harmonics. Higher harmonic can also be phase shifted by a specified fraction of the root phase shift.</p>
         <p>An envelope with linear attack and exponential decay is applied to each harmonic. The envelope is band limited by an adjustable low-pass filter. </p>
         <p>By default, the envelopes of the first (and other if specified) harmonics are delayed by the same amount as the phase delay for that harmonic but this delay can be removed.</p>  
         <p>The waves are normalised together so their relative size are unchanged. This is to keep to optimum loudness levels for tests, avoiding clipping or the sounds being too quiet.</p> 
         <p>Negative phase shifts are there to allow trying to compensate for existing phase shifts in playback systems.</p>
         <p>The code is plain javascript, using the browsers own Web Audio API for playback, to allow for easy modification and review of methodology etc.</p>
         <p>The waves are generated using additive synthesis to allow for easy and predictable setting of phases and levels.</p>
+        <p>The filter is a simulated Butterworth response but with no phase shift. It is intended just for altering harmonic content to try out different sounds The filter envelope is linear but moves the frequency as if it were an exponential control.</p>
     </div>
     
     <div id="Notes2" class="bordered">
