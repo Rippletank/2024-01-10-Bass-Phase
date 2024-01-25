@@ -383,7 +383,30 @@ function updateLabelsFor(containerId, patch) {
                 if (patch.sinCos==1) type = "cos(t)";
                 ve.innerHTML = (patch.sinCos*0.5).toFixed(2)+'π &nbsp;&nbsp; '+type;
                 break;
-
+            case "balance": 
+                if (patch.balance==0) 
+                {
+                    ve.textContent = "-";
+                }
+                else if (patch.balance==1) 
+                {
+                    ve.textContent = "higher only";
+                }
+                else if (patch.balance==-1) 
+                {
+                    ve.textContent = "1st only";
+                }
+                else if (patch.balance>0) 
+                {
+                    let db = patch.balance*patch.balance*75;
+                    ve.textContent = "1st "+(-db).toFixed(db<3?2:1 )+"db";                    
+                }
+                else if (patch.balance<0) 
+                {
+                    let db = patch.balance*patch.balance*75;
+                    ve.textContent = "high "+(-db).toFixed(db<3?2:1)+"db";                    
+                }
+                break;
                 
             case "attack": ve.textContent = patch.attack + "s";break;  
             case "decay": ve.textContent = patch.decay + "s";break;

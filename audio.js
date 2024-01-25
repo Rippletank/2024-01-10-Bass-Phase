@@ -283,6 +283,10 @@ function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, dela
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
     bufferSize=b.length;
 
+    //Balance settings
+    const firstLevel = patch.balance<=0 ? 1 : (patch.balance==1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance)); //-75db
+    const higherLevel = patch.balance>=0 ? 1 : (patch.balance==-1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance)); //-75db
+
     //Alt needed for triangle wave causing polarity to flip for each successive harmonic
     const altW = patch.altW * Math.PI;   
     const altOffset = patch.altOffset * Math.PI *0.5; 
@@ -290,16 +294,16 @@ function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, dela
     for (let n = 1; n < harmonics; n++) {
         let w = rootW * n;
         if (w>=nyquistW) return;//Nyquist limit
-        let level = 0;
+        let level = n==1 ? firstLevel : higherLevel;
         let isEven = n % 2 == 0;
         let delay = n==1 ? delay0 : delayN + delayScale/w;
         let phaseShift = phaseShift0 * (n==1 ? 1 :patch.higherHarmonicRelativeShift);
         if (isEven){
-            level = patch.evenLevel * ((Math.sin(n*altW - altOffset)-1) * patch.evenAlt + 1) * Math.pow(n,-patch.evenFalloff );
+            level *= patch.evenLevel * ((Math.sin(n*altW - altOffset)-1) * patch.evenAlt + 1) * Math.pow(n,-patch.evenFalloff );
         }
         else{
 
-            level=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
+            level*=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
         }        
         mixInSine( b, w, filter,  envelopeBuffer, level ,delay, phaseShift + sinCos );
         if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);

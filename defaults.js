@@ -31,6 +31,7 @@ let wavePresets = [
     {
         name:"default", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1.8,
             oddAlt:0,
@@ -45,6 +46,7 @@ let wavePresets = [
     {
         name:"square", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:0,
@@ -59,6 +61,7 @@ let wavePresets = [
     {
         name:"Saw", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:0,
@@ -73,6 +76,7 @@ let wavePresets = [
     {
         name:"Triangle", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:2,
             oddAlt:1,
@@ -87,6 +91,7 @@ let wavePresets = [
     {
         name:"stairs", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:0,
@@ -101,6 +106,7 @@ let wavePresets = [
     {
         name:"pulse", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:1,
@@ -109,6 +115,21 @@ let wavePresets = [
             evenAlt:1,
             sinCos:1,
             altW:0.75,
+            altOffset:0,
+        }
+    },
+    {
+        name:"sine", 
+        patch:{
+            balance:-1,
+            oddLevel:1,
+            oddFalloff:1,
+            oddAlt:0,
+            evenLevel:0,
+            evenFalloff:1,
+            evenAlt:0,
+            sinCos:0,
+            altW:0.5,
             altOffset:0,
         }
     }
@@ -240,6 +261,7 @@ function getDefaultPatch(){
         higherHarmonicRelativeShift: 0,//fraction of rootPhaseDelay for phase of higher harmonics
 
         //Harmonic series
+        balance:0,
         oddLevel: 1,//-1..1 level of odd harmonics
         oddAlt: 0,//0..1 How much the odd harmonics alternate in polarity
         oddFalloff: 1.8,//1..2 How much the odd harmonics fall off in amplitude as a power of 1/n
