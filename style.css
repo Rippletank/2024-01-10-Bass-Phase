@@ -148,6 +148,11 @@ canvas {
     justify-content:left;
 }
 
+.previewButtons .previewC{
+    margin-right:auto;
+    justify-content:center;
+}
+
 .previewButtons .previewButton{
     margin-top: 0em;
     margin-bottom: 0.5em;

@@ -68,25 +68,55 @@ document.getElementById('polarityButton').addEventListener('click', function() {
 let previewSubject =0;
 document.getElementById('previewD').addEventListener('click', function() {
     previewSubject = 0;
-    updatePreviewButtonState();
-    updatePreview();
-    paintPreview();
+    DoFullPreviewUpdate();
 });
 document.getElementById('previewA').addEventListener('click', function() {
     previewSubject = 1;
-    updatePreviewButtonState();
-    updatePreview();
-    paintPreview();
+    DoFullPreviewUpdate();
 });
 document.getElementById('previewB').addEventListener('click', function() {
     previewSubject = 2;
+    DoFullPreviewUpdate();
+});
+
+document.getElementById('previewF0').addEventListener('click', function() {
+    filterPreviewSubject = 0;
+    DoFullPreviewUpdate();
+});
+document.getElementById('previewF1').addEventListener('click', function() {
+    filterPreviewSubject = 1;
+    DoFullPreviewUpdate();
+});
+document.getElementById('previewF2').addEventListener('click', function() {
+    filterPreviewSubject = 2;
+    DoFullPreviewUpdate();
+});
+document.getElementById('previewF3').addEventListener('click', function() {
+    filterPreviewSubject = 3;
+    DoFullPreviewUpdate();
+});
+
+document.getElementById('waveformShowF').addEventListener('click', function() {
+    showBufferFilterOverlay=!showBufferFilterOverlay;
+    updatePreviewButtonState();
+    updateDisplay();
+});
+document.getElementById('waveformShowEG').addEventListener('click', function() {
+    showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
+    updatePreviewButtonState();
+    updateDisplay();
+});
+
+function DoFullPreviewUpdate(){
     updatePreviewButtonState();
     updatePreview();
     paintPreview();
-});
+}
 
 let subjectBtns=null;
 let previewBtns = null;
+let filterPreBtns = null;
+let bufferPreviewBtns = null;
 function updatePreviewButtonState(){
     subjectBtns = subjectBtns ?? [
         document.getElementById('previewD'),
@@ -112,6 +142,18 @@ function updatePreviewButtonState(){
     previewBtns[0].classList.add(previewSpectrumFullWidth ? 'button-selected' : 'button-unselected');
     previewBtns[1].classList.add(previewSpectrumShowPhase ? 'button-selected' : 'button-unselected');
     previewBtns[2].classList.add(previewSpectrumPolarity ? 'button-selected' : 'button-unselected');
+
+    bufferPreviewBtns = filterPreBtns ?? [
+        document.getElementById('waveformShowF'),
+        document.getElementById('waveformShowEG')
+    ];
+
+    bufferPreviewBtns.forEach(function(button) {
+        button.classList.remove('button-selected');
+        button.classList.remove('button-unselected');
+    });
+    bufferPreviewBtns[0].classList.add(showBufferFilterOverlay ? 'button-selected' : 'button-unselected');
+    bufferPreviewBtns[1].classList.add(showBufferEnvelopeOverlay ? 'button-selected' : 'button-unselected');
 }
 
 

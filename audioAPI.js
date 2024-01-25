@@ -209,17 +209,22 @@ function updateBuffers(patchA, patchB) {
 
 
 
-
+let showBufferEnvelopeOverlay=false;
+let showBufferFilterOverlay=false;
 function updateDisplay(){
     if (!audioBufferA || !audioBufferB || !nullTestBuffer) return;
     let maxLength = Math.max(audioBufferA.buffer.length, audioBufferB.buffer.length, nullTestBuffer.length);
     paintBuffer(audioBufferA.buffer, maxLength, "waveformA");
-    paintEnvelope(audioBufferA.envelope, maxLength, "waveformA");
-    paintFilterEnvelope(audioBufferA.filter, maxLength, "waveformA");
     paintBuffer(audioBufferB.buffer, maxLength, "waveformB");
-    paintEnvelope(audioBufferB.envelope, maxLength, "waveformB");
-    paintFilterEnvelope(audioBufferB.filter, maxLength, "waveformB");
     paintBuffer(nullTestBuffer, maxLength, "waveformNull");
+    if (showBufferEnvelopeOverlay){    
+        paintEnvelope(audioBufferA.envelope, maxLength, "waveformA");
+        paintEnvelope(audioBufferB.envelope, maxLength, "waveformB");
+    }
+    if (showBufferFilterOverlay){
+        paintFilterEnvelope(audioBufferA.filter, maxLength, "waveformA");
+        paintFilterEnvelope(audioBufferB.filter, maxLength, "waveformB");
+    }
     paintPreview()
     let nullTest = document.getElementById('nullTestdb');
     nullTest.textContent = " - Peak:" +nullTestMax.toFixed(1) + "dB";
@@ -232,12 +237,23 @@ function paintBuffer(buffer, maxLength, canvasId){
 
     var canvas = document.getElementById(canvasId);
     var ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(0, 0, 0)";
-    let x = 0;
     const h = canvas.height/2;
     const step = canvas.width / maxLength;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    //Centre line
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = "rgb(50, 50, 50)";
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    ctx.lineTo(canvas.width, h);
+    ctx.stroke();
+
+    //Waveform
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(0, 0, 0)";
+    let x = 0;
 
     for (let i = 0; i < maxLength; i++) {
         if (i >= bufferSize) break;
@@ -250,6 +266,8 @@ function paintBuffer(buffer, maxLength, canvasId){
         x += step;
     }
     ctx.stroke();
+    ctx.stroke();
+         
 }
 
 function paintEnvelope(envelop, maxLength, canvasId){
@@ -312,16 +330,17 @@ function paintFilterEnvelope(filter, maxLength, canvasId){
 
 
 let previewResult = null;
+let filterPreviewSubject =0;
 function updatePreview(patch){
     switch(previewSubject){
         case 0: 
-            previewResult = getPreview(cachedPatchCmn);
+            previewResult = getPreview(cachedPatchCmn, filterPreviewSubject);
             break;
         case 1: 
-            previewResult = getPreview(cachedPatchA);
+            previewResult = getPreview(cachedPatchA, filterPreviewSubject);
             break;  
         case 2: 
-            previewResult = getPreview(cachedPatchB);
+            previewResult = getPreview(cachedPatchB, filterPreviewSubject);
             break;  
     }
 }
@@ -415,6 +434,43 @@ function paintPreview(){
             ctx.fillRect(x-0.5, sp0-0.5, 1, 1); 
         }
     }
+
+    if (filterPreviewSubject>0 && previewResult.filter){
+        //Overlay the filter frequency response
+        ctx.beginPath();    
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgb(0, 140, 0)";
+        const filter = previewResult.filter;
+        const invW0 = filter.invW0[previewResult.filter.invW0.length*0.5]
+        const rootW = previewResult.patch.frequency * 2 * Math.PI  / filter.sampleRate;
+        for (let i = 1; i < count; i++) {
+            let x =spL + i * spW / count;
+            let w = i * rootW;
+            let c=w *invW0;
+            let l=1;
+            if (c>=filter.stopBandEnd) 
+            {
+                l=0;
+            } 
+            else if (c>filter.passBandEnd)
+            {
+                //Use lookup table for filter response in transition band
+                l=filter.lut[Math.trunc((c-filter.passBandEnd)*filter.lutScale)]; 
+            }
+
+            let y =spT + Math.max(min, Math.log10( Math.abs(l))) * spScale;
+            if (i == 1) {
+                ctx.moveTo(x, y);
+            }
+            else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();    
+
+
+    }
+
 
     if (!previewSpectrumShowPhase) return;
     //Spectrum Phase preview - right side rectangle

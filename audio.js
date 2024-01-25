@@ -77,15 +77,14 @@ function getAudioBuffer(
 // samples - the audio samples for one complete cycle
 // magnitude - the magnitude of each harmonic
 // phase - the phase of each harmonic
-function getPreview(referencePatch){
+function getPreview(referencePatch, filterPreviewSubject){
     let defaultPatch = getDefaultPatch();
     let patch = {
         ...defaultPatch,
         ...referencePatch
     };
-    let sampleRate = 1000;
-    patch.frequency = 1;
-    let bufferSize = sampleRate; //Allow for attack and 1.5* decay time + extra for filter smoothing
+    let bufferSize = 1000; //Number of samples
+    let sampleRate = bufferSize * patch.frequency;//Ensure is one complete per cycle
     let envelopeBuffer =[];
     let b = [];
     for (let i = 0; i < bufferSize; i++) {
@@ -93,20 +92,54 @@ function getPreview(referencePatch){
         b.push(0);
     }
 
+    let filter =null;
+    if (patch.filterSlope>0 && filterPreviewSubject>0){
+        let f=0;
+        switch (filterPreviewSubject){
+            case 1:
+                f=patch.filterF1;
+                break;
+            case 2:
+                f=patch.filterF2;
+                break;
+            case 3:
+                f=patch.filterF3;
+                break;
+        }
+        patch.filterF1=f;
+        patch.filterF2=f;
+        patch.filterF3=f;
+        filter = buildFilter(sampleRate, bufferSize, patch);
+    }
     let magnitude = [];
     let phase = [];
     let postProcessor = (n, w, level, phaseShift)=>{
-        magnitude.push(level);
+        let l = level;
+        if (filter){
+            let c=w *filter.invW0[filter.invW0.length/2];
+            if (c>=filter.stopBandEnd) 
+            {
+                l=0;
+            }
+            else if (c>filter.passBandEnd)
+            {
+                //Use lookup table for filter response in transition band
+                l*=filter.lut[Math.trunc((c-filter.passBandEnd)*filter.lutScale)]; 
+            }
+        }
+        magnitude.push(l);
         phase.push(phaseShift);
     }
-    buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
+    buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
     return {
         samples:b,
         magnitude:magnitude,
         phase:phase,
         mean:b.reduce((a, b) => a + b, 0) / b.length, //average value
         max:Math.max(...b),
-        min:Math.min(...b)
+        min:Math.min(...b),
+        filter:filter,
+        patch:patch
     };
 }
 
@@ -133,7 +166,7 @@ function buildEnvelopeBuffer(
         let isDecay = false;
         const attackRate = 1 / (attack * sampleRate); //Linear attack
         const decayLambda = ln1024 / (decay * sampleRate); //Exponential decay -> decay is time in seconds to get to 1/1024 (-60db)of start value
-        let envValues = [0]; // Array to store env values
+        let envValues = [0]; // Array to store env values - ensure starts at zero
         for (let i = 1; i < bufferSize; i++) {
             if (isHold){
                 if (--holdSamples <=0){
@@ -218,12 +251,24 @@ function buildFilter(
             envValues.push(1/(20*Math.pow(2,y) * pi2_sr));// convert to rads/sample freq = 20*Math.pow(2,y), w0 = 2piF/sampleRate then store 1/w0
         }
         let order2 = patch.filterSlope/6*2; //2n, n=filterOrder, filterOrder = filterSlope/6
+        const passBandEnd = Math.pow(1/(0.994*0.994)-1,1/order2); //inverse of butterworth equation, 0.994 is point where response is down -0.05db
+        const stopBandEnd= Math.pow(1/(zeroLevel*zeroLevel)-1,1/order2); //inverse of butterworth equation, zeroLevel when response is consider zero
+        
+        const lutSize = 10000;
+        let lut = [];
+        const scale = (stopBandEnd-passBandEnd)/lutSize;
+        for (let i = 0; i < lutSize; i++) {
+            lut.push(Math.pow(1 + Math.pow(passBandEnd + i*scale ,order2),-0.5));
+        }
+        
         return {
            invW0: envValues, //array of 1/w0 for each sample w0 = 2*pi*f/sampleRate
            order2:order2,
+           lut:lut,
+           lutScale:1/scale,
            sampleRate:sampleRate,//makes it easier for drawing the filter response
-           passBandEnd: Math.pow(1/(0.994*0.994)-1,1/order2), //inverse of butterworth equation, 0.994 is point where response is down -0.05db
-           stopBandEnd: Math.min(1/pi2_sr, Math.pow(1/(zeroLevel*zeroLevel)-1,1/order2)), //inverse of butterworth equation, zeroLevel when response is consider zero
+           passBandEnd: passBandEnd,
+           stopBandEnd: stopBandEnd
         };
 }
 
@@ -256,7 +301,7 @@ function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, dela
 
             level=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
         }        
-        mixInSine( b, w,filter,  envelopeBuffer, level ,delay, phaseShift + sinCos );
+        mixInSine( b, w, filter,  envelopeBuffer, level ,delay, phaseShift + sinCos );
         if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);
     }
 }
@@ -287,10 +332,11 @@ function mixInSine(
             if (l<zeroLevel) continue;
             if (filter){
                 let c=w *filter.invW0[env];
-                if (c>filter.stopBandEnd) continue;
+                if (c>=filter.stopBandEnd) continue;
                 if (c>filter.passBandEnd)
                 {
-                    l*=Math.pow(1 + Math.pow(c,filter.order2),-0.5); 
+                    //Use lookup table for filter response in transition band
+                    l*=filter.lut[Math.trunc((c-filter.passBandEnd)*filter.lutScale)]; 
                 }
             }
             buffer[i] += amplitude * l * Math.sin(theta) ;
