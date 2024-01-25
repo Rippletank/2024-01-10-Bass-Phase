@@ -198,6 +198,7 @@ function loadSliderValuesFromContainer(id, patch) {
 function setupPresetButtons(){    
     insertPresetButtons('wavePresetButtons', wavePresets);
     insertPresetButtons('envelopPresetButtons', envelopePresets);
+    insertPresetButtons('filterPresetButtons', filterPresets);
 }
 
 function insertPresetButtons(id, presetList){     
@@ -325,7 +326,7 @@ function updateLabelsFor(containerId, patch) {
             case "filterF1": ve.textContent = toFilterFreq(patch.filterF1);break;
             case "filterF2": ve.textContent = toFilterFreq(patch.filterF2);break;
             case "filterF3": ve.textContent = toFilterFreq(patch.filterF3);break;
-            case "filterSlope": ve.textContent = patch.filterSlope.toFixed(0)+"db/oct";break;
+            case "filterSlope": ve.textContent =patch.filterSlope==0? "off" : patch.filterSlope.toFixed(0)+"db/oct";break;
 
             case "rootPhaseDelay": 
                 ve.innerHTML =getPhaseLabel(patch);break;

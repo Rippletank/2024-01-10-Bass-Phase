@@ -50,7 +50,7 @@ function playAudio(index, patchA, patchB) {
     if (changed || generatedSampleRate != audioContext.sampleRate){
         updateBuffersAndDisplay(patchA, patchB);
     }
-    newSourceNode.buffer = index==0 ? audioBufferA : (index==1 ? audioBufferB: nullTestBuffer);
+    newSourceNode.buffer = index==0 ? audioBufferA.buffer : (index==1 ? audioBufferB.buffer: nullTestBuffer);
     if (useFFT){
         newSourceNode.connect(analyserNode);
         analyserNode.connect(audioContext.destination);
@@ -183,14 +183,14 @@ function updateBuffers(patchA, patchB) {
         patchB
     );
 
-    nullTestBuffer = buildNullTest(audioBufferA, audioBufferB);
+    nullTestBuffer = buildNullTest(audioBufferA.buffer, audioBufferB.buffer);
 
 
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
-    let scale = 0.99 / Math.max(getBufferMax(audioBufferA), getBufferMax(audioBufferB));
+    let scale = 0.99 / Math.max(getBufferMax(audioBufferA.buffer), getBufferMax(audioBufferB.buffer));
 
-    scaleBuffer(audioBufferA, scale);
-    scaleBuffer(audioBufferB, scale);
+    scaleBuffer(audioBufferA.buffer, scale);
+    scaleBuffer(audioBufferB.buffer, scale);
 
     //normalise null test buffer if above threshold
     let nullMax = getBufferMax(nullTestBuffer);
@@ -206,9 +206,13 @@ function updateBuffers(patchA, patchB) {
 
 function updateDisplay(){
     if (!audioBufferA || !audioBufferB || !nullTestBuffer) return;
-    let maxLength = Math.max(audioBufferA.length, audioBufferB.length, nullTestBuffer.length);
-    paintBuffer(audioBufferA, maxLength, "waveformA");
-    paintBuffer(audioBufferB, maxLength, "waveformB");
+    let maxLength = Math.max(audioBufferA.buffer.length, audioBufferB.buffer.length, nullTestBuffer.length);
+    paintBuffer(audioBufferA.buffer, maxLength, "waveformA");
+    paintEnvelope(audioBufferA.envelope, maxLength, "waveformA");
+    paintFilterEnvelope(audioBufferA.filter, maxLength, "waveformA");
+    paintBuffer(audioBufferB.buffer, maxLength, "waveformB");
+    paintEnvelope(audioBufferB.envelope, maxLength, "waveformB");
+    paintFilterEnvelope(audioBufferB.filter, maxLength, "waveformB");
     paintBuffer(nullTestBuffer, maxLength, "waveformNull");
     paintPreview()
     let nullTest = document.getElementById('nullTestdb');
@@ -224,13 +228,77 @@ function paintBuffer(buffer, maxLength, canvasId){
     var ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
+    ctx.strokeStyle = "rgb(0, 0, 0)";
     let x = 0;
-    let y = canvas.height/2;
-    let step = canvas.width / maxLength;
+    const h = canvas.height/2;
+    const step = canvas.width / maxLength;
 
     for (let i = 0; i < maxLength; i++) {
         if (i >= bufferSize) break;
-        ctx.lineTo(x, y - b[i] * y);//Minus to ensure positive is up
+        let y=h-b[i] * h;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);//Minus to ensure positive is up
+        }
+        x += step;
+    }
+    ctx.stroke();
+}
+
+function paintEnvelope(envelop, maxLength, canvasId){
+    let b = envelop;
+    let bufferSize = b.length;
+
+    var canvas = document.getElementById(canvasId);
+    var ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.strokeStyle = "rgb(0, 128, 0)";
+    let x = 0;
+    const h = canvas.height/2;
+    const step = canvas.width / maxLength;
+
+    for (let i = 0; i < maxLength; i++) {
+        if (i >= bufferSize) break;
+        let y=h-b[i] * h;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);//Minus to ensure positive is up
+        }
+        x += step;
+    }
+    ctx.stroke();
+}
+
+let filterEnvIsLog = true;
+function paintFilterEnvelope(filter, maxLength, canvasId){
+    if (!filter) return;
+    const b = filter.invW0;//1/wo  = sampleRate/(2*Math.PI*f0)
+    const maxF = filter.sampleRate/2;//-20 to avoid log(0)
+    const invLogMaxF =1/Math.log2(maxF-20);
+    const c = filter.sampleRate/(2*Math.PI);//retrieve f0 from 1/wo and scale to max frequency
+    const bufferSize = b.length;
+
+    var canvas = document.getElementById(canvasId);
+    var ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.strokeStyle = "rgb(0, 0, 128)";
+    let x = 0;
+    const h = canvas.height;
+    const step = canvas.width / maxLength;
+    const scale  = filterEnvIsLog ? h * invLogMaxF : h/maxF;
+    const doLog = filterEnvIsLog;//for jit optimisation
+
+    for (let i = 0; i < maxLength; i++) {
+        if (i >= bufferSize) break;
+        const f = c / b[i];
+        let y =h- scale *(doLog ? Math.log2(f-20) : f);
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);//Minus to ensure positive is up
+        }
         x += step;
     }
     ctx.stroke();

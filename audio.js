@@ -59,9 +59,18 @@ function getAudioBuffer(
       });
       let b = audioBuffer.getChannelData(0);
       let envelopeBuffer =buildEnvelopeBuffer(sampleRate, bufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
-      let filterBuffer = buildFilterBuffer(sampleRate, bufferSize, patch);
-      buildHarmonicSeries(patch, sampleRate, b, filterBuffer, envelopeBuffer, delay0, delayN, phaseShift0);
-      return audioBuffer;
+      let filter =null;
+      if (patch.filterSlope!=0) 
+      {
+        filter = buildFilter(sampleRate, bufferSize, patch);
+      }
+      buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0);
+      return {
+            buffer:audioBuffer,
+            envelope:envelopeBuffer,
+            filter:filter
+      }
+
 }
 
 //Return object with 3 float arrays,
@@ -79,10 +88,8 @@ function getPreview(referencePatch){
     let bufferSize = sampleRate; //Allow for attack and 1.5* decay time + extra for filter smoothing
     let envelopeBuffer =[];
     let b = [];
-    let f =[];
     for (let i = 0; i < bufferSize; i++) {
         envelopeBuffer.push(1);
-        f.push(0.1*Math.PI);//Fully open filter - for now
         b.push(0);
     }
 
@@ -119,13 +126,13 @@ function buildEnvelopeBuffer(
         //Low pass filter setup
         let x = 0;
         let y=0;  
-        let a = 1/Math.max(1,filter);
+        const a = 1/Math.max(1,filter);
 
         let isHold = false;
         let holdSamples = hold * sampleRate;
         let isDecay = false;
-        let attackRate = 1 / (attack * sampleRate); //Linear attack
-        let decayLambda = ln1024 / (decay * sampleRate); //Exponential decay -> decay is time in seconds to get to 1/1024 (-60db)of start value
+        const attackRate = 1 / (attack * sampleRate); //Linear attack
+        const decayLambda = ln1024 / (decay * sampleRate); //Exponential decay -> decay is time in seconds to get to 1/1024 (-60db)of start value
         let envValues = [0]; // Array to store env values
         for (let i = 1; i < bufferSize; i++) {
             if (isHold){
@@ -157,7 +164,7 @@ function buildEnvelopeBuffer(
 
 //Generate envelope of filter with cutoff frequency in radians per sample, w
 //Don't worry if longer than bufferSize since audio level will be at zero by then
-function buildFilterBuffer(
+function buildFilter(
     sampleRate, //samples per second
     bufferSize,
     patch
@@ -166,20 +173,20 @@ function buildFilterBuffer(
         let isDecay = false;
         let isAttack = true;
         const pi2_sr = 2 * Math.PI / sampleRate;
-        let f1 = 20*Math.pow(2,patch.filterF1) * pi2_sr;
-        let f2 = 20*Math.pow(2,patch.filterF2) * pi2_sr;
-        let f3 = 20*Math.pow(2,patch.filterF3) * pi2_sr;
-        let attackSamples = patch.attackF * sampleRate;
-        let attackRate = (f2-f1) / attackSamples; //Linear attack
-        let holdSamples =attackSamples + patch.holdF * sampleRate;
+        const f1 = 20*Math.pow(2,patch.filterF1) * pi2_sr;
+        const f2 = 20*Math.pow(2,patch.filterF2) * pi2_sr;
+        const f3 = 20*Math.pow(2,patch.filterF3) * pi2_sr;
+        const attackSamples = patch.attackF * sampleRate;
+        const attackRate = (f2-f1) / attackSamples; //Linear attack
+        const holdSamples =attackSamples + patch.holdF * sampleRate;
         let decaySamples = patch.decayF * sampleRate;
-        let decayRate = (f3-f2) / (decaySamples); //Linear attack
+        const decayRate = (f3-f2) / (decaySamples); //Linear attack
         decaySamples += holdSamples;
         
         //Envelope Smoothing filter
         let x=f1;
         let y=f1;
-        let a = 1/Math.max(1,patch.envelopeFilter);
+        const a = 1/Math.max(1,patch.envelopeFilter);
 
         let envValues = [1/y]; // Array to store env values
         for (let i = 1; i < bufferSize; i++) {
@@ -210,24 +217,31 @@ function buildFilterBuffer(
             y +=  a * (x - y);
             envValues.push(1/y);
         }
-        return envValues;
+        let order2 = patch.filterSlope/6*2; //2n, n=filterOrder, filterOrder = filterSlope/6
+        return {
+           invW0: envValues, //array of 1/w0 for each sample w0 = 2*pi*f/sampleRate
+           order2:order2,
+           sampleRate:sampleRate,//makes it easier for drawing the filter response
+           passBandEnd: Math.pow(1/(0.994*0.994)-1,1/order2), //inverse of butterworth equation, 0.994 is point where response is down -0.05db
+           stopBandEnd: Math.min(1/pi2_sr, Math.pow(1/(zeroLevel*zeroLevel)-1,1/order2)), //inverse of butterworth equation, zeroLevel when response is consider zero
+        };
 }
 
 
 
 
 //Generate the harmonic series
-function buildHarmonicSeries(patch,  sampleRate, b, filterBuffer, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
-    let nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
-    let rootW = patch.frequency * 2 * Math.PI  / sampleRate;
-    let sinCos = patch.sinCos*Math.PI/2;
+function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
+    const nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
+    const rootW = patch.frequency * 2 * Math.PI  / sampleRate;
+    const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
     bufferSize=b.length;
 
     //Alt needed for triangle wave causing polarity to flip for each successive harmonic
-    let altW = patch.altW * Math.PI;   
-    let altOffset = patch.altOffset * Math.PI *0.5; 
-    let delayScale = (delay0-delayN) * rootW * patch.higherHarmonicRelativeShift;//Either Delay0 or delayN will be zero
+    const altW = patch.altW * Math.PI;   
+    const altOffset = patch.altOffset * Math.PI *0.5; 
+    const delayScale = (delay0-delayN) * rootW * patch.higherHarmonicRelativeShift;//Either Delay0 or delayN will be zero
     for (let n = 1; n < harmonics; n++) {
         let w = rootW * n;
         if (w>=nyquistW) return;//Nyquist limit
@@ -242,36 +256,44 @@ function buildHarmonicSeries(patch,  sampleRate, b, filterBuffer, envelopeBuffer
 
             level=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
         }        
-        mixInSine( b, w,filterBuffer,  envelopeBuffer, level ,delay, phaseShift + sinCos, patch.filterSlope );
+        mixInSine( b, w,filter,  envelopeBuffer, level ,delay, phaseShift + sinCos );
         if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);
     }
 }
 
 
 //Generate a single sine wave and mix into the buffer
+const smallestLevel=-100;//db
+const zeroLevel=Math.pow(10,smallestLevel/20);//-100db
 function mixInSine(
     buffer, 
     w, //Hz 
-    filterBuffer,
+    filter,
     envelopeBuffer,
     amplitude, // 0..1
     delay, //in samples for this frequency - envelope start will be delayed. Phase counter will not start until envelope starts
-    phaseOffset,
-    filterOrder
+    phaseOffset
     ) {
-        if (amplitude==0) return;
+        if (Math.abs(amplitude)<zeroLevel) return;
     let theta = phaseOffset + (Math.floor(delay) + 1 - delay) * w; //Phase accumulator + correction for fractional delay
-    let env = 0;
-    let bufferSize = buffer.length;
-    const fo=filterOrder/6*2;
+    let env = -1;
+    const bufferSize = buffer.length;
     for (let i = 0; i < bufferSize; i++) {
         if (i >= delay)   {
+            env++;//call here to advance even if level is zero
             //Phase accumulator
             theta += w;
-            let f=filterBuffer ? 
-                Math.pow(1 + Math.pow(w *filterBuffer[env],fo),-0.5) //Butterworth filter frequency response 
-                : 1;
-            buffer[i] += amplitude * f * envelopeBuffer[env++] * Math.sin(theta) ;
+            let l=envelopeBuffer[env];
+            if (l<zeroLevel) continue;
+            if (filter){
+                let c=w *filter.invW0[env];
+                //if (c>filter.stopBandEnd) continue;
+                //if (c>filter.passBandEnd)
+                {
+                    l*=Math.pow(1 + Math.pow(c,filter.order2),-0.5); 
+                }
+            }
+            buffer[i] += amplitude * l * Math.sin(theta) ;
         }
     }
 }

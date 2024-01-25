@@ -157,6 +157,62 @@ let envelopePresets = [
 
 ];
 
+let filterPresets = [
+    {   
+        name:"default",
+        patch:{
+            filterF1:10,
+            filterF2:10,
+            filterF3:5,
+            attackF:0.005,
+            holdF:0,
+            decayF:0.2,
+            filterSlope:12,
+            filterPeak:0,
+        }
+    },    
+    {   
+        name:"Chirp",
+        patch:{
+            filterF1:10,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.005,
+            holdF:0,
+            decayF:0.01,
+            filterSlope:24,
+            filterPeak:0,
+        }
+    },    
+    {   
+        name:"Test",
+        patch:{
+            filterF1:0,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.04,
+            holdF:0,
+            decayF:0.08,
+            filterSlope:24,
+            filterPeak:0,
+        }
+    },    
+    {   
+        name:"off",
+        patch:{
+            filterF1:10,
+            filterF2:10,
+            filterF3:2,
+            attackF:0.005,
+            holdF:0,
+            decayF:0.01,
+            filterSlope:0,
+            filterPeak:0,
+        }
+    }
+
+
+]
 
 function getDefaultPatch(){
     return {
@@ -188,7 +244,7 @@ function getDefaultPatch(){
         attackF: 0.005,//Linear time to get to max amplitude  in seconds
         holdF: 0,// time in seconds to hold max amplitude
         decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
-        filterSlope:12,//db/octave
+        filterSlope:12,//db/octave, 0=off
         filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
     }
 }
