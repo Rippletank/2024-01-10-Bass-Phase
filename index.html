@@ -54,7 +54,7 @@
         </div>
 
         
-        <div class="presetHeader">
+        <div class="presetHeader topSpaced">
             <h4>Harmonic Series</h4>
             <div id="wavePresetButtons" class="PresetButtons"></div>
         </div>
@@ -124,25 +124,25 @@
         </div>
         <div class ="previewButtons">
             <div class="previewButtons previewL">
-                <button id="previewD" class = "previewButton">def</button>
-                <button id="previewA" class = "previewButton">A</button>
-                <button id="previewB" class = "previewButton">B</button>
+                <button name="PD" class = "previewButton">def</button>
+                <button name="PA" class = "previewButton">A</button>
+                <button name="PB" class = "previewButton">B</button>
             </div>
             <div class="previewButtons previewC">
-                <button id="previewF0" class = "previewButton">off</button>
-                <button id="previewF1" class = "previewButton">F1</button>
-                <button id="previewF2" class = "previewButton">F2</button>
-                <button id="previewF3" class = "previewButton">F3</button>
+                <button name="F0" class = "previewButton">off</button>
+                <button name="F1" class = "previewButton">F1</button>
+                <button name="F2" class = "previewButton">F2</button>
+                <button name="F3" class = "previewButton">F3</button>
             </div>
 
             <div class="previewButtons">
-                <button id="fullButton" class = "previewButton">Full</button>
-                <button id="phaseButton" class = "previewButton">Φ</button>
-                <button id="polarityButton" class = "previewButton">+/-</button>
+                <button name="HFull" class = "previewButton">Full</button>
+                <button name="HPhase" class = "previewButton">Φ</button>
+                <button name="HPolarity" class = "previewButton">+/-</button>
             </div>
         </div>
 
-        <div class="presetHeader">
+        <div class="presetHeader topSpaced">
             <h4>Envelope</h4>
             <div id="envelopPresetButtons" class="PresetButtons"></div>
         </div>
@@ -179,9 +179,8 @@
         </div>
     </div>
     <div class="bordered" id="FilterSetup">
-        <h3>Filter Settings</h3>
         <div class="presetHeader">
-            <h4>Filter</h4>
+            <h3>Filter Settings</h3>
             <div id="filterPresetButtons" class="PresetButtons"></div>
         </div>
 
@@ -242,6 +241,47 @@
         </div>
 
     </div>
+
+
+    <div class="bordered" id="DistortionSetup">
+        <div class="presetHeader">
+            <h3>Distortion Settings</h3>
+            <div id="distortionPresets" class="PresetButtons"></div>
+        </div>
+     
+        <div>
+            <canvas id="distortionPreview"  width ="800" height="200"></canvas>
+        </div>
+        <div class ="previewButtons bottomSpaced">
+            <div class="previewButtons previewL">
+                <button name="PD" class = "previewButton">def</button>
+                <button name="PA" class = "previewButton">A</button>
+                <button name="PB" class = "previewButton">B</button>
+            </div>
+            <div class="previewButtons previewC">
+                <button name="F0" class = "previewButton">off</button>
+                <button name="F1" class = "previewButton">F1</button>
+                <button name="F2" class = "previewButton">F2</button>
+                <button name="F3" class = "previewButton">F3</button>
+            </div>
+
+            <div class="previewButtons">
+                <button name="DFull" class = "previewButton">Full</button>
+                <button name="DPhase" class = "previewButton">Φ</button>
+                <button name="DPolarity" class = "previewButton">+/-</button>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <label for="distortion">Amount:</label>
+            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.05" value="0">
+            <output class="valueSpan" name="distortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the amount of distortion</div>
+        </div>
+    </div>
+
+
 
     <div class="bordered" id="TestSetup">
         <h3>Phase shift settings</h3>
@@ -343,8 +383,8 @@
         <h3>Background info - see <a href="#Notes1">notes</a></h3>
         <div class ="previewButtons">
             <div class="previewButtons">
-                <button id="waveformShowF" class = "previewButton">Filter overlays</button>
-                <button id="waveformShowEG" class = "previewButton">Envelope overlays</button>
+                <button name="wShowF" class = "previewButton">Filter overlays</button>
+                <button name="wShowEG" class = "previewButton">Envelope overlays</button>
             </div>
         </div>
     </div>

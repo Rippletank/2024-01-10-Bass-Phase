@@ -113,10 +113,20 @@ canvas {
 .presetHeader{
     display: flex;
     align-items: center;
+}
+
+.topSpaced{
     margin-top: 2em;
 }
 
+.bottomSpaced{
+    margin-bottom: 2em;
+}
+
 .presetHeader h4{
+    flex-basis: 20%;
+}
+.presetHeader h3{
     flex-basis: 20%;
 }
 .PresetButtons {

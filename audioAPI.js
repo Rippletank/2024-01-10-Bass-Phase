@@ -348,9 +348,46 @@ function updatePreview(patch){
 let previewSpectrumFullWidth =false;
 let previewSpectrumPolarity = true;
 let previewSpectrumShowPhase = true;
+let distortionSpectrumFullWidth =false;
+let distortionSpectrumPolarity = true;
+let distortionSpectrumShowPhase = true;
 function paintPreview(){
     if (!previewResult) return;
-    let canvas = document.getElementById('wavePreview');
+    doPreviewPaint(
+        'wavePreview',
+        previewResult.samples,
+        previewResult.magnitude,
+        previewResult.phase,
+        previewResult.min,
+        previewResult.max,
+        previewSpectrumFullWidth,
+        previewSpectrumPolarity,
+        previewSpectrumShowPhase);
+
+        doPreviewPaint(
+            'distortionPreview',
+            previewResult.samples,
+            previewResult.magnitude,
+            previewResult.phase,
+            previewResult.min,
+            previewResult.max,
+            distortionSpectrumFullWidth,
+            distortionSpectrumPolarity,
+            distortionSpectrumShowPhase);
+}
+
+function doPreviewPaint(
+    id, //id of canvas element
+    samples, //array of samples
+    magnitude, //array of magnitude values for harmonics
+    phases, //array of phase values for harmonics
+    min, //min value in samples data
+    max, //max value in samples data
+    showFullSpectrum, //show all harmonics or just first 50
+    showPolarity, //show polarity of harmonics or just absolute value
+    showPhase //show phase graph of harmonics
+){
+    let canvas = document.getElementById(id);
     let ctx = canvas.getContext("2d");
     let w=canvas.width;
     let h=canvas.height;
@@ -362,7 +399,7 @@ function paintPreview(){
     ctx.fillStyle = "rgb(240, 240, 240)";
     ctx.fillRect(0, 0, wpSize+wpCorner*2, wpSize+wpCorner*2);  
     ctx.beginPath();    
-    let waveScale = 1/Math.max(Math.abs(previewResult.min),Math.abs(previewResult.max));
+    let waveScale = 1/Math.max(Math.abs(min),Math.abs(max));
     //waveForm axis lines
     ctx.lineWidth = 0.5;
     ctx.strokeStyle = "rgb(150, 150, 150)";
@@ -376,9 +413,9 @@ function paintPreview(){
     ctx.beginPath();    
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(0, 0, 0)";
-    for(let i=0;i<previewResult.samples.length;i++){
-        let x =wpCorner + i * wpSize / previewResult.samples.length;
-        let y =wpCorner + (0.5-0.5 * waveScale * previewResult.samples[i]) * wpSize;
+    for(let i=0;i<samples.length;i++){
+        let x =wpCorner + i * wpSize / samples.length;
+        let y =wpCorner + (0.5-0.5 * waveScale * samples[i]) * wpSize;
         if (i === 0) {
             ctx.moveTo(x, y);
         } else {
@@ -389,16 +426,16 @@ function paintPreview(){
 
 
     //Spectrum Amplitude preview - right side rectangle
-    let min = -100/20;//db/20 - optimise out the *20 from the db calculation
+    let minDB = -100/20;//db/20 - optimise out the *20 from the db calculation
     //Spectrum Amplitude preview - right side rectangle
     let spL= wpCorner*3+wpSize;
     let spW = w - spL;
     let spT = 0;
-    let spB = h*( previewSpectrumShowPhase ? 0.75: 1);
-    let spH = (spB-spT) * (previewSpectrumPolarity ? 0.5 : 1);
+    let spB = h*( showPhase ? 0.75: 1);
+    let spH = (spB-spT) * (showPolarity ? 0.5 : 1);
     let sp0 = spT+spH;
-    let spScale = spH /min;
-    let count = previewSpectrumFullWidth ? previewResult.magnitude.length : Math.min(previewResult.magnitude.length/2,50);
+    let spScale = spH /minDB;
+    let count = showFullSpectrum ? magnitude.length : Math.min(magnitude.length/2,50);
     
     //Spectrum Amplitude axis lines
     ctx.beginPath(); 
@@ -416,16 +453,16 @@ function paintPreview(){
     ctx.strokeStyle = "rgb(0, 0, 200)";
     for (let i = 0; i < count; i++) {
         let x =spL + i * spW / count;
-        let mag = previewResult.magnitude[i];
-        let polarity = previewSpectrumPolarity ? Math.sign(mag) : 1;
+        let mag = magnitude[i];
+        let polarity = showPolarity ? Math.sign(mag) : 1;
         let offset = spH - polarity*spH; //either 0 or spH*2 
-        let y =spT +offset + polarity * Math.max(min, Math.log10( Math.abs(mag))) * spScale;
+        let y =spT +offset + polarity * Math.max(minDB, Math.log10( Math.abs(mag))) * spScale;
         ctx.moveTo(x, sp0);
         ctx.lineTo(x, y);
     }
     ctx.stroke();
 
-    if (!previewSpectrumFullWidth)
+    if (!showFullSpectrum)
     {
         //Draw dots to show harmonics on zoomed in view        
         ctx.fillStyle = "rgb(0, 0, 100)";
@@ -435,6 +472,7 @@ function paintPreview(){
         }
     }
 
+    //Preview Filter and patch are common for Harmonics preview and distortion preview
     if (filterPreviewSubject>0 && previewResult.filter){
         //Overlay the filter frequency response
         ctx.beginPath();    
@@ -458,7 +496,7 @@ function paintPreview(){
                 l=filter.lut[Math.trunc((c-filter.passBandEnd)*filter.lutScale)]; 
             }
 
-            let y =spT + Math.max(min, Math.log10( Math.abs(l))) * spScale;
+            let y =spT + Math.max(minDB, Math.log10( Math.abs(l))) * spScale;
             if (i == 1) {
                 ctx.moveTo(x, y);
             }
@@ -472,7 +510,7 @@ function paintPreview(){
     }
 
 
-    if (!previewSpectrumShowPhase) return;
+    if (!showPhase) return;
     //Spectrum Phase preview - right side rectangle
     let pL= spL;
     let pW = spW;
@@ -499,9 +537,9 @@ function paintPreview(){
     //Spectrum preview - right side rectangle
     for (let i = 0; i < count; i++) {
         let x =pL + i * pW / count;
-        let phase = -previewResult.phase[i];
-        if(!previewSpectrumPolarity) {
-            let mag = previewResult.magnitude[i];
+        let phase = -phases[i];
+        if(!showPolarity) {
+            let mag = magnitude[i];
             if (mag<0) phase+=Math.PI;
         }
         //Scale to +/- PI
@@ -514,7 +552,7 @@ function paintPreview(){
     }
     ctx.stroke();
 
-    if (!previewSpectrumFullWidth)
+    if (!showFullSpectrum)
     {
         //Draw dots to show harmonics on zoomed in view        
         ctx.fillStyle = "rgb(50, 0, 0)";

@@ -47,74 +47,101 @@ function play(index){
     playAudio(index, cachedPatchA, cachedPatchB);   
 }
 
-//FFT buttons
-document.getElementById('hideFFT').addEventListener('click', function() {
-    useFFT = !useFFT;
-    if (!useFFT) fftClear();
-    this.textContent = useFFT ? "Hide FFT" : "Show FFT";
-});
-
-//Waveform overlay buttons
-document.getElementById('waveformShowF').addEventListener('click', function() {
-    showBufferFilterOverlay=!showBufferFilterOverlay;
-    updatePreviewButtonState();
-    updateDisplay();
-});
-document.getElementById('waveformShowEG').addEventListener('click', function() {
-    showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
-    updatePreviewButtonState();
-    updateDisplay();
-});
-
-
-//Harmonics Preview option buttons
-document.getElementById('fullButton').addEventListener('click', function() {
-    previewSpectrumFullWidth=!previewSpectrumFullWidth;
-    updatePreviewButtonState();
-    paintPreview();
-});
-
-document.getElementById('phaseButton').addEventListener('click', function() {
-    previewSpectrumShowPhase=!previewSpectrumShowPhase;
-    updatePreviewButtonState();
-    paintPreview();
-});
-
-document.getElementById('polarityButton').addEventListener('click', function() {
-    previewSpectrumPolarity=!previewSpectrumPolarity;
-    updatePreviewButtonState();
-    paintPreview();
-});
-
+//load settings for all of the little green buttons
 let previewSubject =0;
-document.getElementById('previewD').addEventListener('click', function() {
-    previewSubject = 0;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewA').addEventListener('click', function() {
-    previewSubject = 1;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewB').addEventListener('click', function() {
-    previewSubject = 2;
-    DoFullPreviewUpdate();
-});
-
-document.getElementById('previewF0').addEventListener('click', function() {
-    filterPreviewSubject = 0;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewF1').addEventListener('click', function() {
-    filterPreviewSubject = 1;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewF2').addEventListener('click', function() {
-    filterPreviewSubject = 2;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewF3').addEventListener('click', function() {
-    filterPreviewSubject = 3;
-    DoFullPreviewUpdate();
+let previewButtons = document.querySelectorAll('.previewButton');
+previewButtons.forEach(function(button) {
+    switch(button.name[0]){    
+        case 'P': //patch to use for preview
+            let sub =0;
+            switch(button.name[1]){
+                case 'D': sub=0;break;
+                case 'A': sub=1;break;
+                case 'B': sub=2;break;
+            };
+            button.addEventListener('click', function() {
+                previewSubject = sub;
+                DoFullPreviewUpdate();
+            });
+            button.isChecked =()=> previewSubject == sub;
+        break;
+        case 'F': //filter preview options
+            let subF =parseInt(button.name[1]);
+            button.addEventListener('click', function() {
+                filterPreviewSubject = subF;
+                DoFullPreviewUpdate();
+            });
+            button.isChecked =()=> filterPreviewSubject == subF;
+        break;
+        case 'H'://Harmonics preview view options
+            let fh = ()=>{};//function to call when clicked
+            let ch = ()=>false;//isChecked function
+            switch(button.name){
+                case 'HFull': 
+                    fh=()=>previewSpectrumFullWidth=!previewSpectrumFullWidth;
+                    ch=()=>previewSpectrumFullWidth;
+                    break;
+                case 'HPhase': 
+                    fh=()=>previewSpectrumShowPhase=!previewSpectrumShowPhase;
+                    ch=()=>previewSpectrumShowPhase;
+                    break;
+                case 'HPolarity': 
+                    fh=()=>previewSpectrumPolarity=!previewSpectrumPolarity;
+                    ch=()=>previewSpectrumPolarity;
+                    break;
+            }
+            button.addEventListener('click', function() {
+                fh();
+                updatePreviewButtonState();
+                paintPreview();
+            });
+            button.isChecked =ch;
+        break;
+        case 'D'://Harmonics preview view options
+            let fd = ()=>{};//function to call when clicked
+            let cd = ()=>false;//isChecked function
+            switch(button.name){
+                case 'DFull': 
+                    fd=()=>distortionSpectrumFullWidth=!distortionSpectrumFullWidth;
+                    cd=()=>distortionSpectrumFullWidth;
+                    break;
+                case 'DPhase': 
+                    fd=()=>distortionSpectrumShowPhase=!distortionSpectrumShowPhase;
+                    cd=()=>distortionSpectrumShowPhase;
+                    break;
+                case 'DPolarity': 
+                    fd=()=>distortionSpectrumPolarity=!distortionSpectrumPolarity;
+                    cd=()=>distortionSpectrumPolarity;
+                    break;
+            }
+            button.addEventListener('click', function() {
+                fd();
+                updatePreviewButtonState();
+                paintPreview();
+            });
+            button.isChecked =cd;
+        break;
+        case 'w': //Waveform A/B options
+            let fw = ()=>{};//function to call when clicked
+            let cw = ()=>false;//isChecked function
+            switch(button.name){
+                case 'wShowF': 
+                    fw=()=>showBufferFilterOverlay=!showBufferFilterOverlay;
+                    cw=()=>showBufferFilterOverlay;
+                    break;
+                case 'wShowEG': 
+                    fw=()=>showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
+                    cw=()=>showBufferEnvelopeOverlay;
+                break;
+            }
+            button.addEventListener('click', function() {
+                fw();
+                updatePreviewButtonState();
+                updateDisplay();
+            });
+            button.isChecked =cw;
+        break;
+    }
 });
 
 function DoFullPreviewUpdate(){
@@ -123,61 +150,13 @@ function DoFullPreviewUpdate(){
     paintPreview();
 }
 
-let subjectBtns=null;
-let previewBtns = null;
-let filterPreBtns = null;
-let bufferPreviewBtns = null;
+
 function updatePreviewButtonState(){
-    subjectBtns = subjectBtns ?? [
-        document.getElementById('previewD'),
-        document.getElementById('previewA'),
-        document.getElementById('previewB')
-    ];
-    subjectBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
+    previewButtons.forEach((button)=>{
+        const checked = button.isChecked();
+        button.classList.add(checked ? 'button-selected' : 'button-unselected');
+        button.classList.remove(checked ? 'button-unselected' : 'button-selected');
     });
-    for (let i=0; i<subjectBtns.length; i++){
-        subjectBtns[i].classList.add(i==previewSubject ? 'button-selected' : 'button-unselected');
-    }
-    previewBtns = previewBtns ?? [
-        document.getElementById('fullButton'),
-        document.getElementById('phaseButton'),
-        document.getElementById('polarityButton')
-    ];
-    previewBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
-    });
-    previewBtns[0].classList.add(previewSpectrumFullWidth ? 'button-selected' : 'button-unselected');
-    previewBtns[1].classList.add(previewSpectrumShowPhase ? 'button-selected' : 'button-unselected');
-    previewBtns[2].classList.add(previewSpectrumPolarity ? 'button-selected' : 'button-unselected');
-
-    filterPreBtns = filterPreBtns ?? [
-        document.getElementById('previewF0'),
-        document.getElementById('previewF1'),
-        document.getElementById('previewF2'),
-        document.getElementById('previewF3')
-    ];
-    filterPreBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
-    });
-    for (let i=0; i<filterPreBtns.length; i++){
-        filterPreBtns[i].classList.add(i==filterPreviewSubject ? 'button-selected' : 'button-unselected');
-    }    
-
-    bufferPreviewBtns = bufferPreviewBtns ?? [
-        document.getElementById('waveformShowF'),
-        document.getElementById('waveformShowEG')
-    ];
-
-    bufferPreviewBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
-    });
-    bufferPreviewBtns[0].classList.add(showBufferFilterOverlay ? 'button-selected' : 'button-unselected');
-    bufferPreviewBtns[1].classList.add(showBufferEnvelopeOverlay ? 'button-selected' : 'button-unselected');
 }
 
 
@@ -202,13 +181,18 @@ function updateCanvas() {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+const commonSectionNames = [
+    'CommonSettings', 
+    'FilterSetup', 
+    'TestSetup', 
+    'DistortionSetup'];
 
 
 function initSliders(){
     //Call once only at startup
-    wireUpSlidersForContainer('CommonSettings');
-    wireUpSlidersForContainer('FilterSetup');
-    wireUpSlidersForContainer('TestSetup');
+    commonSectionNames.forEach((sectionName)=>{
+        wireUpSlidersForContainer(sectionName);
+    });
     wireUpSlidersForContainer('SoundASetup');
     wireUpSlidersForContainer('SoundBSetup');
     setupPresetButtons();
@@ -267,6 +251,7 @@ function setupPresetButtons(){
     insertPresetButtons('wavePresetButtons', wavePresets);
     insertPresetButtons('envelopPresetButtons', envelopePresets);
     insertPresetButtons('filterPresetButtons', filterPresets);
+    insertPresetButtons('distortionPresets', distortionPresets);
 }
 
 function insertPresetButtons(id, presetList){     
@@ -281,10 +266,11 @@ function insertPresetButtons(id, presetList){
     });
 }
 
+
 function loadPatches(patch, patchA, patchB, testSubjectList) {
-    loadPatchIntoContainer('CommonSettings', patch);
-    loadPatchIntoContainer('FilterSetup', patch);
-    loadPatchIntoContainer('TestSetup', patch);
+    commonSectionNames.forEach((sectionName)=>{
+        loadPatchIntoContainer(sectionName, patch);
+    });
     if(testSubjectList)
     {
         loadTestSubjectList(testSubjectList);
@@ -314,12 +300,12 @@ let cachedPatchA = null;
 let cachedPatchB = null;
 function updateAllLabelsAndCachePatches(){
     let patch = {};
-    loadSliderValuesFromContainer('CommonSettings', patch);
-    loadSliderValuesFromContainer('FilterSetup', patch);
-    loadSliderValuesFromContainer('TestSetup', patch);
-    updateLabelsFor('CommonSettings', patch);
-    updateLabelsFor('FilterSetup', patch);
-    updateLabelsFor('TestSetup', patch);
+    commonSectionNames.forEach((sectionName)=>{
+        loadSliderValuesFromContainer(sectionName, patch);
+    });
+    commonSectionNames.forEach((sectionName)=>{
+        updateLabelsFor(sectionName, patch);
+    });
     cachedPatchCmn = {...patch};
 
     loadSliderValuesFromContainer('SoundASetup', patch);
@@ -442,6 +428,9 @@ function updateLabelsFor(containerId, patch) {
 
             case "rootPhaseDelay": 
                 ve.innerHTML =getPhaseLabel(patch);break;
+            
+            case "distortion":
+                ve.textContent = toPercent(patch.distortion);
         }
     });
 }

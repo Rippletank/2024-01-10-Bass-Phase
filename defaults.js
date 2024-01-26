@@ -184,6 +184,21 @@ let envelopePresets = [
 
 ];
 
+let distortionPresets = [
+    {
+        name:"default",
+        patch:{
+            distortion:0,
+        }
+    },
+    {
+        name:"Heavy",
+        patch:{
+            distortion:1,
+        }
+    },
+];
+
 let filterPresets = [
     {   
         name:"default",
@@ -287,6 +302,8 @@ function getDefaultPatch(){
         decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
         filterSlope:12,//db/octave, 0=off
         filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
+
+        distortion:0,//0..1 0 = no distortion, 1 = max distortion
     }
 }
 
