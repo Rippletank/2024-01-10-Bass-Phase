@@ -1,4 +1,3 @@
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Audio Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -65,6 +64,9 @@ function getAudioBuffer(
         filter = buildFilter(sampleRate, bufferSize, patch);
       }
       buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0);
+      
+      distort(b, patch, sampleRate);
+      
       return {
             buffer:audioBuffer,
             envelope:envelopeBuffer,
@@ -83,7 +85,7 @@ function getPreview(referencePatch, filterPreviewSubject){
         ...defaultPatch,
         ...referencePatch
     };
-    let bufferSize = 1000; //Number of samples
+    let bufferSize = 1024; //Number of samples
     let sampleRate = bufferSize * patch.frequency;//Ensure is one complete per cycle
     let envelopeBuffer =[];
     let b = [];
@@ -131,6 +133,10 @@ function getPreview(referencePatch, filterPreviewSubject){
         phase.push(phaseShift);
     }
     buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
+    
+    let distorted =[...b];
+    distort(distorted, patch, sampleRate);
+
     return {
         samples:b,
         magnitude:magnitude,
@@ -139,7 +145,8 @@ function getPreview(referencePatch, filterPreviewSubject){
         max:Math.max(...b),
         min:Math.min(...b),
         filter:filter,
-        patch:patch
+        patch:patch,
+        distortedSamples:distorted
     };
 }
 

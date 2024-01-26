@@ -274,7 +274,7 @@
 
         <div class="slider-container">
             <label for="distortion">Amount:</label>
-            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.05" value="0">
+            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0">
             <output class="valueSpan" name="distortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Controls the amount of distortion</div>
@@ -421,6 +421,7 @@
         <p>With a significant hold time and no second harmonic shift, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
     </div>
     <script src="defaults.js"></script>
+    <script src="distortion.js"></script>
     <script src="audio.js"></script>
     <script src="painting.js"></script>
     <script src="audioAPI.js"></script>

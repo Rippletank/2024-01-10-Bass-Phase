@@ -183,6 +183,7 @@ function updatePreview(patch){
             previewResult = getPreview(cachedPatchB, filterPreviewSubject);
             break;  
     }
+    previewResult.fft = getFFT(previewResult.samples);
 }
 
 let previewSpectrumFullWidth =false;
@@ -208,9 +209,9 @@ function paintPreview(){
 
         doPreviewPaint(
             'distortionPreview',
-            previewResult.samples,
-            previewResult.magnitude,
-            previewResult.phase,
+            previewResult.distortedSamples,
+            previewResult.fft.magnitude,
+            previewResult.fft.phase,
             previewResult.patch,
             previewResult.filter,
             previewResult.min,
@@ -328,7 +329,14 @@ function setValueFromPatch(ve, patch){
             ve.innerHTML =getPhaseLabel(patch);break;
         
         case "distortion":
-            ve.textContent = toPercent(patch.distortion);
+            if (patch.distortion==0)
+            {
+                ve.innerHTML = "<b>off</b>";
+            }
+            else
+            {
+                ve.textContent = toPercent(patch.distortion);
+            }
     }
 }
 
