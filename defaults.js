@@ -20,6 +20,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Default values and presets - no knowledge of anything else in the code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const smallestLevel=-100;//db
+const zeroLevel=Math.pow(10,smallestLevel/20);//-100db global minimum level for calculations
+
+
 
 let defaultTestSubjectList = 
 [

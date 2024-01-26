@@ -38,6 +38,7 @@ function initFFT()
     //FFT always of length 1024 - so bit reversals and sin lUT can be precalculated
     const N = 1024;
     const N_1 =N-1;
+    const N_4 =N/4;
     const logN = Math.log2(N);
     const shift = 16-logN;
     let bitReversals = [];
@@ -45,6 +46,7 @@ function initFFT()
     //https://vanhunteradams.com/FFT/FFT.html#Generalized-code
     //who referenced https://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
     //Leave first and last in place
+    let mr = 0;
     for(let m=1;m<N_1;m++){
         mr =((m>>1)  & 0x5555)|((m  & 0x5555)<<1);
         mr =((mr>>2) & 0x3333)|((mr & 0x3333)<<2);
@@ -52,17 +54,17 @@ function initFFT()
         mr =((mr>>8) & 0x00ff)|((mr & 0x00ff)<<8);
         mr = mr>>shift;
         if (mr<=m) continue;
-        bitReversals.push({m,mr});
+        bitReversals.push([m,mr]);
     }
 
     //Sin LUT precalculation
     const sinLUT = new Array(N);
     const w =2*Math.PI/N;//rads per sample
     for(let i=0;i<N;i++){
-        sinLUT[i] = Math.sin(w*i);
+        sinLUT[i] = Math.sin(w*i) * 0.5;
     }
 
-    //performs an FFT on the buffer[N] and returns the result as {real:array[n/2],imaginary:array[n/2]}
+    //performs an FFT on the buffer[N] and returns the result as {magnitude:array[n/2],phase:array[n/2]}
     getFFT = (buffer)=>{  
         if (buffer.length!=N)  return null;
         
@@ -73,11 +75,9 @@ function initFFT()
             const m = br[0];
             const mr = br[1];
             const tr = fr[m];
-            const ti = fi[m];
             fr[m] = fr[mr];
-            fi[m] = fi[mr];
             fr[mr] = tr;
-            fi[mr] = ti;
+            //don't need to swap fi as it is all 0
         }
         
 
@@ -87,10 +87,10 @@ function initFFT()
         let k=logN-1;
         while (L<N){
             let iStep = L*2;
-            for(let m=0;m<L;++m){
+            for(let m=0;m<L;m++){
                 const theta = m<<k;
-                const wr = sinLUT[theta+N/4] * 0.5;
-                const wi = -sinLUT[theta] * 0.5;
+                const wr = sinLUT[theta+N_4];//cosine * 0.5 in LUT
+                const wi = -sinLUT[theta];//sine * 0.5 in LUT
                 for(let i=m;i<N;i+=iStep){
                     const j=i+L;
                     let tr = wr*fr[j]-wi*fi[j];
@@ -112,8 +112,9 @@ function initFFT()
         for(let i=0;i<N/2;i++){
             const x=fr[i];
             const y=fi[i];
-            mag.push(Math.sqrt(x*x+y*y));
-            phase.push(Math.atan2(y,x));
+            const m = Math.sqrt(x*x+y*y);
+            mag.push(m);
+            phase.push(m>zeroLevel? Math.atan2(y,x):0);
         }
         return {
             magnitude: mag,

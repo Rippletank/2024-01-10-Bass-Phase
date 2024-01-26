@@ -183,7 +183,7 @@ function updatePreview(patch){
             previewResult = getPreview(cachedPatchB, filterPreviewSubject);
             break;  
     }
-    previewResult.fft = getFFT(previewResult.samples);
+    previewResult.fft = getFFT(previewResult.distortedSamples);
 }
 
 let previewSpectrumFullWidth =false;

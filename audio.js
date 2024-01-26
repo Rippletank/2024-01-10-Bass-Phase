@@ -319,8 +319,6 @@ function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, dela
 
 
 //Generate a single sine wave and mix into the buffer
-const smallestLevel=-100;//db
-const zeroLevel=Math.pow(10,smallestLevel/20);//-100db
 function mixInSine(
     buffer, 
     w, //Hz 
