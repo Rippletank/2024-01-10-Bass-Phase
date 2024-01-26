@@ -15,13 +15,13 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Audio/WebAudioAPI linking code  
-//knows about Audio API, Audio.js and defaults.js. Can access canvas element by ID to draw FTT and previews etc
+//knows about Audio API, Audio.js and defaults.js. Calls painting.js for canvas rendering
 //No knowledge of GUI controls or patch management
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 let audioContext = null;
-let sourceNode = null;
 let analyserNode = null;
+let sourceNode = null;
 let audioBufferA = null;
 let audioBufferB = null;
 let nullTestBuffer = null;
@@ -73,7 +73,7 @@ function playAudio(index, patchA, patchB) {
     }
     sourceNode = newSourceNode;
     newSourceNode.start(0);
-    startFFT();
+    startFFT(audioContext,analyserNode, 'fftCanvas');
 }
 
 function stop() {
@@ -83,74 +83,12 @@ function stop() {
         sourceNode = null;
         cancelAnimationFrame(fftFrameCall);
         fftFrameCall = null;
-        fftClear();
+        fftClear('fftCanvas');
     }
 }
 
-let useFFT = true;
-
-function fftClear(){
-    let canvas = document.getElementById('fftCanvas');
-    let ctx = canvas.getContext("2d");
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.fillStyle = "rgb(240, 240, 240)";
-    ctx.fillRect(0, 0, w, h);  
-}
 
 
-
-let fftFrameCall = null;
-const fftStartF = 20;
-const fftEndF = 20000;
-function startFFT(){
-    if (fftFrameCall) return;
-    if (!useFFT) {
-        fftClear();
-        return;
-    }
-    let canvas = document.getElementById('fftCanvas');
-    let ctx = canvas.getContext("2d");
-    const w = canvas.width;
-    const h = canvas.height;
-    const bufferLength = analyserNode.fftSize;
-    const maxLogF = Math.log2(fftEndF-fftStartF);
-    const octaveStep = maxLogF / w;
-    const freqStep = bufferLength / audioContext.sampleRate;
-    const hScale = h / 256;
-    const fft = new Uint8Array(bufferLength);
-    const bins = new Uint8Array(w);
-    const fftDraw =()=>{
-        fftFrameCall = requestAnimationFrame(fftDraw);
-        analyserNode.getByteFrequencyData(fft);  
-        ctx.fillStyle = "rgb(240, 240, 240)";
-        ctx.fillRect(0, 0, w, h);        
-        ctx.lineWidth = 0.5;
-        ctx.strokeStyle = "rgb(0, 0, 0)";
-        ctx.beginPath();
-
-        let startBin = 0;
-        for (let i = 0; i < w; i++) {
-            let endOctave = (i+1) * octaveStep;
-            let endBin = Math.round((fftStartF + Math.pow(2,endOctave))  * freqStep );
-            if (endBin>startBin){
-                let max = 0;
-                for (let j = startBin; j < endBin; j++) {
-                    max = Math.max(max,fft[j]);
-                }
-                let y = h - max * hScale;
-                if (i === 0) {
-                    ctx.moveTo(i, y);
-                } else {
-                    ctx.lineTo(i, y);
-                }
-                startBin = endBin;
-            }
-        }
-        ctx.stroke();
-    }
-    fftDraw();
-}
 
    
 let changed = true;
@@ -163,7 +101,7 @@ function updateBuffersAndDisplay(patchA, patchB) {
 
     updateBuffers(patchA, patchB);
     updateDisplay();
-    fftClear();
+    fftClear('fftCanvas');
 
     let t1 = performance.now();
     console.log("Execution time: " + (t1 - t0) + " milliseconds.");
@@ -231,104 +169,6 @@ function updateDisplay(){
 }
 
 
-function paintBuffer(buffer, maxLength, canvasId){
-    let b = buffer.getChannelData(0);
-    let bufferSize = buffer.length;
-
-    var canvas = document.getElementById(canvasId);
-    var ctx = canvas.getContext("2d");
-    const h = canvas.height/2;
-    const step = canvas.width / maxLength;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    //Centre line
-    ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgb(50, 50, 50)";
-    ctx.beginPath();
-    ctx.moveTo(0, h);
-    ctx.lineTo(canvas.width, h);
-    ctx.stroke();
-
-    //Waveform
-    ctx.beginPath();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(0, 0, 0)";
-    let x = 0;
-
-    for (let i = 0; i < maxLength; i++) {
-        if (i >= bufferSize) break;
-        let y=h-b[i] * h;
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);//Minus to ensure positive is up
-        }
-        x += step;
-    }
-    ctx.stroke();
-    ctx.stroke();
-         
-}
-
-function paintEnvelope(envelop, maxLength, canvasId){
-    let b = envelop;
-    let bufferSize = b.length;
-
-    var canvas = document.getElementById(canvasId);
-    var ctx = canvas.getContext("2d");
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(0, 128, 0)";
-    let x = 0;
-    const h = canvas.height/2;
-    const step = canvas.width / maxLength;
-
-    for (let i = 0; i < maxLength; i++) {
-        if (i >= bufferSize) break;
-        let y=h-b[i] * h;
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);//Minus to ensure positive is up
-        }
-        x += step;
-    }
-    ctx.stroke();
-}
-
-let filterEnvIsLog = true;
-function paintFilterEnvelope(filter, maxLength, canvasId){
-    if (!filter) return;
-    const b = filter.invW0;//1/wo  = sampleRate/(2*Math.PI*f0)
-    const maxF = filter.sampleRate/2;//-20 to avoid log(0)
-    const invLogMaxF =1/Math.log2(maxF-20);
-    const c = filter.sampleRate/(2*Math.PI);//retrieve f0 from 1/wo and scale to max frequency
-    const bufferSize = b.length;
-
-    var canvas = document.getElementById(canvasId);
-    var ctx = canvas.getContext("2d");
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(0, 0, 128)";
-    let x = 0;
-    const h = canvas.height;
-    const step = canvas.width / maxLength;
-    const scale  = filterEnvIsLog ? h * invLogMaxF : h/maxF;
-    const doLog = filterEnvIsLog;//for jit optimisation
-
-    for (let i = 0; i < maxLength; i++) {
-        if (i >= bufferSize) break;
-        const f = c / b[i];
-        let y =h- scale *(doLog ? Math.log2(f-20) : f);
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);//Minus to ensure positive is up
-        }
-        x += step;
-    }
-    ctx.stroke();
-}
-
-
 let previewResult = null;
 let filterPreviewSubject =0;
 function updatePreview(patch){
@@ -358,6 +198,8 @@ function paintPreview(){
         previewResult.samples,
         previewResult.magnitude,
         previewResult.phase,
+        previewResult.patch,
+        previewResult.filter,
         previewResult.min,
         previewResult.max,
         previewSpectrumFullWidth,
@@ -369,6 +211,8 @@ function paintPreview(){
             previewResult.samples,
             previewResult.magnitude,
             previewResult.phase,
+            previewResult.patch,
+            previewResult.filter,
             previewResult.min,
             previewResult.max,
             distortionSpectrumFullWidth,
@@ -376,191 +220,161 @@ function paintPreview(){
             distortionSpectrumShowPhase);
 }
 
-function doPreviewPaint(
-    id, //id of canvas element
-    samples, //array of samples
-    magnitude, //array of magnitude values for harmonics
-    phases, //array of phase values for harmonics
-    min, //min value in samples data
-    max, //max value in samples data
-    showFullSpectrum, //show all harmonics or just first 50
-    showPolarity, //show polarity of harmonics or just absolute value
-    showPhase //show phase graph of harmonics
-){
-    let canvas = document.getElementById(id);
-    let ctx = canvas.getContext("2d");
-    let w=canvas.width;
-    let h=canvas.height;
-    ctx.clearRect(0, 0, w, h);
 
-    //Waveform Preview - left side square
-    let wpCorner= h/16;
-    let wpSize = wpCorner*14;
-    ctx.fillStyle = "rgb(240, 240, 240)";
-    ctx.fillRect(0, 0, wpSize+wpCorner*2, wpSize+wpCorner*2);  
-    ctx.beginPath();    
-    let waveScale = 1/Math.max(Math.abs(min),Math.abs(max));
-    //waveForm axis lines
-    ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgb(150, 150, 150)";
-    ctx.moveTo(wpCorner, wpCorner + 0.5 * wpSize);
-    ctx.lineTo(wpCorner + wpSize, wpCorner + 0.5 * wpSize); 
-    ctx.moveTo(wpCorner+ 0.5 * wpSize, wpCorner );
-    ctx.lineTo(wpCorner + 0.5 * wpSize, wpCorner + wpSize); 
-    ctx.stroke();
-  
-    //Waveform preview
-    ctx.beginPath();    
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(0, 0, 0)";
-    for(let i=0;i<samples.length;i++){
-        let x =wpCorner + i * wpSize / samples.length;
-        let y =wpCorner + (0.5-0.5 * waveScale * samples[i]) * wpSize;
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
-        }
-    }
-    ctx.stroke();
-
-
-    //Spectrum Amplitude preview - right side rectangle
-    let minDB = -100/20;//db/20 - optimise out the *20 from the db calculation
-    //Spectrum Amplitude preview - right side rectangle
-    let spL= wpCorner*3+wpSize;
-    let spW = w - spL;
-    let spT = 0;
-    let spB = h*( showPhase ? 0.75: 1);
-    let spH = (spB-spT) * (showPolarity ? 0.5 : 1);
-    let sp0 = spT+spH;
-    let spScale = spH /minDB;
-    let count = showFullSpectrum ? magnitude.length : Math.min(magnitude.length/2,50);
-    
-    //Spectrum Amplitude axis lines
-    ctx.beginPath(); 
-    ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgb(150, 150, 150)";
-    ctx.moveTo(spL, sp0);
-    ctx.lineTo(spL + spW, sp0); 
-    ctx.moveTo(spL, spT );
-    ctx.lineTo(spL , spB); 
-    ctx.stroke();
-
-
-    ctx.beginPath();    
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(0, 0, 200)";
-    for (let i = 0; i < count; i++) {
-        let x =spL + i * spW / count;
-        let mag = magnitude[i];
-        let polarity = showPolarity ? Math.sign(mag) : 1;
-        let offset = spH - polarity*spH; //either 0 or spH*2 
-        let y =spT +offset + polarity * Math.max(minDB, Math.log10( Math.abs(mag))) * spScale;
-        ctx.moveTo(x, sp0);
-        ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-
-    if (!showFullSpectrum)
-    {
-        //Draw dots to show harmonics on zoomed in view        
-        ctx.fillStyle = "rgb(0, 0, 100)";
-        for (let i = 0; i < count; i++) {
-            let x =spL + i * spW / count;
-            ctx.fillRect(x-0.5, sp0-0.5, 1, 1); 
-        }
-    }
-
-    //Preview Filter and patch are common for Harmonics preview and distortion preview
-    if (filterPreviewSubject>0 && previewResult.filter){
-        //Overlay the filter frequency response
-        ctx.beginPath();    
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = "rgb(0, 140, 0)";
-        const filter = previewResult.filter;
-        const invW0 = filter.invW0[previewResult.filter.invW0.length*0.5]
-        const rootW = previewResult.patch.frequency * 2 * Math.PI  / filter.sampleRate;
-        for (let i = 1; i < count; i++) {
-            let x =spL + i * spW / count;
-            let w = i * rootW;
-            let c=w *invW0;
-            let l=1;
-            if (c>=filter.stopBandEnd) 
+function setValueFromPatch(ve, patch){
+    switch (ve.name) {
+        case "frequency": 
+            ve.textContent = patch.frequency.toFixed(0) + "Hz";
+            break;
+        case "higherHarmonicRelativeShift": 
+            ve.textContent = toPercent(patch.higherHarmonicRelativeShift);
+            break;
+        case "odd": 
+            ve.textContent = getPartialLevelLabel(patch.oddLevel,patch.oddAlt);
+            break;
+        case "even": 
+            ve.textContent = getPartialLevelLabel(patch.evenLevel, patch.evenAlt);
+            break;
+        case "oddFalloff": 
+            ve.innerHTML = toFalloffString(patch.oddFalloff);
+            break;
+        case "evenFalloff":
+            ve.innerHTML = toFalloffString(patch.evenFalloff);
+            break;
+            break;
+        case "altW":
+            ve.innerHTML = "Every "+ toReciprocal(patch.altW) +" steps &nbsp; (Duty: " +toPercent(patch.altW)+")";
+            break;
+        case "altOffset":
+            let isInt = Math.round(patch.altOffset) ==patch.altOffset;
+            let valText = patch.altOffset.toFixed(1);
+            if (isInt){
+                switch(patch.altOffset){
+                    case -1: valText =valText + ' step &nbsp; Even -↔+ &nbsp; Odd 0↔0';break;
+                    case 0: valText =valText +  ' steps &nbsp; Even 0↔0 &nbsp; Odd +↔-';break;
+                    case 1: valText = valText + ' step &nbsp; Even +↔- &nbsp; Odd 0↔0';break;
+                }
+            }
+            else{
+                valText =valText +' steps &nbsp;&nbsp; both';
+            }
+            ve.innerHTML = valText;
+            break;
+        case "sinCos":
+            let type = "&nbsp;";
+            if (patch.sinCos==0) type = "sin(t)";
+            if (patch.sinCos==-1) type = "-cos(t)";
+            if (patch.sinCos==1) type = "cos(t)";
+            ve.innerHTML = (patch.sinCos*0.5).toFixed(2)+'π &nbsp;&nbsp; '+type;
+            break;
+        case "balance": 
+            if (patch.balance==0) 
             {
-                l=0;
-            } 
-            else if (c>filter.passBandEnd)
+                ve.textContent = "-";
+            }
+            else if (patch.balance==1) 
             {
-                //Use lookup table for filter response in transition band
-                l=filter.lut[Math.trunc((c-filter.passBandEnd)*filter.lutScale)]; 
+                ve.textContent = "higher only";
             }
-
-            let y =spT + Math.max(minDB, Math.log10( Math.abs(l))) * spScale;
-            if (i == 1) {
-                ctx.moveTo(x, y);
+            else if (patch.balance==-1) 
+            {
+                ve.textContent = "1st only";
             }
-            else {
-                ctx.lineTo(x, y);
+            else if (patch.balance>0) 
+            {
+                let db = patch.balance*patch.balance*75;
+                ve.textContent = "1st "+(-db).toFixed(db<3?2:1 )+"db";                    
             }
-        }
-        ctx.stroke();    
+            else if (patch.balance<0) 
+            {
+                let db = patch.balance*patch.balance*75;
+                ve.textContent = "high "+(-db).toFixed(db<3?2:1)+"db";                    
+            }
+            break;
+            
+        case "attack": ve.textContent = patch.attack + "s";break;  
+        case "decay": ve.textContent = patch.decay + "s";break;
+        case "hold": ve.textContent = patch.hold + "s";break;
+        case "envelopeFilter": 
+            if (patch.envelopeFilter==0) 
+                {
+                    ve.innerHTML = "<b>OFF</b>";
+                }
+                else
+                {
+                    ve.textContent = patch.envelopeFilter.toFixed(0);
+                }
+            break;
 
 
+        case "attackF": ve.textContent = patch.attackF + "s";break;  
+        case "decayF": ve.textContent = patch.decayF + "s";break;
+        case "holdF": ve.textContent = patch.holdF + "s";break;
+        case "filterF1": ve.textContent = toFilterFreq(patch.filterF1);break;
+        case "filterF2": ve.textContent = toFilterFreq(patch.filterF2);break;
+        case "filterF3": ve.textContent = toFilterFreq(patch.filterF3);break;
+        case "filterSlope": 
+        if (patch.filterSlope==0) 
+            {
+                ve.innerHTML = "<b>OFF</b>";
+            }
+            else
+            {
+                ve.textContent = patch.filterSlope.toFixed(0)+"db/oct";
+            }
+        break;
+
+        case "rootPhaseDelay": 
+            ve.innerHTML =getPhaseLabel(patch);break;
+        
+        case "distortion":
+            ve.textContent = toPercent(patch.distortion);
     }
-
-
-    if (!showPhase) return;
-    //Spectrum Phase preview - right side rectangle
-    let pL= spL;
-    let pW = spW;
-    let pT = spB + h*0.05;//Small gap between amplitude and phase graphs
-    let pB = h;
-    let pH =(pB-pT)*0.5;
-    let p0 = pT+pH;
-    let pScale = pH / Math.PI;
-    
-    //Spectrum Phase axis lines
-    ctx.beginPath(); 
-    ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgb(150, 150, 150)";
-    ctx.moveTo(pL, p0);
-    ctx.lineTo(pL + pW, p0); 
-    ctx.moveTo(pL, pT );
-    ctx.lineTo(pL , pB); 
-    ctx.stroke();
-
-
-    ctx.beginPath();    
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(100, 0, 0)";
-    //Spectrum preview - right side rectangle
-    for (let i = 0; i < count; i++) {
-        let x =pL + i * pW / count;
-        let phase = -phases[i];
-        if(!showPolarity) {
-            let mag = magnitude[i];
-            if (mag<0) phase+=Math.PI;
-        }
-        //Scale to +/- PI
-        let nos2Pis = phase/(2*Math.PI);
-        phase -= Math.floor(nos2Pis)*2*Math.PI; //Floor works for negative numbers too (floor(-1.5)=-2)
-        if (phase>=Math.PI) phase-=2*Math.PI;
-        let y =p0 + phase * pScale;
-        ctx.moveTo(x, p0);
-        ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-
-    if (!showFullSpectrum)
-    {
-        //Draw dots to show harmonics on zoomed in view        
-        ctx.fillStyle = "rgb(50, 0, 0)";
-        for (let i = 0; i < count; i++) {
-            let x =pL + i * pW / count;
-            ctx.fillRect(x-0.5, p0-0.5, 1, 1); 
-        }
-    }
-
-
 }
+
+
+function toPercent(value){
+    return (value*100).toFixed(0) + "%";
+}   
+function toReciprocal(value){
+    if (value>0.5) return (1/value).toFixed(2);
+    if (value>0.01) return (1/value).toFixed(1);
+    if (value>0.001) return (1/value).toFixed(0);
+    return "∞"
+    
+}
+
+function toFalloffString(value){
+    let result = "";
+    if (value==0) result = "1";
+    else if (value==1) result = "1/n";
+    else result = "1/n<sup>" + value + "</sup>";
+    return result;
+}
+
+function getPartialLevelLabel(level, polarity){
+    level = level ;
+    polarity =polarity;
+    let value = "off"
+    if (level!=0)
+    {
+        if (polarity==0) 
+            value = level.toFixed(1);
+        else
+            value = level.toFixed(1) +"↔" + (level *(-2 * polarity +1)).toFixed(1);
+    }
+    return value;
+}
+
+
+function getPhaseLabel(patch){
+    let invFreq = 1000 / (patch.frequency * 2);
+    let rootPhaseDelay = patch.rootPhaseDelay;
+    let delayA = rootPhaseDelay * invFreq;
+    return rootPhaseDelay.toFixed(2) + "π <br> (" + (delayA).toFixed(1) + "ms)";
+}
+
+function toFilterFreq(x){
+    return (20 * Math.pow(2,x)).toFixed(0) + "Hz";
+}
+
