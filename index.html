@@ -178,6 +178,48 @@
             <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
         </div>
     </div>
+
+
+    <div class="bordered" id="DistortionSetup">
+        <div class="presetHeader">
+            <h3>Distortion Settings</h3>
+            <div id="distortionPresets" class="PresetButtons"></div>
+        </div>
+     
+        <div>
+            <canvas id="distortionPreview"  width ="800" height="200"></canvas>
+        </div>
+        <div class ="previewButtons bottomSpaced">
+            <div class="previewButtons previewL">
+                <button name="PD" class = "previewButton">def</button>
+                <button name="PA" class = "previewButton">A</button>
+                <button name="PB" class = "previewButton">B</button>
+            </div>
+            <div class="previewButtons previewC">
+                <button name="F0" class = "previewButton">off</button>
+                <button name="F1" class = "previewButton">F1</button>
+                <button name="F2" class = "previewButton">F2</button>
+                <button name="F3" class = "previewButton">F3</button>
+            </div>
+
+            <div class="previewButtons">
+                <button name="DFull" class = "previewButton">Full</button>
+                <button name="DPhase" class = "previewButton">Φ</button>
+                <button name="DPolarity" class = "previewButton">+/-</button>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <label for="distortion">Amount:</label>
+            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0">
+            <output class="valueSpan" name="distortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the amount of distortion</div>
+        </div>
+    </div>
+
+    
+
     <div class="bordered" id="FilterSetup">
         <div class="presetHeader">
             <h3>Filter Settings</h3>
@@ -240,45 +282,6 @@
             <div class="help-popup">Controls the time for the linear (in frequency) decay of filter envelope</div>
         </div>
 
-    </div>
-
-
-    <div class="bordered" id="DistortionSetup">
-        <div class="presetHeader">
-            <h3>Distortion Settings</h3>
-            <div id="distortionPresets" class="PresetButtons"></div>
-        </div>
-     
-        <div>
-            <canvas id="distortionPreview"  width ="800" height="200"></canvas>
-        </div>
-        <div class ="previewButtons bottomSpaced">
-            <div class="previewButtons previewL">
-                <button name="PD" class = "previewButton">def</button>
-                <button name="PA" class = "previewButton">A</button>
-                <button name="PB" class = "previewButton">B</button>
-            </div>
-            <div class="previewButtons previewC">
-                <button name="F0" class = "previewButton">off</button>
-                <button name="F1" class = "previewButton">F1</button>
-                <button name="F2" class = "previewButton">F2</button>
-                <button name="F3" class = "previewButton">F3</button>
-            </div>
-
-            <div class="previewButtons">
-                <button name="DFull" class = "previewButton">Full</button>
-                <button name="DPhase" class = "previewButton">Φ</button>
-                <button name="DPolarity" class = "previewButton">+/-</button>
-            </div>
-        </div>
-
-        <div class="slider-container">
-            <label for="distortion">Amount:</label>
-            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0">
-            <output class="valueSpan" name="distortion">0%</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the amount of distortion</div>
-        </div>
     </div>
 
 

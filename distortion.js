@@ -25,13 +25,27 @@
 //Perform distortion on buffer in place
 function distort(buffer, patch, sampleRate){
     if (patch.distortion==0) return;
-    const d=1.01-patch.distortion/0.99;
-    for(let i=0;i<buffer.length;i++){
+    let length = buffer.length;
+    const d=1.5-1.5 * (patch.distortion-0.01)/0.99;
+    clip(buffer, length, d, -d);
+}
+
+function clip(buffer, length, thresholdHigh, thresholdLow){
+    for(let i=0;i<length;i++){
         let v =buffer[i];
-        buffer[i] = Math.abs(v) > d ? d*Math.sign(v) : v;
+        buffer[i] = v > thresholdHigh ? thresholdHigh : (v < thresholdLow ? thresholdLow : v);
     }
 }
 
+
+
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//FFT Code
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let getFFT = (buffer)=>null;
 function initFFT()
 {
