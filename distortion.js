@@ -38,6 +38,7 @@ function initFFT()
     //FFT always of length 1024 - so bit reversals and sin lUT can be precalculated
     const N = 1024;
     const N_1 =N-1;
+    const N_2 =N/2;
     const N_4 =N/4;
     const logN = Math.log2(N);
     const shift = 16-logN;
@@ -109,12 +110,14 @@ function initFFT()
 
         let mag=[];
         let phase=[];
-        for(let i=0;i<N/2;i++){
+        const offset1=Math.PI/N_2;
+        const offset2=Math.PI/2;
+        for(let i=0;i<N_2;i++){
             const x=fr[i];
             const y=fi[i];
             const m = Math.sqrt(x*x+y*y);
             mag.push(m);
-            phase.push(m>zeroLevel? Math.atan2(y,x):0);
+            phase.push(m>zeroLevel? Math.atan2(y,x) + (N_2-i)*offset1 + offset2:0);
         }
         return {
             magnitude: mag,
