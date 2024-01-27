@@ -110,14 +110,17 @@ function initFFT()
 
         let mag=[];
         let phase=[];
-        const offset1=Math.PI/N_2;
-        const offset2=Math.PI/2;
+        const offset1=0;//Math.PI/N_2;
+        const offset2=0;//Math.PI/2;
         for(let i=0;i<N_2;i++){
             const x=fr[i];
             const y=fi[i];
             const m = Math.sqrt(x*x+y*y);
+            let p =m>zeroLevel? 
+                    Math.atan2(x,-y) //x and y are rotated here to get the phase correct FFT is cosine based but Synthesis method is sine based
+                + (N_2-i)*offset1 + offset2:0;
             mag.push(m);
-            phase.push(m>zeroLevel? Math.atan2(y,x) + (N_2-i)*offset1 + offset2:0);
+            phase.push(p);
         }
         return {
             magnitude: mag,

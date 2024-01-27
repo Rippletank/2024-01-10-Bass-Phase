@@ -262,14 +262,14 @@ function doPreviewPaint(
     ctx.lineTo(spL , spB); 
     ctx.stroke();
 
-
+    adjustForPhase(magnitude,phases,showPolarity)
     ctx.beginPath();    
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(0, 0, 200)";
     for (let i = 0; i < count; i++) {
         let x =spL + i * spW / count;
         let mag = magnitude[i];
-        let polarity = showPolarity ? Math.sign(mag) : 1;
+        let polarity =  Math.sign(mag);
         let offset = spH - polarity*spH; //either 0 or spH*2 
         let y =spT +offset + polarity * Math.max(minDB, Math.log10( Math.abs(mag))) * spScale;
         ctx.moveTo(x, sp0);
@@ -293,7 +293,6 @@ function doPreviewPaint(
         ctx.beginPath();    
         ctx.lineWidth = 1;
         ctx.strokeStyle = "rgb(0, 140, 0)";
-        const filter = filter;
         const invW0 = filter.invW0[filter.invW0.length*0.5]
         const rootW = patch.frequency * 2 * Math.PI  / filter.sampleRate;
         for (let i = 1; i < count; i++) {
@@ -376,6 +375,40 @@ function doPreviewPaint(
             ctx.fillRect(x-0.5, p0-0.5, 1, 1); 
         }
     }
+}
 
+function adjustForPhase(magnitudes,phases, showPolarity){
+   const len = Math.min(magnitudes.length,phases.length);
+   for(let i=0;i<len;i++){
+       let m=magnitudes[i];
+       let p = phases[i];
+       if (m<0) {
+            //Store all phase info in phase value
+            //n is only magnitude
+            p+=Math.PI;
+            m=-m;
+       }
+       if (m<smallestLevel)
+        {
+            p[i]=0;
+            continue;
+        }
+       //adjust phase to be between -PI and PI
+       let nos2Pis = p/(2*Math.PI);
+       p -= Math.floor(nos2Pis)*2*Math.PI; //Floor works for negative numbers too (floor(-1.5)=-2)
+       if (p>=Math.PI) p-=2*Math.PI;
 
+        //m >= 0
+        //phase >= -PI and < PI
+        if (showPolarity)
+        {
+            if (Math.abs(p)>Math.PI/2){
+                m=-m;
+                p-= Math.sign(p) * Math.PI;
+            } 
+        }
+        magnitudes[i]=m;
+        phases[i]=p;
+
+   }
 }

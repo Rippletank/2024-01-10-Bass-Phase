@@ -329,14 +329,15 @@ function mixInSine(
     phaseOffset
     ) {
         if (Math.abs(amplitude)<zeroLevel) return;
-    let theta = phaseOffset + (Math.floor(delay) + 1 - delay) * w; //Phase accumulator + correction for fractional delay
+    let theta = phaseOffset //Phase accumulator 
+            + (((Math.floor(delay) + 1 - delay) % 1) -1) * w; //correction for fractional delay and also -1 to allow theta to be incremented at start of loop
     let env = -1;
     const bufferSize = buffer.length;
     for (let i = 0; i < bufferSize; i++) {
         if (i >= delay)   {
             env++;//call here to advance even if level is zero
             //Phase accumulator
-            theta += w;
+            theta += w;//call here to allow continue to still cause increments
             let l=envelopeBuffer[env];
             if (l<zeroLevel) continue;
             if (filter){

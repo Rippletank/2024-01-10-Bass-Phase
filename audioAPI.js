@@ -96,15 +96,34 @@ let changed = true;
 //Called at startup and whenever a parameter changes
 function updateBuffersAndDisplay(patchA, patchB) {
     changed = false;
-    ensureAudioContext();
-    let t0 = performance.now();
+    startUpdate();
+    setTimeout(function() { //allow for UI to update to indicate busy
+    try{
+        ensureAudioContext();
+        let t0 = performance.now();
+    
+        updateBuffers(patchA, patchB);
+        updateDisplay();
+        fftClear('fftCanvas');
+    
+        let t1 = performance.now();
+        console.log("Execution time: " + (t1 - t0) + " milliseconds.");
+    }
+    finally{
+        endUpdate();
+    }},0);
+}
 
-    updateBuffers(patchA, patchB);
-    updateDisplay();
-    fftClear('fftCanvas');
-
-    let t1 = performance.now();
-    console.log("Execution time: " + (t1 - t0) + " milliseconds.");
+let fullwaves = document.querySelectorAll('.fullwave');
+function startUpdate() {
+    fullwaves.forEach(canvas => {
+        canvas.classList.add('blur');
+    });
+}
+function endUpdate() {
+    fullwaves.forEach(canvas => {
+        canvas.classList.remove('blur');
+    });
 }
 
 
@@ -199,8 +218,8 @@ function paintPreview(){
         previewResult.samples,
         previewResult.magnitude,
         previewResult.phase,
-        previewResult.patch,
         previewResult.filter,
+        previewResult.patch,
         previewResult.min,
         previewResult.max,
         previewSpectrumFullWidth,
@@ -212,8 +231,8 @@ function paintPreview(){
             previewResult.distortedSamples,
             previewResult.fft.magnitude,
             previewResult.fft.phase,
-            previewResult.patch,
             previewResult.filter,
+            previewResult.patch,
             previewResult.min,
             previewResult.max,
             distortionSpectrumFullWidth,

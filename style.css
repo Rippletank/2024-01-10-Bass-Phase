@@ -260,3 +260,7 @@ canvas {
 .waveformCanvas {
     margin-bottom: 2em;
 }
+
+.blur {
+    filter: blur(4px);
+}

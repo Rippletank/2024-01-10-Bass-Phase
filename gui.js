@@ -204,11 +204,22 @@ function initSliders(){
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
     setInterval(function() {
-        if (changed && Date.now() - lastUpdate > 800) {
+        if (!isMouseDown && changed && Date.now() - lastUpdate > 300) {
             updateBuffersAndDisplay(cachedPatchA, cachedPatchB);
         }
-    }, 500); 
+    }, 300); 
 }
+
+
+//Detect Mouse down status - allow full update skips when mouse is down
+let isMouseDown = false;
+window.addEventListener('mousedown', function() {
+    isMouseDown = true;
+});
+window.addEventListener('mouseup', function() {
+    isMouseDown = false;
+});
+
 
 let lastUpdate=0;
 function wireUpSlidersForContainer(id) {
