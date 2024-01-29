@@ -65,7 +65,7 @@ function getAudioBuffer(
       }
       buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0);
       
-      distort(b, patch, sampleRate);
+      distort(b, patch, sampleRate, false);
       
       return {
             buffer:audioBuffer,
@@ -135,7 +135,7 @@ function getPreview(referencePatch, filterPreviewSubject){
     buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
     
     let distorted =[...b];
-    distort(distorted, patch, sampleRate);
+    distort(distorted, patch, sampleRate, true);
 
     return {
         samples:b,

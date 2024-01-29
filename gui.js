@@ -15,8 +15,12 @@
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//GUI wiring up Code - handles creation of the patch objects and value display on GUI
-//Calls play and refresh methods inside audioAPI.js
+//GUI wiring up Code - handles connecting the GUI to the audio code 
+//Doesn't know anything about the contents of the patch, audio calculations or Web Audio API
+//Patch values handled by guiValues.js
+//Audio API handled by audioAPI.js (including calls to painting.js to update preview and waveform displays)
+//Audio calculations handled by audio.js and distortion.js 
+//Distortion fft shown using fft.js
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
