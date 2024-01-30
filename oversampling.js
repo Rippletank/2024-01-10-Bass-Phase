@@ -161,7 +161,7 @@ function upsample(buffer, polyphaseKernels){
     const polyphaseLength = polyphaseKernels[0].length;
     const upsampleFactor = polyphaseKernels.length;
     const inLength = buffer.length;
-    const result = new Array((inLength+upsampleFactor*polyphaseLength)*upsampleFactor);//padding of filterLength at start and end
+    const result = new Array((inLength+polyphaseLength)*upsampleFactor);//padding of filterLength at start and end
     const outLength = result.length;
     let inPos = -polyphaseLength+1;
     let ppk =0;
