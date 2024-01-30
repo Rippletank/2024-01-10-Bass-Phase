@@ -104,7 +104,7 @@ function filterCheck2(buffer, offset, isCyclic){
         //buffer[0] = 1;
 
     }
-    let newB = isCyclic ? convolveFolded( buffer, flt) : convolve(buffer, flt);
+    let newB = isCyclic ? convolveWrapped( buffer, flt) : convolve(buffer, flt);
 
     if (isCyclic){
         for(let i=0;i<buffer.length;i++){

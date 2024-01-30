@@ -161,19 +161,17 @@ function upsample(buffer, polyphaseKernels){
     const polyphaseLength = polyphaseKernels[0].length;
     const upsampleFactor = polyphaseKernels.length;
     const inLength = buffer.length;
-    const result = new Array((inLength+2*upsampleFactor*polyphaseLength)*upsampleFactor);//padding of filterLength at start and end
+    const result = new Array((inLength+upsampleFactor*polyphaseLength)*upsampleFactor);//padding of filterLength at start and end
     const outLength = result.length;
-    let inPos = 0;
+    let inPos = -polyphaseLength+1;
     let ppk =0;
     for(let i=0;i<outLength;i++){
-        let sum =0;
-        const inStart = inPos-polyphaseLength+1;
-        const polyEnd = Math.min(polyphaseLength, inLength-inStart);//truncate last polyphaseKernal if it extends past end of in buffer
-        for(let j=Math.max(0,-inStart);//skip negative values of inStart
+        result[i] =0;
+        const polyEnd = Math.min(polyphaseLength, inLength-inPos);//truncate last polyphaseKernal if it extends past end of in buffer
+        for(let j=Math.max(0,-inPos);//skip negative values of inStart
                 j<polyEnd;//skip past end of in buffer if polyphaseKernal is longer than remaining buffer
                 j++){
-            const k = inStart+j;
-            sum += buffer[k] * polyphaseKernels[ppk][j];
+            result[i] += buffer[inStart+j] * polyphaseKernels[ppk][j];
         }
         ppk++;
         if(ppk>=upsampleFactor) 
@@ -181,8 +179,6 @@ function upsample(buffer, polyphaseKernels){
             ppk=0;
             inPos++;//overflow handled by checks in j loop
         }
-
-        result[i] = sum;
     }
     return result;
 }
@@ -195,19 +191,17 @@ function downsample(inBuffer, outBuffer, filterKernel, upsampleFactor)
     const filterLength = filterKernel.length;
     const inLength = inBuffer.length;
     const outLength = outBuffer.length;
-    let inPos = filterLength-1;
+    const filterOffset = (filterLength-1)/2;
+    let inPos = -filterOffset;//dont need samples until filter centre lines up with first sample of inbuffer
     for(let i=0;i<outLength;i++){
-        let sum =0;
-        const inStart = inPos-filterLength+1;
-        const filterEnd = Math.min(filterLength, inLength-inStart);//truncate last filter if it extends past end of in buffer
-        for(let j=Math.max(0,-inStart);//skip negative values of inStart
+        outBuffer[i]=0;
+        const filterEnd = Math.min(filterLength, inLength-inPos);//truncate last filter if it extends past end of in buffer
+        for(let j=Math.max(0,-inPos);//skip negative values of inStart
                 j<filterEnd;//skip past end of in buffer if filter is longer than remaining buffer
                 j++){
-            const k = inStart+j;
-            sum += inBuffer[k] * filterKernel[j];
+                    outBuffer[i] += inBuffer[inPos+j] * filterKernel[j];
         }
         inPos+=upsampleFactor;
-        outBuffer[i] = sum;
     }
 }
 
@@ -244,11 +238,10 @@ function convolve(inputBuffer, filterKernel) {
             outputBuffer[i] += inputBuffer[i - j] * filterKernel[j];
         }
     }
-
     return outputBuffer;
 }
 
-function convolveFolded(inputBuffer, filterKernel) {
+function convolveWrapped(inputBuffer, filterKernel) {
     const inputLength = inputBuffer.length;
     const filterLength = filterKernel.length;
     const outputLength = inputLength + filterLength - 1;
@@ -256,7 +249,7 @@ function convolveFolded(inputBuffer, filterKernel) {
 
     for (let i = 0; i < outputLength; i++) {
         for (let j =0; j <filterLength; j++) {
-            outputBuffer[i] += inputBuffer[(inputLength+i - j)%inputLength] * filterKernel[j];
+            outputBuffer[i] += inputBuffer[(inputLength + i - j)%inputLength] * filterKernel[j];
         }
     }
 
