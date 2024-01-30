@@ -45,14 +45,12 @@ function distort(buffer, patch, sampleRate, isCyclic){
     //return;
     
 
-    const ob =isCyclic ? 
-        upsampleCyclicSlow(buffer, filter, oversampling)
-        : upsample(buffer, polyphaseKernels,filter.length, isCyclic);
+    let ob =upsample(buffer, filter, polyphaseKernels, isCyclic);
 
     const d=1.5-1.5 * (patch.distortion-0.01)/0.99;
     //clip(ob, d, -d);
     //clip(ob, d, -2*d);
-    tape(ob, patch.distortion);
+    //tape(ob, patch.distortion);
 
     // if (isCyclic)
     // {

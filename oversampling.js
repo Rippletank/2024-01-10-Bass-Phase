@@ -143,73 +143,158 @@ function generateKaiserSincKernel_fromParams(fn, stop_db, transition_width) {
 }
 
 
-function generateUpsamplingPolyphasekernals(filterKernal, upsampleFactor){
+function generateUpsamplingPolyphasekernals(filter, upsampleFactor){
     const polyphaseKernals = new Array(upsampleFactor);
-    const polyphaseLength = Math.ceil(filterKernal.length/upsampleFactor);//Careful, if filterKernal.length is not a multiple of upsampleFactor, this will be rounded up
+    const polyphaseLength = Math.ceil(filter.length/upsampleFactor);//Ceiling, incase filter length is not a multiple of upsampleFactor, some will have zero length
     for(let i=0;i<upsampleFactor;i++){
-        const polyphaseKernal = new Array(polyphaseLength);
-        const phaseEnd = filterKernal.length-1-i;//align last (right) edge of first phase with first(left) sample of filterKernal
-        for(let j=0;j<polyphaseLength;j++){
-            const source=phaseEnd-j*upsampleFactor;//Step back through filterKernal, skipping upsampleFactor samples each time
-            polyphaseKernal[polyphaseLength-1-j] //Backwards to align end (right ) with start
-                = source <0?0: upsampleFactor*filterKernal[source];//pad with zeros at the start when it source is negative, upsampleFactor* to adjust gain for zero padding
+        polyphaseKernals[i] = new Array(polyphaseLength);
+    }
+
+    //Account for filter length not being a multiple of upsampleFactor
+    //Pad the first few polyphaseKernals with zeros
+    let ppk =polyphaseLength * upsampleFactor-filter.length;//pad zeros at start of first few polyphaseKernals
+    for(let i=0;i<ppk;i++){
+        polyphaseKernals[i][0] = 0;
+    }
+
+    //Fill the rest of the polyphaseKernals
+    let x = 0;
+    for(let i = 0; i < filter.length; i++){
+        polyphaseKernals[ppk][x] = filter[i]* upsampleFactor;
+        ppk++;
+        if (ppk>=upsampleFactor){
+            ppk=0;
+            x++;
         }
-        polyphaseKernals[i] = polyphaseKernal;
     }
 
     //Confirm integrity
-    report =[];
-    for(let i=0;i<filter.length;i++){
-        //Flip to start at the end
-        let x = filter.length-1-i;
-        let f = upsampleFactor*filter[x];
-
-        //Find polyphase position
-        let filterEndPhaseAdjust = ((filter.length-1)/upsampleFactor) % 1;//adjust for filter length
-        let fractionalPos = x/upsampleFactor  + filterEndPhaseAdjust;
-        let polyphasePos = Math.floor(fractionalPos);
-        let polyphase =(1 - (fractionalPos % 1))*upsampleFactor;
-        if (polyphase==upsampleFactor) polyphase=0;//Handle when fractionalInOffset is 0
-
-        let p = polyphaseKernals[polyphase][polyphasePos];
-        if (p!=f){
-            let p0=polyphaseKernals[0][polyphasePos];
-            let p1=polyphaseKernals[1][polyphasePos];
-            let p2=polyphaseKernals[2][polyphasePos];
-            let p3=polyphaseKernals[3][polyphasePos];
-            report.push({x,f,p, fractionalPos, polyphasePos, p0,p1,p2,p3});        
-        } 
-    }
-    if (report.length>0) {
-        console.log('Error in polyphaseKernals');
-        console.log('KernalSize '+filter.length);
-        console.log(report);
-    }
-
+    //confirmPolyphaseKernals(filter, upsampleFactor, polyphaseLength, polyphaseKernals);
 
     return polyphaseKernals;
 }
 
 
-function upsample(buffer, polyphaseKernels, filterLength, isCyclic){
-    return isCyclic? upsampleCyclic(buffer, polyphaseKernels, filterLength) : upsampleNonCyclic(buffer, polyphaseKernels, filterLength);
+
+
+function confirmPolyphaseKernals(filter, upsampleFactor, polyphaseLength, polyphaseKernals) {
+    report = [];
+    for (let i = 0; i < filter.length; i++) {
+        //Flip to start at the end
+        let f = upsampleFactor * filter[i];
+
+        //Find polyphase position
+        let startAdjust = (polyphaseLength * upsampleFactor - filter.length); //adjust for zero padding at start of polyphaseKernals
+        let fractionalPos = (startAdjust + i) / upsampleFactor;
+        let polyphasePos = Math.floor(fractionalPos);
+        let polyphase = (fractionalPos % 1) * upsampleFactor;
+
+        let p = polyphaseKernals[polyphase][polyphasePos];
+        if (p != f) {
+            let p0 = polyphaseKernals[0][polyphasePos];
+            let p1 = polyphaseKernals[1][polyphasePos];
+            let p2 = polyphaseKernals[2][polyphasePos];
+            let p3 = polyphaseKernals[3][polyphasePos];
+            report.push({ x: i, f, p, fractionalPos, polyphasePos, p0, p1, p2, p3 });
+        }
+    }
+    if (report.length > 0) {
+        console.log('Error in polyphaseKernals');
+        console.log('KernalSize ' + filter.length);
+        console.log(report);
+    }
 }
 
-function upsampleCyclicSlow(inBuffer, filter, upsampleFactor){
+function upsample(buffer, filter, polyphaseKernels, isCyclic){
+
+    if (isCyclic){
+        let debug1=[];
+        let b1 = upsampleCyclicSlow(buffer, filter, polyphaseKernels.length, debug1) 
+        let debug2=[];
+        let b2 = upsampleCyclicTemp(buffer, polyphaseKernels, filter.length, debug2) 
+        
+        for(let i=0;i<debug1.length;i++){
+            if (debug1[i].i != debug2[i].i){
+                console.log('i mismatch: ' + i);
+            }
+            if (debug1[i].pairs.length != debug2[i].pairs.length){
+                console.log('pair length mismatch: ' + i + ': ' + debug1[i].pairs.length + ' | ' + debug2[i].pairs.length);
+            }
+            for(let j=0;j<1;j++){
+                if (debug1[i].pairs[j].pos != debug2[i].pairs[j].pos || debug1[i].pairs[j].fi != debug2[i].pairs[j].fi){
+                    console.log('Value mismatch: out[' + i + '] point[' + j + '] ' + debug1[i].pairs[j].pos + ' | ' + debug2[i].pairs[j].pos + ' : ' + debug1[i].pairs[j].fi + ' | ' + debug2[i].pairs[j].fi);
+                }
+            }
+        }
+    }
+
+
+    return isCyclic? 
+    //upsampleCyclicSlow(buffer, filter, polyphaseKernels.length) 
+    upsampleCyclicTemp(buffer, polyphaseKernels, filter.length) 
+    : upsampleNonCyclic(buffer, polyphaseKernels, filter.length);
+}
+
+function upsampleCyclicSlow(inBuffer, filter, upsampleFactor, debug){
     const inLength = inBuffer.length;
     const outLength = inLength*upsampleFactor; //Cyclic so no padding
     const result = new Array(outLength);
     const filterLength = filter.length;
-    const inPos =+(filterLength-1)/2;//Assumes zero stuffing between samples
+    const inPos =-(filterLength-1)/2;//Assumes zero stuffing between samples
     for (let i = 0; i < outLength; i++) {
         result[i] = 0;
+        let pairs =[]
         for (let j =0; j <filterLength; j++) {
-            const x = (i-j + inPos)/4;
-            if (Math.abs(x) % 1>0) continue;//skip fractional values - pad with zeros
-            result[i] += inBuffer[(inLength + x)%inLength] * filter[j] * upsampleFactor;
+            const x = (i+j + inPos)/upsampleFactor;
+            const pos = (inLength + x)%inLength;
+            if (Math.abs(pos) % 1>0) continue;//skip fractional values - pad with zeros
+            result[i] += inBuffer[pos] * filter[j] * upsampleFactor;
+            if (debug) pairs.push({pos:pos, fi:j})
+            //if (debug) debug.push({i:i,fI:j, inBufferPos:pos, f:filter[j] * upsampleFactor, val:inBuffer[pos] * filter[j] * upsampleFactor});
+        }
+        if (debug) debug.push({i:i,pairs:pairs});
+    }
+    return result
+}
+
+function upsampleCyclicTemp(inBuffer, polyphaseKernels, filterLength, debug){
+    const polyphaseLength = polyphaseKernels[0].length;
+    const upsampleFactor = polyphaseKernels.length;
+    const inLength = inBuffer.length;
+    const outLength = inLength*upsampleFactor; //Cyclic so no padding
+    const result = new Array(outLength);
+    const filterOffsetIn =(filterLength-1)/2/upsampleFactor;//As if zero stuffing between samples
+    let inPos = -Math.floor(filterOffsetIn);//As if zero stuffing between samples
+    const inPosAdjust = (filterOffsetIn%1)*upsampleFactor;//
+
+    //polySettings    
+    const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
+    const startFractionalPos = (inPosAdjust + startAdjust ) / upsampleFactor;
+    inPos += Math.floor(startFractionalPos);
+    const startPolyphase = (startFractionalPos % 1) * upsampleFactor;
+
+
+    let ppk = startPolyphase;
+    for (let i = 0; i < outLength; i++) {
+        result[i] = 0;
+        let pairs =[];
+        let filterPos =ppk - startAdjust
+        let startPP =0;
+        if (filterPos<0) startPP=1;
+        for (let j =startPP; j <polyphaseLength; j++) {
+            const x =(inLength + inPos + j)%inLength;
+            result[i] += inBuffer[x] * polyphaseKernels[ppk][j];
+            if (debug) pairs.push({pos:x, fi:ppk +j * upsampleFactor - startAdjust})
+           // if (debug) debug.push({i:i,fI:ppk +j * upsampleFactor - startAdjust, inBufferPos: x, ppk, f:polyphaseKernels[ppk][j], val:inBuffer[x] * polyphaseKernels[ppk][j] });
+        }
+        if (debug) debug.push({i:i,pairs:pairs});
+        ppk--;
+        if(ppk<0) 
+        {
+            ppk=upsampleFactor-1;
+            inPos++;//overflow handled by checks in j loop
         }
     }
-
     return result
 }
 
@@ -223,11 +308,11 @@ function upsampleCyclic(buffer, polyphaseKernels, filterLength){
     //Need to skip the right number of input samples AND polyphase steps to make sure the first 
     //point generated by the calculation is for the polyphase that contains the mid point of the filter
     const filterOffset = (filterLength-1)*0.5;//padding size at start and end <- should be exact offset to start of real signal in outbuffer
-    const fractionalInOffset =filterOffset/upsampleFactor;
-    let inPos = -Math.ceil(fractionalInOffset); //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
-    //let inPos = -polyphaseLength+1; //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
-    let ppk =(1-(fractionalInOffset % 1))*upsampleFactor;// adjust the polyphase to shift to right to align with mid point of filter
-    if (ppk==upsampleFactor) ppk=0;//Handle when fractionalInOffset is 0
+    const filterStartAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
+    const polyPos =(filterOffset +filterStartAdjust)/upsampleFactor;
+    let inPos = -Math.ceil(polyPos); //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
+    let ppk =(1 - (polyPos % 1))*upsampleFactor;// adjust the polyphase to shift to right to align with mid point of filter
+    if (ppk>=upsampleFactor) ppk=0;//handle rounding errors
 
     for(let i=0;i<outLength;i++){
         result[i] =0;
@@ -254,11 +339,11 @@ function upsampleNonCyclic(buffer, polyphaseKernels, filterLength){
     //Need to skip the right number of input samples AND polyphase steps to make sure the first 
     //point generated by the calculation is for the polyphase that contains the mid point of the filter
     const filterOffset = (filterLength-1)*0.5;//padding size at start and end <- should be exact offset to start of real signal in outbuffer
-    const fractionalInOffset =filterOffset/upsampleFactor;
-    let inPos = -Math.ceil(fractionalInOffset); //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
-    //let inPos = -polyphaseLength+1; //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
-    let ppk =(1-(fractionalInOffset % 1))*upsampleFactor;// adjust the polyphase to shift to right to align with mid point of filter
-    if (ppk==upsampleFactor) ppk=0;//Handle when fractionalInOffset is 0
+    const filterStartAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
+    const polyPos =(filterOffset +filterStartAdjust)/upsampleFactor;
+    let inPos = -Math.ceil(polyPos); //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
+    let ppk =(1 - (polyPos % 1))*upsampleFactor;// adjust the polyphase to shift to right to align with mid point of filter
+    if (ppk>=upsampleFactor) ppk=0;//handle rounding errors
 
     for(let i=0;i<outLength;i++){
         result[i] =0;
