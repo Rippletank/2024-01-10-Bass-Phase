@@ -210,11 +210,25 @@
         </div>
 
         <div class="slider-container">
-            <label for="distortion">Amount:</label>
+            <label for="distortion">Overal Level:</label>
             <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0">
             <output class="valueSpan" name="distortion">0%</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Controls the amount of distortion</div>
+            <div class="help-popup">Turns distortion on and off and controls the overall amount</div>
+        </div>
+        <div class="slider-container">
+            <label for="oddDistortion">Odd harmonic:</label>
+            <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.1" value="0">
+            <output class="valueSpan" name="oddDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Third order Chebyshev polynomial distortion, generating third harmonic for a sine wave</div>
+        </div>
+        <div class="slider-container">
+            <label for="evenDistortion">Even Harmonic:</label>
+            <input type="range" id="evenDistortion" name="evenDistortion" min="-1" max="1" step="0.1" value="0">
+            <output class="valueSpan" name="evenDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Second order Chebyshev polynomial distortion, generating second harmonic for a sine wave</div>
         </div>
     </div>
 

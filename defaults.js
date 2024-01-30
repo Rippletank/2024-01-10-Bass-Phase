@@ -193,12 +193,16 @@ let distortionPresets = [
         name:"default",
         patch:{
             distortion:0,
+            oddDistortion:0,
+            evenDistortion:0,
         }
     },
     {
         name:"Heavy",
         patch:{
-            distortion:1,
+            distortion:0.5,
+            oddDistortion:0.5,
+            evenDistortion:0.1,
         }
     },
 ];
@@ -307,7 +311,9 @@ function getDefaultPatch(){
         filterSlope:12,//db/octave, 0=off
         filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
 
-        distortion:0,//0..1 0 = no distortion, 1 = max distortion
+        distortion:0,//0..1 0 = off, 1 = max distortion
+        oddDistortion:0,//Third order Chebyshev polynomial distortion
+        evenDistortion:0,//second order Chebyshev polynomial distortion
     }
 }
 

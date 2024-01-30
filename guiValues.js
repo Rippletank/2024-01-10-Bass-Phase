@@ -134,6 +134,12 @@ function setValueFromPatch(ve, patch){
             {
                 ve.textContent = toPercent(patch.distortion);
             }
+            break;
+        case "oddDistortion":
+            ve.textContent =toPercent(patch.oddDistortion);break;
+        case "evenDistortion":
+            ve.textContent =toPercent(patch.evenDistortion);break;
+
     }
 }
 

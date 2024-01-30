@@ -47,23 +47,11 @@ function distort(buffer, patch, sampleRate, isCyclic){
 
     let ob =upsample(buffer, filter, polyphaseKernels, isCyclic);
 
-    const d=1.5-1.5 * (patch.distortion-0.01)/0.99;
+    //const d=1.5-1.5 * (patch.distortion-0.01)/0.99;
     //clip(ob, d, -d);
-    //clip(ob, d, -2*d);
-    //tape(ob, patch.distortion);
+    cheb_2_3(ob, patch.distortion * patch.evenDistortion, patch.distortion * patch.oddDistortion);
 
-    // if (isCyclic)
-    // {
-    //     for(let i=0;i<1024;i++){
-    //         buffer[i] = ob[i*4];
-    //     }
-    // }
-    // else
-    // {
-    //     downsample(ob, buffer, filter, oversampling, false);
-    // }
     downsample(ob, buffer, filter, oversampling, isCyclic);
-    //downsample(ob, buffer, filter, oversampling, isCyclic);
 }
 
 function clip(buffer,  thresholdHigh, thresholdLow){
@@ -83,12 +71,27 @@ function clip(buffer,  thresholdHigh, thresholdLow){
 //T_4(x)	=	8x^4-8x^2+1	
 //T_5(x)	=	16x^5-20x^3+5x	
 //T_6(x)	=	32x^6-48x^4+18x^2-1.
-function tape(buffer,  amount){
+function cheb_2(buffer,  amount){
     let length = buffer.length;
     for(let i=0;i<length;i++){
         let v =buffer[i];
-        //buffer[i] += amount*(2* v * v  -1 + 4*v*v*v - 3*v);
+        buffer[i] += amount*(2* v * v  -1);
+    }
+}
+function cheb_3(buffer,  amount){
+    let length = buffer.length;
+    for(let i=0;i<length;i++){
+        let v =buffer[i];
         buffer[i] -= amount*( 4*v*v*v - 3*v);
+    }
+}
+function cheb_2_3(buffer, even, odd){
+    let length = buffer.length;
+    for(let i=0;i<length;i++){
+        const v =buffer[i];
+        //buffer[i] -= odd*( 4*v*v*v - 3*v) + even*(2* v * v  -1);
+        const v2 = v*v;
+        buffer[i] -= odd*( 4*v2 - 3 )*v + (2* v2 - 1) * even;
     }
 }
 
