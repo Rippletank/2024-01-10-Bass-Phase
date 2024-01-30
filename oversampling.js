@@ -161,11 +161,24 @@ function generateUpsamplingPolyphasekernals(filterKernal, upsampleFactor){
     report =[];
     for(let i=0;i<filter.length;i++){
         //Flip to start at the end
-        let f = upsampleFactor*filter[i];
-        let fractionalPos = x/upsampleFactor;
-        let polyphasePos = Math.ceil(fractionalPos);
-        let p = polyphaseKernals[(polyphasePos % 1)*upsampleFactor][polyphaseLength - polyphasePos];
-        if (p!=f) report.push({x,f,p});
+        let x = filter.length-1-i;
+        let f = upsampleFactor*filter[x];
+
+        //Find polyphase position
+        let filterEndPhaseAdjust = ((filter.length-1)/upsampleFactor) % 1;//adjust for filter length
+        let fractionalPos = x/upsampleFactor  + filterEndPhaseAdjust;
+        let polyphasePos = Math.floor(fractionalPos);
+        let polyphase =(1 - (fractionalPos % 1))*upsampleFactor;
+        if (polyphase==upsampleFactor) polyphase=0;//Handle when fractionalInOffset is 0
+
+        let p = polyphaseKernals[polyphase][polyphasePos];
+        if (p!=f){
+            let p0=polyphaseKernals[0][polyphasePos];
+            let p1=polyphaseKernals[1][polyphasePos];
+            let p2=polyphaseKernals[2][polyphasePos];
+            let p3=polyphaseKernals[3][polyphasePos];
+            report.push({x,f,p, fractionalPos, polyphasePos, p0,p1,p2,p3});        
+        } 
     }
     if (report.length>0) {
         console.log('Error in polyphaseKernals');
