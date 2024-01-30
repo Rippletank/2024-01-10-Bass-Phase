@@ -206,36 +206,25 @@ function confirmPolyphaseKernals(filter, upsampleFactor, polyphaseLength, polyph
 }
 
 function upsample(buffer, filter, polyphaseKernels, isCyclic){
-
-    if (isCyclic){
-        let debug1=[];
-        let b1 = upsampleCyclicSlow(buffer, filter, polyphaseKernels.length, debug1) 
-        let debug2=[];
-        let b2 = upsampleCyclicTemp(buffer, polyphaseKernels, filter.length, debug2) 
-        
-        for(let i=0;i<debug1.length;i++){
-            if (debug1[i].i != debug2[i].i){
-                console.log('i mismatch: ' + i);
-            }
-            if (debug1[i].pairs.length != debug2[i].pairs.length){
-                console.log('pair length mismatch: ' + i + ': ' + debug1[i].pairs.length + ' | ' + debug2[i].pairs.length);
-            }
-            for(let j=0;j<1;j++){
-                if (debug1[i].pairs[j].pos != debug2[i].pairs[j].pos || debug1[i].pairs[j].fi != debug2[i].pairs[j].fi){
-                    console.log('Value mismatch: out[' + i + '] point[' + j + '] ' + debug1[i].pairs[j].pos + ' | ' + debug2[i].pairs[j].pos + ' : ' + debug1[i].pairs[j].fi + ' | ' + debug2[i].pairs[j].fi);
-                }
-            }
-        }
-    }
+    // examples slow vs fast: 1024 samples, 915 filter length, 4x upsample 49ms vs 4.2ms
+    // examples slow vs fast: 29280 samples, 915 filter length, 4x upsample 109ms vs 1527ms
+    // console.log('upsample test - buffer length: ' + buffer.length + ' filter length: ' + filter.length + ' upsampleFactor: ' + polyphaseKernels.length);
+    // let time1 = performance.now();
+    // const result = upsampleCyclic(buffer, polyphaseKernels, filter.length);
+    // let time2 = performance.now();
+    // console.log('upsampleCyclic: ' + (time2 - time1) + 'ms');
+    // time1 = performance.now();
+    // const result2 = upsampleCyclicSlow(buffer, filter, polyphaseKernels.length);
+    // time2 = performance.now();
+    // console.log('upsampleCyclicSlow: ' + (time2 - time1) + 'ms');
 
 
     return isCyclic? 
-    //upsampleCyclicSlow(buffer, filter, polyphaseKernels.length) 
-    upsampleCyclicTemp(buffer, polyphaseKernels, filter.length) 
+     upsampleCyclic(buffer, polyphaseKernels, filter.length) 
     : upsampleNonCyclic(buffer, polyphaseKernels, filter.length);
 }
 
-function upsampleCyclicSlow(inBuffer, filter, upsampleFactor, debug){
+function upsampleCyclicSlow(inBuffer, filter, upsampleFactor){
     const inLength = inBuffer.length;
     const outLength = inLength*upsampleFactor; //Cyclic so no padding
     const result = new Array(outLength);
@@ -243,21 +232,17 @@ function upsampleCyclicSlow(inBuffer, filter, upsampleFactor, debug){
     const inPos =-(filterLength-1)/2;//Assumes zero stuffing between samples
     for (let i = 0; i < outLength; i++) {
         result[i] = 0;
-        let pairs =[]
         for (let j =0; j <filterLength; j++) {
             const x = (i+j + inPos)/upsampleFactor;
             const pos = (inLength + x)%inLength;
             if (Math.abs(pos) % 1>0) continue;//skip fractional values - pad with zeros
             result[i] += inBuffer[pos] * filter[j] * upsampleFactor;
-            if (debug) pairs.push({pos:pos, fi:j})
-            //if (debug) debug.push({i:i,fI:j, inBufferPos:pos, f:filter[j] * upsampleFactor, val:inBuffer[pos] * filter[j] * upsampleFactor});
         }
-        if (debug) debug.push({i:i,pairs:pairs});
     }
     return result
 }
 
-function upsampleCyclicTemp(inBuffer, polyphaseKernels, filterLength, debug){
+function upsampleCyclic(inBuffer, polyphaseKernels, filterLength){
     const polyphaseLength = polyphaseKernels[0].length;
     const upsampleFactor = polyphaseKernels.length;
     const inLength = inBuffer.length;
@@ -277,18 +262,12 @@ function upsampleCyclicTemp(inBuffer, polyphaseKernels, filterLength, debug){
     let ppk = startPolyphase;
     for (let i = 0; i < outLength; i++) {
         result[i] = 0;
-        let pairs =[];
         let filterPos =ppk - startAdjust
-        let startPP =0;
-        if (filterPos<0) startPP=1;
-        for (let j =startPP; j <polyphaseLength; j++) {
+        for (let j =filterPos<0?1:0; j <polyphaseLength; j++) {
             const x =(inLength + inPos + j)%inLength;
             result[i] += inBuffer[x] * polyphaseKernels[ppk][j];
-            if (debug) pairs.push({pos:x, fi:ppk +j * upsampleFactor - startAdjust})
-           // if (debug) debug.push({i:i,fI:ppk +j * upsampleFactor - startAdjust, inBufferPos: x, ppk, f:polyphaseKernels[ppk][j], val:inBuffer[x] * polyphaseKernels[ppk][j] });
         }
-        if (debug) debug.push({i:i,pairs:pairs});
-        ppk--;
+        ppk--;//<--Fucker to find this was -ve, ha
         if(ppk<0) 
         {
             ppk=upsampleFactor-1;
@@ -297,74 +276,44 @@ function upsampleCyclicTemp(inBuffer, polyphaseKernels, filterLength, debug){
     }
     return result
 }
-
-function upsampleCyclic(buffer, polyphaseKernels, filterLength){
-    const polyphaseLength = polyphaseKernels[0].length;
-    const upsampleFactor = polyphaseKernels.length;
-    const inLength = buffer.length;
-    const outLength = inLength*upsampleFactor; //Cyclic so no over flow
-    const result = new Array(outLength);//padding of filterLength at start and end
-
-    //Need to skip the right number of input samples AND polyphase steps to make sure the first 
-    //point generated by the calculation is for the polyphase that contains the mid point of the filter
-    const filterOffset = (filterLength-1)*0.5;//padding size at start and end <- should be exact offset to start of real signal in outbuffer
-    const filterStartAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
-    const polyPos =(filterOffset +filterStartAdjust)/upsampleFactor;
-    let inPos = -Math.ceil(polyPos); //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
-    let ppk =(1 - (polyPos % 1))*upsampleFactor;// adjust the polyphase to shift to right to align with mid point of filter
-    if (ppk>=upsampleFactor) ppk=0;//handle rounding errors
-
-    for(let i=0;i<outLength;i++){
-        result[i] =0;
-        for(let j=0;j<polyphaseLength;j++){
-            result[i] += buffer[(inLength + inPos + j) % inLength] * polyphaseKernels[ppk][j];
-        }
-        ppk++;
-        if(ppk>=upsampleFactor) 
-        {
-            ppk=0;
-            inPos++;//overflow handled by checks in j loop
-        }
-    }   
-
-    return result;
-}
 function upsampleNonCyclic(buffer, polyphaseKernels, filterLength){
     const polyphaseLength = polyphaseKernels[0].length;
     const upsampleFactor = polyphaseKernels.length;
     const inLength = buffer.length;
-    const outLength = inLength*upsampleFactor + filterLength-1;
-    const result = new Array(outLength);//padding of filterLength at start and end
+    const outLength = inLength*upsampleFactor; //Cyclic so no padding
+    const result = new Array(outLength);
+    const filterOffsetIn =(filterLength-1)/2/upsampleFactor;//As if zero stuffing between samples
+    let inPos = -Math.floor(filterOffsetIn);//As if zero stuffing between samples
+    const inPosAdjust = (filterOffsetIn%1)*upsampleFactor;//
 
-    //Need to skip the right number of input samples AND polyphase steps to make sure the first 
-    //point generated by the calculation is for the polyphase that contains the mid point of the filter
-    const filterOffset = (filterLength-1)*0.5;//padding size at start and end <- should be exact offset to start of real signal in outbuffer
-    const filterStartAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
-    const polyPos =(filterOffset +filterStartAdjust)/upsampleFactor;
-    let inPos = -Math.ceil(polyPos); //start at (negative) sample that would be to left (-1) from mid point of filter. More accurate than using half polyphaseLength
-    let ppk =(1 - (polyPos % 1))*upsampleFactor;// adjust the polyphase to shift to right to align with mid point of filter
-    if (ppk>=upsampleFactor) ppk=0;//handle rounding errors
+    //polySettings    
+    const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
+    const startFractionalPos = (inPosAdjust + startAdjust ) / upsampleFactor;
+    inPos += Math.floor(startFractionalPos);
+    const startPolyphase = (startFractionalPos % 1) * upsampleFactor;
 
+
+    let ppk = startPolyphase;
     for(let i=0;i<outLength;i++){
         result[i] =0;
+        let filterPos =ppk - startAdjust;
         const polyEnd = Math.min(polyphaseLength, inLength-inPos);//truncate last polyphaseKernal if it extends past end of in buffer
-        for(let j=Math.max(0,-inPos);//skip negative values of inStart
+        for(let j=Math.max(filterPos<0?1:0,-inPos);//skip negative values of inStart
                 j<polyEnd;//skip past end of in buffer if polyphaseKernal is longer than remaining buffer
                 j++){
-                    if (ppk>=upsampleFactor) console.log('ppk out of range' + ppk);
-            result[i] += buffer[inPos+j] * polyphaseKernels[ppk][j];
-        }
-        ppk++;
-        if(ppk>=upsampleFactor) 
+                    const x =(inLength + inPos + j)%inLength;
+                    result[i] += buffer[x] * polyphaseKernels[ppk][j];
+                } 
+        ppk--;
+        if(ppk<0) 
         {
-            ppk=0;
+            ppk=upsampleFactor-1;
             inPos++;//overflow handled by checks in j loop
         }
     } 
 
     return result;
 }
-
 
 //This should work for cyclic and non-cyclic buffers since the upsampling should have included the necessary padding either side of the main part
 function downsample(inBuffer, outBuffer, filterKernel, upsampleFactor, isCyclic)
