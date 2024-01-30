@@ -18,7 +18,7 @@
 
 let oversampling =4;
 //let filter = generateKaiserSincKernel_alphaN(0.454/oversampling,201,5);
-let filter = generateKaiserSincKernel_fromParams(0.25/oversampling,90,0.1/oversampling);
+let filter = generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.025/oversampling);
 //let filter = generateKaiserSincKernel_fromParams(0.454/oversampling,90,0.04/oversampling);
 let polyphaseKernels = generateUpsamplingPolyphasekernals(filter, oversampling);
 
@@ -39,36 +39,69 @@ function distort(buffer, patch, sampleRate, isCyclic){
     //     buffer[i] = i<384? 0: (i>512+128-1? 0 :testFilter2[i-384]);
     // }
 
-    filterCheck2(buffer,patch.distortion,isCyclic);
-    return;
+    // filterCheck2(buffer,patch.distortion,isCyclic);
+    // return;
     //offsetCheck(buffer);
     //return;
     
 
-    const ob = upsample(buffer, polyphaseKernels);
+    const ob =isCyclic ? 
+        upsampleCyclicSlow(buffer, filter, oversampling)
+        : upsample(buffer, polyphaseKernels,filter.length, isCyclic);
 
     const d=1.5-1.5 * (patch.distortion-0.01)/0.99;
-    let length = ob.length;
-    //clip(ob, length, d, -10000);
+    //clip(ob, d, -d);
+    //clip(ob, d, -2*d);
+    tape(ob, patch.distortion);
 
-    downsample(ob, buffer, filter, oversampling);
+    // if (isCyclic)
+    // {
+    //     for(let i=0;i<1024;i++){
+    //         buffer[i] = ob[i*4];
+    //     }
+    // }
+    // else
+    // {
+    //     downsample(ob, buffer, filter, oversampling, false);
+    // }
+    downsample(ob, buffer, filter, oversampling, isCyclic);
+    //downsample(ob, buffer, filter, oversampling, isCyclic);
 }
 
-function clip(buffer, length, thresholdHigh, thresholdLow){
+function clip(buffer,  thresholdHigh, thresholdLow){
+    let length = buffer.length;
     for(let i=0;i<length;i++){
         let v =buffer[i];
         buffer[i] = v > thresholdHigh ? thresholdHigh : (v < thresholdLow ? thresholdLow : v);
     }
 }
 
+//Chebyshev polynomials
+//https://mathworld.wolfram.com/ChebyshevPolynomialoftheFirstKind.html
+//T_0(x)	=	1	
+//T_1(x)	=	x	
+//T_2(x)	=	2x^2-1	
+//T_3(x)	=	4x^3-3x	
+//T_4(x)	=	8x^4-8x^2+1	
+//T_5(x)	=	16x^5-20x^3+5x	
+//T_6(x)	=	32x^6-48x^4+18x^2-1.
+function tape(buffer,  amount){
+    let length = buffer.length;
+    for(let i=0;i<length;i++){
+        let v =buffer[i];
+        //buffer[i] += amount*(2* v * v  -1 + 4*v*v*v - 3*v);
+        buffer[i] -= amount*( 4*v*v*v - 3*v);
+    }
+}
 
-function offsetCheck(buffer)
+
+function offsetCheck(buffer, isCyclic)
 {    
     let dummyBuffer = new Float32Array(buffer.length).fill(0);
     dummyBuffer[0] = 1;
     dummyBuffer[buffer.length-1] = 1;
     logValuesNear1('dummyBuffer:', dummyBuffer);
-    const ob = upsample(dummyBuffer, polyphaseKernels);
+    const ob = upsample(dummyBuffer, polyphaseKernels,filter.length, isCyclic);
     logValuesNear1('Upsampled:', ob);
     downsample(ob, buffer, filter, oversampling);
     logValuesNear1('downsampled:', buffer);
