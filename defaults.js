@@ -314,6 +314,11 @@ function getDefaultPatch(){
         distortion:0,//0..1 0 = off, 1 = max distortion
         oddDistortion:0,//Third order Chebyshev polynomial distortion
         evenDistortion:0,//second order Chebyshev polynomial distortion
+        clipDistortion:0,//0..1 0 = off, 1 = max distortion
+
+        oversampleTimes:2,//How many times samplerate is raised 0-5: [1,2,4,8,12,16]
+        oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+        oversampleTransition:0.5//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
     }
 }
 

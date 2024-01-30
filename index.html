@@ -230,6 +230,36 @@
             <span class="help-icon">?</span>
             <div class="help-popup">Second order Chebyshev polynomial distortion, generating second harmonic for a sine wave</div>
         </div>
+        <div class="slider-container">
+            <label for="clipDistortion">Clipping:</label>
+            <input type="range" id="clipDistortion" name="clipDistortion" min="0" max="1" step="0.1" value="0">
+            <output class="valueSpan" name="clipDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Plain old full hard clipping, even oversampling might not save it</div>
+        </div>
+        
+        <h4>Over-sampling</h4>
+        <div class="slider-container">
+            <label for="oversampleTimes">Factor:</label>
+            <input type="range" id="oversampleTimes" name="oversampleTimes" min="0" max="5" step="1" value="2">
+            <output class="valueSpan" name="oversampleTimes">x4</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">How many times the sample rate is increased for the non-linear processes to be applied</div>
+        </div>
+        <div class="slider-container">
+            <label for="oversampleStopDepth">Cut:</label>
+            <input type="range" id="oversampleStopDepth" name="oversampleStopDepth" min="0" max="1" step="0.1" value="0.5">
+            <output class="valueSpan" name="oversampleStopDepth">90db%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">The amount of cut in the stop-band.</div>
+        </div>
+        <div class="slider-container">
+            <label for="oversampleTransition">Transition:</label>
+            <input type="range" id="oversampleTransition" name="oversampleTransition" min="0." max="1" step="0.1" value="0.5">
+            <output class="valueSpan" name="oversampleTransition">0.1 x fc</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">The width of the transition band between pass and stop</div>
+        </div>
     </div>
 
 

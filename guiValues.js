@@ -139,7 +139,14 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.oddDistortion);break;
         case "evenDistortion":
             ve.textContent =toPercent(patch.evenDistortion);break;
-
+        case "clipDistortion":
+            ve.textContent =toPercent(patch.clipDistortion);break;
+        case "oversampleTimes":
+            ve.textContent ='x'+[1,2,4,8,12,16][patch.oversampleTimes];break;
+        case "oversampleStopDepth":
+            ve.textContent ='-'+(70 +40 *patch.oversampleStopDepth).toFixed(0) + "db";break;
+        case "oversampleTransition":
+            ve.textContent =(0.025 *patch.oversampleTransition).toFixed(2) + " of fc";break;
     }
 }
 

@@ -16,42 +16,43 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Kippel loudspeaker models - for reference on distortion in speakers
 
-let oversampling =4;
-//let filter = generateKaiserSincKernel_alphaN(0.454/oversampling,201,5);
-let filter = generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.025/oversampling);
-//let filter = generateKaiserSincKernel_fromParams(0.454/oversampling,90,0.04/oversampling);
-let polyphaseKernels = generateUpsamplingPolyphasekernals(filter, oversampling);
-
-let testFilter1 = generateKaiserSincKernel_alphaN(0.125,1024,5);
-let testFilter2 = generateKaiserSincKernel_alphaN(0.125,501,5);
+let distOversampling =0;
+let oversampling = 0;
+let distStopBand = 0;
+let distTransitionBand = 0;
+let filter = null;//generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.025/oversampling);
+let polyphaseKernels = null;//generateUpsamplingPolyphasekernals(filter, oversampling);
 
 //Perform distortion on buffer in place
 function distort(buffer, patch, sampleRate, isCyclic){
     if (patch.distortion==0) return;
+    if (distOversampling != patch.oversampleTimes 
+        || distStopBand != patch.oversampleStopDepth 
+        || distTransitionBand != patch.oversampleTransition
+        || filter == null
+        || polyphaseKernels == null){
+            distOversampling =patch.oversampleTimes;
+            distStopBand = patch.oversampleStopDepth;
+            distTransitionBand = patch.oversampleTransition;
+            oversampling =[1,2,4,8,12,16][distOversampling];
+            const transition =0.005 + 0.025 *distTransitionBand
+            const stop = 70 +40 *distStopBand
+            filter = generateKaiserSincKernel_fromParams(
+                (0.5-transition)/oversampling,
+                stop,
+                transition/oversampling);
+            polyphaseKernels = generateUpsamplingPolyphasekernals(filter, oversampling);
+            console.log("Oversampling: x"+oversampling+" stop:-"+stop+"db   transition: "+((0.5-transition)*sampleRate).toFixed(0)+"Hz to "+((0.5)*sampleRate).toFixed(0)+"Hz   filter size:"+filter.length);
+        }
 
-    // for(let i=0;i<buffer.length;i++){
-    //     buffer[i] = testFilter1[i]-testFilter[testFilter.length-1-i];
-    // }
 
-    // var max = testFilter2.reduce((a,b)=>Math.max(a,Math.abs(b)),0);
+    let ob =oversampling==1 ? buffer :  upsample(buffer, filter, polyphaseKernels, isCyclic);
 
-    // for(let i=0;i<1024;i++){
-    //     buffer[i] = i<384? 0: (i>512+128-1? 0 :testFilter2[i-384]);
-    // }
-
-    // filterCheck2(buffer,patch.distortion,isCyclic);
-    // return;
-    //offsetCheck(buffer);
-    //return;
-    
-
-    let ob =upsample(buffer, filter, polyphaseKernels, isCyclic);
-
-    //const d=1.5-1.5 * (patch.distortion-0.01)/0.99;
-    //clip(ob, d, -d);
+    const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
     cheb_2_3(ob, patch.distortion * patch.evenDistortion, patch.distortion * patch.oddDistortion);
+    clip(ob, d, -d);
 
-    downsample(ob, buffer, filter, oversampling, isCyclic);
+    if (oversampling>1) downsample(ob, buffer, filter, oversampling, isCyclic);
 }
 
 function clip(buffer,  thresholdHigh, thresholdLow){
@@ -92,64 +93,5 @@ function cheb_2_3(buffer, even, odd){
         //buffer[i] -= odd*( 4*v*v*v - 3*v) + even*(2* v * v  -1);
         const v2 = v*v;
         buffer[i] -= odd*( 4*v2 - 3 )*v + (2* v2 - 1) * even;
-    }
-}
-
-
-function offsetCheck(buffer, isCyclic)
-{    
-    let dummyBuffer = new Float32Array(buffer.length).fill(0);
-    dummyBuffer[0] = 1;
-    dummyBuffer[buffer.length-1] = 1;
-    logValuesNear1('dummyBuffer:', dummyBuffer);
-    const ob = upsample(dummyBuffer, polyphaseKernels,filter.length, isCyclic);
-    logValuesNear1('Upsampled:', ob);
-    downsample(ob, buffer, filter, oversampling);
-    logValuesNear1('downsampled:', buffer);
-}
-function logValuesNear1(title, buffer)
-{
-    let report = []
-    for(let i=0;i<buffer.length;i++){
-        if (buffer[i]>0.3){
-            report.push(i);
-        }
-    }
-    console.log(title);
-    console.log(report);
-}
-
-function filterCheck(buffer){
-    let dummyBuffer = [...buffer];
-    // let dummyBuffer = [...buffer].fill(0);
-    // dummyBuffer[0] = 1;
-    // dummyBuffer[buffer.length-1] = 1;
-    let dest = new Float32Array(buffer.length).fill(0);
-    filterOnly(dummyBuffer, dest, testFilter2);
-    for(let i=0;i<buffer.length;i++){
-        buffer[i] = dest[i];//null check
-    }
-}
-
-function filterCheck2(buffer, offset, isCyclic){
-    let flt = generateKaiserSincKernel_alphaN(0.4*offset,900,10);
-    if (!isCyclic){
-        //buffer.fill(0);
-        //buffer[0] = 1;
-
-    }
-    let newB = isCyclic ? convolveWrapped( buffer, flt) : convolve(buffer, flt);
-
-    if (isCyclic){
-        for(let i=0;i<buffer.length;i++){
-            buffer[i] = newB[i+(flt.length-1)/2];
-        }
-    }
-    else
-    {
-        logValuesNear1('newB:', newB);
-        for(let i=0;i<buffer.length;i++){
-            buffer[i] = newB[i+(flt.length-1)/2];
-        }
     }
 }
