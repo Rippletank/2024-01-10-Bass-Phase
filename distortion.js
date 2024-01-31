@@ -50,7 +50,7 @@ function distort(buffer, patch, sampleRate, isCyclic){
             if (trueSampleRate!=0) 
             { 
                 //DONT use samplerate from cyclic - it is adjusted for the cycle so not true
-                oversamplingReport = "Samplerate "+trueSampleRate+"Hz Transition["+((0.5-transition)*trueSampleRate).toFixed(0)+"Hz to "+((0.5)*trueSampleRate).toFixed(0)+"Hz]   FIR size:"+filter.length;
+                oversamplingReport = "Samplerate "+trueSampleRate+"Hz Transition "+((0.5-transition)*trueSampleRate).toFixed(0)+"Hz to "+((0.5)*trueSampleRate).toFixed(0)+"Hz   FIR size:"+filter.length;
             }  
             //console.log("Oversampling: x"+oversampling+" stop:-"+stop+"db "+oversamplingReport);
         }    
