@@ -25,7 +25,7 @@ const zeroLevel=Math.pow(10,smallestLevel/20);//-100db global minimum level for 
 
 const allowedOversampleTimes = [1,2,3,4,6,8,12,16];
 
-let defaultTestSubjectList = 
+const defaultTestSubjectList = 
 [
     "rootPhaseDelay"
 ];
@@ -197,6 +197,7 @@ let distortionPresets = [
             evenDistortion:0,
             clipDistortion:0,
             tanhDistortion:0.4,
+            jitter:0,
         }
     },
     {
@@ -207,6 +208,7 @@ let distortionPresets = [
             evenDistortion:0,
             clipDistortion:0,
             tanhDistortion:0.4,
+            jitter:0,
         }
     },
     {
@@ -217,6 +219,21 @@ let distortionPresets = [
             evenDistortion:0.1,
             clipDistortion:0,
             tanhDistortion:0.7,
+            jitter:0,
+        }
+    },
+    {
+        name:"Jitter",
+        patch:{
+            distortion:1,
+            oddDistortion:0,
+            evenDistortion:0,
+            clipDistortion:0,
+            tanhDistortion:0,
+            jitter:0.8,
+            oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.5
         }
     },
 ];

@@ -352,6 +352,40 @@ function updateLabelsFor(containerId, patch) {
 }
 
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Import/Export Patch
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function exportCombinedPatchToJSON(){
+    updateAllLabelsAndCachePatches();
+
+    let patch = { 
+        patchC: {...cachedPatchCmn}, 
+        patchA: {...cachedPatchA},
+        patchB: {...cachedPatchB},
+        testSubjects: getTestSubjectList()
+    };
+    return JSON.stringify(patch);
+}
+
+
+
+function importCombinedPatchFromJSON(json){
+    // Initialize with default values
+    let patch = JSON.parse(json);
+
+    let patchC = {...getDefaultPatch()};
+    let patchA = {...getDefaultAPatch()};
+    let patchB = {...getDefaultBPatch()};
+
+    // Overwrite with values from patch object
+    Object.assign(patchC, patch.patchC);
+    Object.assign(patchA, patch.patchA);
+    Object.assign(patchB, patch.patchB);
+
+    // Load the patches
+    loadPatches(patchC, patchA,patchB,patch.testSubjects ?? defaultTestSubjectList);
+}
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
