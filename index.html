@@ -68,8 +68,8 @@
         <div class="slider-container">
             <label for="even">Even Level:</label>
             <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider" list="ticksPlus1ZeroMinus1">
-            <label for="evenAlternating"  class="flipLabel">Alt Amt:</label>
-            <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
+            <label for="evenAlt"  class="flipLabel">Alt Amt:</label>
+            <input type="range" id="evenAlt" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
             <output class="valueSpan" name="even">-1</output>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
@@ -85,8 +85,8 @@
         <div class="slider-container">
             <label for="odd">Odd Level:</label>
             <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
-            <label for="oddAlternating"  class="flipLabel">Alt Amt:</label>
-            <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
+            <label for="oddAlt"  class="flipLabel">Alt Amt:</label>
+            <input type="range" id="oddAlt" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
             <output class="valueSpan" name="odd">1</output>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
@@ -210,7 +210,7 @@
         </div>
 
         <div class="slider-container">
-            <label for="distortion">Overal Level:</label>
+            <label for="distortion"><b>Master Level:</b></label>
             <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0">
             <output class="valueSpan" name="distortion">0%</output>
             <span class="help-icon">?</span>
@@ -244,27 +244,34 @@
             <span class="help-icon">?</span>
             <div class="help-popup">Plain old full hard clipping</div>
         </div>
+        <div class="slider-container">
+            <label for="jitter">Jitter:</label>
+            <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.1" value="0">
+            <output class="valueSpan" name="jitter">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Random temporal misplacement of sample in normal distribution up to +/-0.5*time-period (1/fs)</div>
+        </div>
         
         <div class="presetHeader">
             <h3>Over-sampling</h3>
             <div id="oversamplingPresets" class="PresetButtons"></div>
         </div>
         <div class="slider-container">
-            <label for="oversampleTimes">Factor:</label>
+            <label for="oversampleTimes">Over Factor:</label>
             <input type="range" id="oversampleTimes" name="oversampleTimes" min="0" max="6" step="1" value="2">
             <output class="valueSpan" name="oversampleTimes">x4</output>
             <span class="help-icon">?</span>
             <div class="help-popup">How many times the sample rate is increased for the non-linear processes to be applied</div>
         </div>
         <div class="slider-container">
-            <label for="oversampleStopDepth">Cut:</label>
+            <label for="oversampleStopDepth">Stop Band:</label>
             <input type="range" id="oversampleStopDepth" name="oversampleStopDepth" min="0" max="1" step="0.1" value="0.5">
             <output class="valueSpan" name="oversampleStopDepth">90db%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">The amount of cut in the stop-band.</div>
         </div>
         <div class="slider-container">
-            <label for="oversampleTransition">Transition:</label>
+            <label for="oversampleTransition">Transition Width:</label>
             <input type="range" id="oversampleTransition" name="oversampleTransition" min="0." max="1" step="0.1" value="0.5">
             <output class="valueSpan" name="oversampleTransition">0.1 x fc</output>
             <span class="help-icon">?</span>

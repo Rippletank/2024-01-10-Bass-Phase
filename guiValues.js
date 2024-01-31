@@ -19,6 +19,87 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+
+const disableGroups =[
+    {
+        masters:[
+            {
+                name:"distortion",
+                value:0,
+            }
+        ],
+        dependents:[
+            "oddDistortion",
+            "evenDistortion",
+            "tanhDistortion",
+            "clipDistortion",
+            "jitter",
+            "oversampleTimes",
+            "oversampleStopDepth",
+            "oversampleTransition"
+        ]
+    },
+    {
+        masters:[
+            {
+                name:"filterSlope",
+                value:0,
+            }
+        ],
+        dependents:[
+            "filterF1",
+            "filterF2",
+            "filterF3",
+            "attackF",
+            "holdF",
+            "decayF"
+        ]
+    },
+    {
+        masters:[
+            {
+                name:"evenAlt",
+                value:0,
+            },
+            {
+                name:"oddAlt",
+                value:0,
+            }
+        ],
+        dependents:[
+            "altW",
+            "altOffset"
+        ]
+    },
+    {
+        masters:[
+            {
+                name:"oddLevel",
+                value:0,
+            },
+        ],
+        dependents:[
+            "oddAlt",
+            "oddFalloff"
+        ]
+    },
+    {
+        masters:[
+            {
+                name:"evenLevel",
+                value:0,
+            },
+        ],
+        dependents:[
+            "evenAlt",
+            "evenFalloff"
+        ]
+    },
+
+
+];
+
+
 function setValueFromPatch(ve, patch){
     switch (ve.name) {
         case "frequency": 
@@ -143,6 +224,8 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.clipDistortion);break;
         case "tanhDistortion":
             ve.textContent =toPercent(patch.tanhDistortion*8);break;
+        case "tanhDistortion":
+            ve.textContent =toPercent(patch.tanhDistortion);break;
             
         case "oversampleTimes":
             ve.textContent ='x'+allowedOversampleTimes[patch.oversampleTimes];break;

@@ -311,6 +311,8 @@ function loadPatchIntoContainer(id, patch) {
     });
 }
 
+
+
 let cachedPatchCmn = null;
 let cachedPatchA = null;
 let cachedPatchB = null;
@@ -322,15 +324,20 @@ function updateAllLabelsAndCachePatches(){
     commonSectionNames.forEach((sectionName)=>{
         updateLabelsFor(sectionName, patch);
     });
+    commonSectionNames.forEach((sectionName)=>{
+        handleDisableGroups(sectionName, patch);
+    });
     cachedPatchCmn = {...patch};
 
     loadSliderValuesFromContainer('SoundASetup', patch);
     cachedPatchA = {...patch};
     updateLabelsFor('SoundASetup', patch);
+    handleDisableGroups('SoundASetup', patch);
 
     loadSliderValuesFromContainer('SoundBSetup', patch);
     cachedPatchB = {...patch};
     updateLabelsFor('SoundBSetup', patch);
+    handleDisableGroups('SoundBSetup', patch);
 }
 
 
@@ -404,7 +411,7 @@ document.querySelectorAll('.slider-container').forEach((div) => {
                 input.style.opacity = '0.3';
             });
             labels.forEach((input)=>{
-                input.style.opacity = '0.4';
+                input.style.opacity = '0.5';
             });
             outputs.forEach((input)=>{
                 input.style.opacity = '0.3';
@@ -435,9 +442,13 @@ document.querySelectorAll('.slider-container').forEach((div) => {
     div.insertBefore(checkbox, div.firstChild);
     sliderContainers.push(
         {
+            parentId:div.parentNode.id,
             name:name,
             div:div,
-            checkbox:checkbox
+            checkbox:checkbox,
+            sliders:sliders,
+            labels:labels,
+            outputs:outputs
         });
 });
 
@@ -467,6 +478,74 @@ function getTestSubjectList(){
     );
     return list;
 }
+
+
+function handleDisableGroups(id, patch){
+    const testSubjects = getTestSubjectList();
+    disableGroups.forEach((group)=>{
+        
+        let allNamesValid = true;
+        const hasKeys = group.masters.length>0;
+        let allMatch = true;
+        for (let key of group.masters) {
+            allNamesValid &=  !testSubjects.includes(key.name) 
+            allMatch &=  patch[key.name] == key.value 
+        }
+        const action =  allNamesValid && allMatch && hasKeys ?
+            (slider)=>slider.classList.add("blurredDisabled")
+            : (slider)=>slider.classList.remove("blurredDisabled");
+        const slidersForId = sliderContainers.filter((container)=>container.parentId ==id);
+        slidersForId.filter((container)=>group.dependents.includes(container.name))
+            .forEach((container)=>{
+                container.sliders.forEach((slider)=>
+                {
+                    action(slider)
+                })
+                container.labels.forEach((slider)=>
+                {
+                    action(slider)
+                })
+                container.outputs.forEach((slider)=>
+                {
+                    action(slider)
+                })
+            });
+        
+        slidersForId.filter((container)=> container.sliders && container.sliders.length>1)
+            .forEach((container)=>{
+                container.sliders.forEach((slider)=>
+                {
+                    if (group.dependents.includes(slider.name))
+                    {
+                        action(slider);
+                    }
+                })
+            })
+        slidersForId.filter((container)=> container.labels && container.labels.length>1)
+            .forEach((container)=>{
+                container.labels.forEach((label)=>
+                {
+                    if (group.dependents.includes(label.htmlFor))
+                    {
+                        action(label);
+                    }
+                })
+            })
+        slidersForId.filter((container)=> container.outputs && container.outputs.length>1)
+            .forEach((container)=>{
+                container.outputs.forEach((slider)=>
+                {
+                    if (group.dependents.includes(slider.name))
+                    {
+                        action(slider);
+                    }
+                })
+            })
+        }
+    );
+}
+
+
 
 //Initialise display of waveform and audio buffers on first load
 initSliders();

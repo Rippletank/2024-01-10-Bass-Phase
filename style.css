@@ -110,6 +110,11 @@ canvas {
     z-index: 1000;
 }
 
+.slider-container .blurredDisabled{
+    filter: blur(1px);
+    pointer-events: none;
+    opacity: 0.3;
+}
 .presetHeader{
     display: flex;
     align-items: center;
