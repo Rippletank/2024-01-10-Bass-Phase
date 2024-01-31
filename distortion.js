@@ -24,6 +24,30 @@ let filter = null;//generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.0
 let polyphaseKernels = null;//generateUpsamplingPolyphasekernals(filter, oversampling);
 let oversamplingReport ="";
 let trueSampleRate = 0;
+
+function buildOSFilters(patch){
+    distOversampling =patch.oversampleTimes;
+    distStopBand = patch.oversampleStopDepth;
+    distTransitionBand = patch.oversampleTransition;
+    oversampling =allowedOversampleTimes[distOversampling];
+    const transition =0.005 + 0.025 *distTransitionBand
+    const stop = 70 +40 *distStopBand
+    filter = generateKaiserSincKernel_fromParams(
+        (0.5-transition)/oversampling,
+        stop,
+        transition/oversampling);
+    polyphaseKernels = generateUpsamplingPolyphasekernals(filter, oversampling);
+    
+    if (trueSampleRate!=0) 
+    { 
+        //DONT use samplerate from cyclic - it is adjusted for the cycle so not true
+        oversamplingReport = "Samplerate "+trueSampleRate+"Hz Transition "+((0.5-transition)*trueSampleRate).toFixed(0)+"Hz to "+((0.5)*trueSampleRate).toFixed(0)+"Hz   FIR size:"+filter.length;
+    }  
+    //console.log("Oversampling: x"+oversampling+" stop:-"+stop+"db "+oversamplingReport);
+}
+
+
+
 //Perform distortion on buffer in place
 function distort(buffer, patch, sampleRate, isCyclic){
     if (!isCyclic && trueSampleRate != sampleRate){
@@ -34,29 +58,18 @@ function distort(buffer, patch, sampleRate, isCyclic){
         || distStopBand != patch.oversampleStopDepth 
         || distTransitionBand != patch.oversampleTransition
         || filter == null
-        || polyphaseKernels == null){
-            distOversampling =patch.oversampleTimes;
-            distStopBand = patch.oversampleStopDepth;
-            distTransitionBand = patch.oversampleTransition;
-            oversampling =allowedOversampleTimes[distOversampling];
-            const transition =0.005 + 0.025 *distTransitionBand
-            const stop = 70 +40 *distStopBand
-            filter = generateKaiserSincKernel_fromParams(
-                (0.5-transition)/oversampling,
-                stop,
-                transition/oversampling);
-            polyphaseKernels = generateUpsamplingPolyphasekernals(filter, oversampling);
-            
-            if (trueSampleRate!=0) 
-            { 
-                //DONT use samplerate from cyclic - it is adjusted for the cycle so not true
-                oversamplingReport = "Samplerate "+trueSampleRate+"Hz Transition "+((0.5-transition)*trueSampleRate).toFixed(0)+"Hz to "+((0.5)*trueSampleRate).toFixed(0)+"Hz   FIR size:"+filter.length;
-            }  
-            //console.log("Oversampling: x"+oversampling+" stop:-"+stop+"db "+oversamplingReport);
+        || polyphaseKernels == null)
+        {            
+            buildOSFilters(patch) 
         }    
 
     let ob =oversampling==1 ? buffer :  upsample(buffer, filter, polyphaseKernels, isCyclic);
 
+    if (patch.jitter>0) 
+    {
+        const rand= new SeededSplitMix32Random();//Might reuse for stereo
+        jitter(ob, patch.jitter, rand, isCyclic);
+    }
 
     const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
     cheb_2_3(ob, patch.distortion * patch.evenDistortion, patch.distortion * patch.oddDistortion);
@@ -65,6 +78,35 @@ function distort(buffer, patch, sampleRate, isCyclic){
 
     if (oversampling>1) downsample(ob, buffer, filter, oversampling, isCyclic);
 }
+
+function jitter(buffer, amount, rand, isCyclic){
+    let length = buffer.length;
+    for(let i=0;i<length;i++){
+        let v = buffer[i];
+        let x_minus_1, x_plus_1;
+
+        if (isCyclic) {
+            // Wrap edge values
+            x_minus_1 = buffer[(i - 1 + length) % length];
+            x_plus_1 = buffer[(i + 1) % length];
+        } else {
+            // Set edge values to zero
+            x_minus_1 = i - 1 >= 0 ? buffer[i - 1] : 0;
+            x_plus_1 = i + 1 < length ? buffer[i + 1] : 0;
+        }
+
+        // Quadratic interpolation
+        let a = (x_minus_1 + x_plus_1) / 2 - v;
+        let b = (x_plus_1 - x_minus_1) / 2;
+        let c = v;
+
+        let shift = boxMullerRandom(rand) * 0.5 * amount;
+        let interpolated = ((a * shift + b) * shift + c);
+
+        buffer[i] = interpolated;
+    }
+}
+
 
 function clip(buffer,  thresholdHigh, thresholdLow){
     let length = buffer.length;
@@ -114,4 +156,47 @@ function cheb_2_3(buffer, even, odd){
         const v2 = v*v;
         buffer[i] -= odd*( 4*v2 - 3 )*v + (2* v2 - 1) * even;
     }
+}
+
+
+
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Seeded random number generator giving normal distribution of values
+//Directly from Github Copilot \/(^_^)\/
+//SplitMix32 ->from refrenced stackoverflow posts
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// Seeded random number generator
+function SeededSplitMix32Random(seed) {
+    this.m = 0x80000000-1; // 2**31;
+    this.state = seed ? seed : Math.floor(Math.random());
+}
+
+//SplitMix32
+//https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
+//https://stackoverflow.com/questions/17035441/looking-for-decent-quality-prng-with-only-32-bits-of-state
+SeededSplitMix32Random.prototype.nextInt = function() {
+    let z = (this.state += 0x9E3779B9) | 0; //Ensure z is a 32bit integer
+    z ^= z >> 16; 
+    z *= 0x21f0aaad;
+    z ^= z >> 15;
+    z *= 0x735a2d97;
+    z ^= z >> 15;
+    return z;
+}
+SeededSplitMix32Random.prototype.nextFloat = function() {
+    // returns in range [0,1]
+    return this.nextInt() / this.m ;
+}
+
+// Box-Muller transform
+function boxMullerRandom(seededRandom) {
+    let u = 0, v = 0;
+    while(u === 0) u = seededRandom.nextFloat(); //Converting [0,1) to (0,1)
+    while(v === 0) v = seededRandom.nextFloat();
+    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
 }

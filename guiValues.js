@@ -226,6 +226,9 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.tanhDistortion*8);break;
         case "tanhDistortion":
             ve.textContent =toPercent(patch.tanhDistortion);break;
+        case "jitter": 
+            ve.textContent =toPercent(patch.jitter);break;
+
             
         case "oversampleTimes":
             ve.textContent ='x'+allowedOversampleTimes[patch.oversampleTimes];break;
