@@ -23,7 +23,7 @@
 const smallestLevel=-100;//db
 const zeroLevel=Math.pow(10,smallestLevel/20);//-100db global minimum level for calculations
 
-
+const allowedOversampleTimes = [1,2,3,4,6,8,12,16];
 
 let defaultTestSubjectList = 
 [
@@ -195,6 +195,18 @@ let distortionPresets = [
             distortion:0,
             oddDistortion:0,
             evenDistortion:0,
+            clipDistortion:0,
+            tanhDistortion:0.4,
+        }
+    },
+    {
+        name:"Light",
+        patch:{
+            distortion:0.2,
+            oddDistortion:0,
+            evenDistortion:0,
+            clipDistortion:0,
+            tanhDistortion:0.4,
         }
     },
     {
@@ -203,6 +215,44 @@ let distortionPresets = [
             distortion:0.5,
             oddDistortion:0.5,
             evenDistortion:0.1,
+            clipDistortion:0,
+            tanhDistortion:0.7,
+        }
+    },
+];
+
+
+let oversamplingPresets = [
+    {
+        name:"default",
+        patch:{
+            oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.7
+        }
+    },
+    {
+        name:"Mid CPU",
+        patch:{
+            oversampleTimes:3,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.5
+        }
+    },
+    {
+        name:"Hi-Q",
+        patch:{
+            oversampleTimes:5,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.6,//-70db to -110db - default = -90db
+            oversampleTransition:0.2
+        }
+    },
+    {
+        name:"Off",
+        patch:{
+            oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.5
         }
     },
 ];
@@ -315,10 +365,11 @@ function getDefaultPatch(){
         oddDistortion:0,//Third order Chebyshev polynomial distortion
         evenDistortion:0,//second order Chebyshev polynomial distortion
         clipDistortion:0,//0..1 0 = off, 1 = max distortion
+        tanhDistortion:0.4,//0= off
 
-        oversampleTimes:2,//How many times samplerate is raised 0-5: [1,2,4,8,12,16]
+        oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
         oversampleStopDepth:0.5,//-70db to -110db - default = -90db
-        oversampleTransition:0.5//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
+        oversampleTransition:0.7//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
     }
 }
 

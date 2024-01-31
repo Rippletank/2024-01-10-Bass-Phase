@@ -231,17 +231,27 @@
             <div class="help-popup">Second order Chebyshev polynomial distortion, generating second harmonic for a sine wave</div>
         </div>
         <div class="slider-container">
+            <label for="tanhDistortion">Tanh Saturation:</label>
+            <input type="range" id="tanhDistortion" name="tanhDistortion" min="0" max="1" step="0.01" value="0">
+            <output class="valueSpan" name="tanhDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Tanh distortion, used in Saturation modelling</div>
+        </div>
+        <div class="slider-container">
             <label for="clipDistortion">Clipping:</label>
             <input type="range" id="clipDistortion" name="clipDistortion" min="0" max="1" step="0.1" value="0">
             <output class="valueSpan" name="clipDistortion">0%</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Plain old full hard clipping, even oversampling might not save it</div>
+            <div class="help-popup">Plain old full hard clipping</div>
         </div>
         
-        <h4>Over-sampling</h4>
+        <div class="presetHeader">
+            <h3>Over-sampling</h3>
+            <div id="oversamplingPresets" class="PresetButtons"></div>
+        </div>
         <div class="slider-container">
             <label for="oversampleTimes">Factor:</label>
-            <input type="range" id="oversampleTimes" name="oversampleTimes" min="0" max="5" step="1" value="2">
+            <input type="range" id="oversampleTimes" name="oversampleTimes" min="0" max="6" step="1" value="2">
             <output class="valueSpan" name="oversampleTimes">x4</output>
             <span class="help-icon">?</span>
             <div class="help-popup">How many times the sample rate is increased for the non-linear processes to be applied</div>
@@ -260,6 +270,7 @@
             <span class="help-icon">?</span>
             <div class="help-popup">The width of the transition band between pass and stop</div>
         </div>
+        <p class="oversamplingReport"></p>
     </div>
 
 

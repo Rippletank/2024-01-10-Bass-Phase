@@ -267,6 +267,7 @@ function setupPresetButtons(){
     insertPresetButtons('envelopPresetButtons', envelopePresets);
     insertPresetButtons('filterPresetButtons', filterPresets);
     insertPresetButtons('distortionPresets', distortionPresets);
+    insertPresetButtons('oversamplingPresets', oversamplingPresets);
 }
 
 function insertPresetButtons(id, presetList){     

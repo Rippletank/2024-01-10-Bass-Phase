@@ -22,6 +22,9 @@
 //General overview: https://www.nickwritesablog.com/introduction-to-oversampling-for-alias-reduction/
 //Specific approaches (including window function choice and sinc filter kernal size):
 //https://www.kvraudio.com/forum/viewtopic.php?t=556692
+//Specifically, the top post here is very helpful on Polyphase upsampling:
+//https://www.kvraudio.com/forum/viewtopic.php?t=556692&start=45
+//Although correctly aligning polyphase kernals was a pain, it is basically the appoach outlined in that post
 
 //Kaiser window: https://en.wikipedia.org/wiki/Kaiser_window
 //Solution for I0(x) first order modified bessel function:
@@ -203,9 +206,13 @@ function confirmPolyphaseKernals(filter, upsampleFactor, polyphaseLength, polyph
         console.log('KernalSize ' + filter.length);
         console.log(report);
     }
+    else {
+        console.log('polyphaseKernals OK');
+    }
 }
 
 function upsample(buffer, filter, polyphaseKernels, isCyclic){
+    // //Timimg tests
     // examples slow vs fast: 1024 samples, 915 filter length, 4x upsample 49ms vs 4.2ms
     // examples slow vs fast: 29280 samples, 915 filter length, 4x upsample 109ms vs 1527ms
     // console.log('upsample test - buffer length: ' + buffer.length + ' filter length: ' + filter.length + ' upsampleFactor: ' + polyphaseKernels.length);
@@ -218,13 +225,50 @@ function upsample(buffer, filter, polyphaseKernels, isCyclic){
     // time2 = performance.now();
     // console.log('upsampleCyclicSlow: ' + (time2 - time1) + 'ms');
 
+    // Equivalence test - debug only
+    // if (isCyclic)
+    // {
+    //     let debug1=[]
+    //     upsampleCyclicSlow(buffer, filter, polyphaseKernels.length,debug1);
+    //     let debug2=[]
+    //     upsampleCyclic(buffer, polyphaseKernels, filter.length,debug2); 
+    //     if (debug1.length!=debug2.length) 
+    //     {
+    //         console.log('debug length mismatch');
+    //     }
+    //     else{let iCount=10
+    //         for(let i=0;i<debug1.length;i++){
+    //             if (debug1[i].length!=debug2[i].length) 
+    //             {
+    //                 console.log('Point count mismatch at ' + i);
+    //             }
+    //             else
+    //             {
+    //                 let count =10
+    //                 for(let j=0;j<debug1[i].length;j++){
+    //                     if (debug1[i][j].i!=debug2[i][j].i || debug1[i][j].in!=debug2[i][j].in || debug1[i][j].f!=debug2[i][j].f) 
+    //                     {
+    //                         console.log('Point mismatch at ' + i + ' ' + j +
+    //                         ' i:' + debug1[i][j].i + ' ' + debug2[i][j].i +
+    //                         ' in:' + debug1[i][j].in + ' ' + debug2[i][j].in +
+    //                         ' f:' + debug1[i][j].f + ' ' + debug2[i][j].f);
+    //                         if (--count==0) break;
+    //                     }
+    //                 }
+    //                 if (--iCount==0) break;
+    //             }
+    //         }
+    //     }
+    // }
+    
 
     return isCyclic? 
-     upsampleCyclic(buffer, polyphaseKernels, filter.length) 
+    //upsampleCyclicSlow(buffer, filter, polyphaseKernels.length) 
+    upsampleCyclic(buffer, polyphaseKernels, filter.length) 
     : upsampleNonCyclic(buffer, polyphaseKernels, filter.length);
 }
 
-function upsampleCyclicSlow(inBuffer, filter, upsampleFactor){
+function upsampleCyclicSlow(inBuffer, filter, upsampleFactor, debug){
     const inLength = inBuffer.length;
     const outLength = inLength*upsampleFactor; //Cyclic so no padding
     const result = new Array(outLength);
@@ -232,17 +276,20 @@ function upsampleCyclicSlow(inBuffer, filter, upsampleFactor){
     const inPos =-(filterLength-1)/2;//Assumes zero stuffing between samples
     for (let i = 0; i < outLength; i++) {
         result[i] = 0;
+        let log =[]
         for (let j =0; j <filterLength; j++) {
             const x = (i+j + inPos)/upsampleFactor;
             const pos = (inLength + x)%inLength;
             if (Math.abs(pos) % 1>0) continue;//skip fractional values - pad with zeros
             result[i] += inBuffer[pos] * filter[j] * upsampleFactor;
+            if (debug) log.push({i, in:pos, f:j});
         }
+        if (debug) debug.push(log);
     }
     return result
 }
 
-function upsampleCyclic(inBuffer, polyphaseKernels, filterLength){
+function upsampleCyclic(inBuffer, polyphaseKernels, filterLength, debug){
     const polyphaseLength = polyphaseKernels[0].length;
     const upsampleFactor = polyphaseKernels.length;
     const inLength = inBuffer.length;
@@ -255,18 +302,21 @@ function upsampleCyclic(inBuffer, polyphaseKernels, filterLength){
     //polySettings    
     const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
     const startFractionalPos = (inPosAdjust + startAdjust ) / upsampleFactor;
-    inPos += Math.floor(startFractionalPos);
-    const startPolyphase = (startFractionalPos % 1) * upsampleFactor;
+    inPos -= Math.floor(startFractionalPos);
+    const startPolyphase = Math.round((startFractionalPos % 1) * upsampleFactor);//Round for unusual  upsampleFactors, eg 7
 
 
     let ppk = startPolyphase;
     for (let i = 0; i < outLength; i++) {
         result[i] = 0;
         let filterPos =ppk - startAdjust
+        let log =[]
         for (let j =filterPos<0?1:0; j <polyphaseLength; j++) {
             const x =(inLength + inPos + j)%inLength;
             result[i] += inBuffer[x] * polyphaseKernels[ppk][j];
+            if (debug) log.push({i, in:x, f:ppk-startAdjust+j*upsampleFactor});
         }
+        if (debug) debug.push(log);
         ppk--;//<--Fucker to find this was -ve, ha
         if(ppk<0) 
         {
@@ -289,8 +339,8 @@ function upsampleNonCyclic(buffer, polyphaseKernels, filterLength){
     //polySettings    
     const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
     const startFractionalPos = (inPosAdjust + startAdjust ) / upsampleFactor;
-    inPos += Math.floor(startFractionalPos);
-    const startPolyphase = (startFractionalPos % 1) * upsampleFactor;
+    inPos -= Math.floor(startFractionalPos);
+    const startPolyphase = Math.round((startFractionalPos % 1) * upsampleFactor);//Round for unusual  upsampleFactors, eg 7
 
 
     let ppk = startPolyphase;

@@ -226,17 +226,24 @@ function paintPreview(){
         previewSpectrumPolarity,
         previewSpectrumShowPhase);
 
-        doPreviewPaint(
-            'distortionPreview',
-            previewResult.distortedSamples,
-            previewResult.fft.magnitude,
-            previewResult.fft.phase,
-            previewResult.filter,
-            previewResult.patch,
-            previewResult.min,
-            previewResult.max,
-            distortionSpectrumFullWidth,
-            distortionSpectrumPolarity,
-            distortionSpectrumShowPhase);
+    doPreviewPaint(
+        'distortionPreview',
+        previewResult.distortedSamples,
+        previewResult.fft.magnitude,
+        previewResult.fft.phase,
+        previewResult.filter,
+        previewResult.patch,
+        previewResult.min,
+        previewResult.max,
+        distortionSpectrumFullWidth,
+        distortionSpectrumPolarity,
+        distortionSpectrumShowPhase);
+
+        putOversamplingReport();
+}
+
+let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
+function putOversamplingReport(){
+    oversamplingReportElements.forEach((element) =>element.textContent = oversamplingReport);
 }
 

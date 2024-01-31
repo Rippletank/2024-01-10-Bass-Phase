@@ -22,9 +22,13 @@ let distStopBand = 0;
 let distTransitionBand = 0;
 let filter = null;//generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.025/oversampling);
 let polyphaseKernels = null;//generateUpsamplingPolyphasekernals(filter, oversampling);
-
+let oversamplingReport ="";
+let trueSampleRate = 0;
 //Perform distortion on buffer in place
 function distort(buffer, patch, sampleRate, isCyclic){
+    if (!isCyclic && trueSampleRate != sampleRate){
+        trueSampleRate = sampleRate;//capture true samplerate as early as possible - use for report even if in cycle mode
+    } 
     if (patch.distortion==0) return;
     if (distOversampling != patch.oversampleTimes 
         || distStopBand != patch.oversampleStopDepth 
@@ -34,7 +38,7 @@ function distort(buffer, patch, sampleRate, isCyclic){
             distOversampling =patch.oversampleTimes;
             distStopBand = patch.oversampleStopDepth;
             distTransitionBand = patch.oversampleTransition;
-            oversampling =[1,2,4,8,12,16][distOversampling];
+            oversampling =allowedOversampleTimes[distOversampling];
             const transition =0.005 + 0.025 *distTransitionBand
             const stop = 70 +40 *distStopBand
             filter = generateKaiserSincKernel_fromParams(
@@ -42,14 +46,21 @@ function distort(buffer, patch, sampleRate, isCyclic){
                 stop,
                 transition/oversampling);
             polyphaseKernels = generateUpsamplingPolyphasekernals(filter, oversampling);
-            console.log("Oversampling: x"+oversampling+" stop:-"+stop+"db   transition: "+((0.5-transition)*sampleRate).toFixed(0)+"Hz to "+((0.5)*sampleRate).toFixed(0)+"Hz   filter size:"+filter.length);
-        }
-
+            
+            if (trueSampleRate!=0) 
+            { 
+                //DONT use samplerate from cyclic - it is adjusted for the cycle so not true
+                oversamplingReport = "Samplerate "+trueSampleRate+"Hz Transition["+((0.5-transition)*trueSampleRate).toFixed(0)+"Hz to "+((0.5)*trueSampleRate).toFixed(0)+"Hz]   FIR size:"+filter.length;
+            }  
+            //console.log("Oversampling: x"+oversampling+" stop:-"+stop+"db "+oversamplingReport);
+        }    
 
     let ob =oversampling==1 ? buffer :  upsample(buffer, filter, polyphaseKernels, isCyclic);
 
+
     const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
     cheb_2_3(ob, patch.distortion * patch.evenDistortion, patch.distortion * patch.oddDistortion);
+    if (patch.tanhDistortion>0)tanh_clip(ob, 0.0005 +8 * patch.distortion * patch.tanhDistortion );
     clip(ob, d, -d);
 
     if (oversampling>1) downsample(ob, buffer, filter, oversampling, isCyclic);
@@ -60,6 +71,15 @@ function clip(buffer,  thresholdHigh, thresholdLow){
     for(let i=0;i<length;i++){
         let v =buffer[i];
         buffer[i] = v > thresholdHigh ? thresholdHigh : (v < thresholdLow ? thresholdLow : v);
+    }
+}
+function tanh_clip(buffer, A)
+{
+    let length = buffer.length;
+    const A0 = Math.tanh(A);
+    for(let i=0;i<length;i++){
+        let v =buffer[i];
+        buffer[i] = Math.tanh(A * v)/A0;
     }
 }
 

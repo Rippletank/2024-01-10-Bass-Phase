@@ -264,3 +264,8 @@ canvas {
 .blur {
     filter: blur(4px);
 }
+
+.oversamplingReport{
+    text-align: center;
+    color: #6b8b6b;
+}
