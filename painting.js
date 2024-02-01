@@ -214,9 +214,9 @@ function paintFilterEnvelope(filter, maxLength, canvasId){
 
 let canvasTooltips =
     {
-        fftCanvas:{
+        fftCanvas:{//same as canvas.id
             visible: ()=>useFFT && fftCanvasWidth>0,
-            text:(x,y)=>{
+            text:(x,y)=>{//x,y are 0-1
                 if (!useFFT || fftCanvasWidth==0) return '';
                 x*=fftCanvasWidth;
                 y*=fftCanvasHeight;
