@@ -86,7 +86,13 @@ function getPreview(referencePatch, filterPreviewSubject){
         ...referencePatch
     };
     let bufferSize = 1024; //Number of samples
-    let sampleRate = bufferSize * patch.frequency;//Ensure is one complete per cycle
+    return _buildPreview(patch, filterPreviewSubject,
+        bufferSize * patch.frequency, //Ensure is one complete per cycle
+        bufferSize);
+}
+
+
+function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize){
     let envelopeBuffer =[];
     let b = [];
     for (let i = 0; i < bufferSize; i++) {
@@ -151,6 +157,22 @@ function getPreview(referencePatch, filterPreviewSubject){
     };
 }
 
+
+
+function getBufferForLongFFT(samplerate, referencePatch){
+    let defaultPatch = getDefaultPatch();
+    let patch = {
+        ...defaultPatch,
+        ...referencePatch
+    };
+    const bufferSize = 65536;
+    let numberOfWavesInBuffer = patch.frequency * bufferSize/samplerate;
+    const adjustedSampleRate = patch.frequency * bufferSize / Math.round(numberOfWavesInBuffer);//Tweak samplerate to give whole number of cycles in buffer - better FFT
+
+    return _buildPreview(patch, filterPreviewSubject,
+        adjustedSampleRate, //Ensure is one complete per cycle
+        bufferSize);
+}
 
 
 //Generate a single envelope, shared by all harmonics

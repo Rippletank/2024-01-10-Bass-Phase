@@ -302,8 +302,20 @@ document.querySelectorAll('canvas').forEach(canvas => {
     // Add the tooltip to the page
     document.body.appendChild(tooltip);
 
+    let isDragging=false;
+    let startX = 0;
+    let startY = 0;
     // Add a mousemove event listener to the canvas
     canvas.addEventListener('mousemove', function(event){
+        if (isDragging){
+            let def = canvasTooltips[canvas.id];
+            let dx = event.clientX - startX;
+            let dy = event.clientY - startY;
+            startX = event.clientX;
+            startY = event.clientY;
+            def.drag(dx/canvas.width, dy/canvas.height);
+            repaintDetailedFFT();
+        }
             update(event);
     });
     
@@ -323,16 +335,31 @@ document.querySelectorAll('canvas').forEach(canvas => {
         // Position the tooltip at the mouse position
         tooltip.style.left = event.pageX - 30 + 'px';
         tooltip.style.top = event.pageY + 30 + 'px';
+
     };
 
     // Hide the tooltip when the mouse leaves the canvas
     canvas.addEventListener('mouseleave', function() {
+        isDragging = false;
         tooltip.style.display = 'none';
     });
 
     // Show the tooltip when the mouse enters the canvas
     canvas.addEventListener('mousedown', function(event) {
         update(event);
+        let def = canvasTooltips[canvas.id];
+        if (def.drag){
+            isDragging = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            //canvas.setPointerCapture(event.pointerId);
+        }
+    });
+    // Show the tooltip when the mouse enters the canvas
+    canvas.addEventListener('mouseup', function(event) {
+        isDragging = false;
+        //canvas.releasePointerCapture(event.pointerId); // Release the pointer
+    update(event);
     });
 
 });

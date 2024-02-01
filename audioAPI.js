@@ -88,18 +88,20 @@ function stop() {
 }
 
 
-function updateDetailedFFT(){   
-
-    const bufferLength = 65536;
-    const inLength = previewResult.samples.length;//1024
-    const fftInput = new Float32Array(bufferLength);
-    for(let i=0;i<bufferLength;i++){
-        fftInput[i]=previewResult.samples[i %  inLength];
-    }
-    distort(fftInput, previewResult.patch, previewResult.virtualSampleRate, true);//true for cyclic because 65536/1024 is an integer
-
-    paintDetailedFFT(fftInput, previewResult.virtualSampleRate, 'staticFFTCanvas');
+let longPreview = null;
+function updateDetailedFFT(){  
+    longPreview = getBufferForLongFFT(audioContext.sampleRate, getPreviewSubjectCachedPatch());
+    paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
 }
+function repaintDetailedFFT(){
+    if (!longPreview) 
+    {
+        updateDetailedFFT()
+        return;
+    }
+    paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
+}
+
 
    
 let changed = true;
@@ -201,20 +203,27 @@ function updateDisplay(){
 
 let previewResult = null;
 let filterPreviewSubject =0;
-function updatePreview(patch){
-    switch(previewSubject){
-        case 0: 
-            previewResult = getPreview(cachedPatchCmn, filterPreviewSubject);
-            break;
-        case 1: 
-            previewResult = getPreview(cachedPatchA, filterPreviewSubject);
-            break;  
-        case 2: 
-            previewResult = getPreview(cachedPatchB, filterPreviewSubject);
-            break;  
-    }
+function updatePreview(){
+    previewResult = getPreview(getPreviewSubjectCachedPatch(), filterPreviewSubject);
     previewResult.fft = getFFT1024(previewResult.distortedSamples);
 }
+
+function getPreviewSubjectCachedPatch() {
+    let cachedPatch;
+    switch(previewSubject){
+        case 0: 
+            cachedPatch = cachedPatchCmn;
+            break;
+        case 1: 
+            cachedPatch = cachedPatchA;
+            break;  
+        case 2: 
+            cachedPatch = cachedPatchB;
+            break;  
+    }
+    return cachedPatch;
+}
+
 
 let previewSpectrumFullWidth =false;
 let previewSpectrumPolarity = true;

@@ -131,8 +131,8 @@ function startFFT(context, analyser, canvasId){
 
 let detailedMinDb =-120;
 let detailedMaxDb =0;
-let detailedMinF =960;
-let detailedMaxF =1040;
+let detailedMinF =20;
+let detailedMaxF =20000;
 //Buffer should be 64k samples long float32array
 function paintDetailedFFT(buffer, sampleRate, canvasId){
     if (buffer.length!=65536) {
@@ -162,8 +162,10 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     ctx.fillRect(0,0,w,h);        
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(50, 0, 0)";
+    ctx.fillStyle = "rgb(50, 0, 0)";
     ctx.beginPath();
 
+    let lastX = 0;
     let startBin = Math.round((detailedMinF * Math.pow(2,octaveStep))  * freqStep );
     for (let i = 0; i < fftW; i++) {
         let endOctave = (i+1) * octaveStep;
@@ -174,17 +176,13 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
                 max = Math.max(max,fft.magnitude[j]);
             }
             let y = fftB - ( (Math.log10(max) -dbOffset) * hScale);// (20*Math.log10(max) -detailedMinDb)/(detailedMaxDb-detailedMinDb) * fftH;
-            if (!y || y>fftB) y=fftB+2;
+            if (!y || y>fftB) y=fftB-1;
             const x = fftL+i;
-            ctx.moveTo(x, fftB);
-            ctx.lineTo(x, y);  
-
-            // if (i === 0) {
-            //     ctx.moveTo(fftL+i, y);
-            // } else {
-            //     ctx.lineTo(fftL+i, y);
-            // }
+            const midX = (lastX+x)/2;
+            ctx.moveTo(midX, fftB);
+            ctx.lineTo(midX, y);
             startBin = endBin;
+            lastX=x;
         }
     }
     ctx.stroke();
@@ -205,7 +203,19 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
                 amplitude = (detailedMaxDb - y * (detailedMaxDb-detailedMinDb)/fftH).toFixed(1) + 'dB';
             };
             return frequency + '<br>' + amplitude;
-        }
+        },
+        drag:(deltaX,deltaY) =>{//both -1=>1, scaled by dimensions of canvas
+            const currentRange = Math.log2(detailedMaxF/detailedMinF);
+            let midRange = currentRange/2;
+            let deltaRange = midRange; //how wide either side of mid range
+            midRange -=midRange*deltaX;
+
+            if (Math.abs(deltaY)>0.5)deltaY = Math.sign(deltaY)*0.5;
+            deltaRange *=Math.pow(2,deltaY);//up down to zoom in/out
+
+            detailedMinF = detailedMinF *Math.pow(2,midRange-deltaRange);
+            detailedMaxF = detailedMinF *Math.pow(2,midRange+deltaRange);
+            }
     }
 }
 

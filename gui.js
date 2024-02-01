@@ -80,12 +80,64 @@ previewButtons.forEach(function(button) {
             }
         break;
         case 'q'://detailed FFT
+            let action = null;
+            let checked = null;
             if (button.name=='qDo') {
-                button.addEventListener('click', function() {
-                    updateDetailedFFT();
-                });
-                button.isChecked =()=> false;
+                action = ()=>updateDetailedFFT();
+                checked =()=> false;
             }
+            else if (button.name[1]=='f') {
+                switch(button.name[2]){
+                    case '-':
+                        action = ()=>
+                        {
+                            canvasTooltips.staticFFTCanvas.drag(0,0.5);
+                            repaintDetailedFFT();
+                        }
+                        break;
+                    case '+':
+                        action = ()=>
+                            {   
+                                canvasTooltips.staticFFTCanvas.drag(0,-0.5);
+                                repaintDetailedFFT();
+                            }
+                        break;
+                    case 'R':
+                        action = ()=>
+                        {
+                            detailedMinF =20;
+                            detailedMaxF =20000;
+                            repaintDetailedFFT();
+                        };
+                        break;
+                }
+                checked =()=> false;
+            }
+            else if (button.name[1]=='d') {
+                let target =90;
+                switch(button.name[2]){
+                    case '6'://60db
+                        target=-60;
+                        break;
+                    case '9'://90db
+                        target=-90;
+                        break;
+                    case '1'://120db
+                        target=-120;
+                        break;
+                }
+                action = ()=>
+                    {
+                        detailedMinDb =target;
+                        repaintDetailedFFT();
+                        updatePreviewButtonState();
+                    }
+                checked =()=> detailedMinDb ==target;
+            }
+            button.addEventListener('click', function() {
+                action();
+            });
+            button.isChecked =checked;
         break;
         case 'F': //filter preview options
             let subF =parseInt(button.name[1]);
