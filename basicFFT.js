@@ -29,11 +29,12 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //FFT Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-let getFFT = (buffer)=>null;
-function initFFT()
+let getFFT1024 = initFFT(1024);
+let getFFT64k = initFFT(65536);
+function initFFT(N)
 {
     //FFT always of length 1024 - so bit reversals and sin lUT can be precalculated
-    const N = 1024;
+    //const N = 1024;
     const N_1 =N-1;
     const N_2 =N/2;
     const N_4 =N/4;
@@ -62,7 +63,7 @@ function initFFT()
         sinLUT[i] = Math.sin(w*i) * 0.5;
     }
 
-    getFFT = (buffer)=>{  
+    return (buffer)=>{  
         if (buffer.length!=N)  return null;
         
         const fr = buffer.slice();
@@ -122,5 +123,3 @@ function initFFT()
         }
     }
 }
-
-initFFT();

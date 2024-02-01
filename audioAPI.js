@@ -202,7 +202,7 @@ function updatePreview(patch){
             previewResult = getPreview(cachedPatchB, filterPreviewSubject);
             break;  
     }
-    previewResult.fft = getFFT(previewResult.distortedSamples);
+    previewResult.fft = getFFT1024(previewResult.distortedSamples);
 }
 
 let previewSpectrumFullWidth =false;
