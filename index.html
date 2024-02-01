@@ -36,6 +36,11 @@
         <option value="1">
     </datalist>
 
+    
+
+    <datalist id="ticksZero">
+        <option value="0">
+    </datalist>
     <datalist id="ticks0half1">
         <option value="0">
         <option value="0.5">
@@ -211,42 +216,42 @@
 
         <div class="slider-container">
             <label for="distortion"><b>Master Level:</b></label>
-            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0">
+            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="distortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Turns distortion on and off and controls the overall amount</div>
         </div>
         <div class="slider-container">
             <label for="oddDistortion">Odd harmonic:</label>
-            <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.1" value="0">
+            <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.1" value="0"  list="ticksPlus1ZeroMinus1">
             <output class="valueSpan" name="oddDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Third order Chebyshev polynomial distortion, generating third harmonic for a sine wave</div>
         </div>
         <div class="slider-container">
             <label for="evenDistortion">Even Harmonic:</label>
-            <input type="range" id="evenDistortion" name="evenDistortion" min="-1" max="1" step="0.1" value="0">
+            <input type="range" id="evenDistortion" name="evenDistortion" min="-1" max="1" step="0.1" value="0"  list="ticksPlus1ZeroMinus1">
             <output class="valueSpan" name="evenDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Second order Chebyshev polynomial distortion, generating second harmonic for a sine wave</div>
         </div>
         <div class="slider-container">
             <label for="tanhDistortion">Tanh Saturation:</label>
-            <input type="range" id="tanhDistortion" name="tanhDistortion" min="0" max="1" step="0.01" value="0">
+            <input type="range" id="tanhDistortion" name="tanhDistortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="tanhDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Tanh distortion, used in Saturation modelling</div>
         </div>
         <div class="slider-container">
             <label for="clipDistortion">Clipping:</label>
-            <input type="range" id="clipDistortion" name="clipDistortion" min="0" max="1" step="0.1" value="0">
+            <input type="range" id="clipDistortion" name="clipDistortion" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="clipDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Plain old full hard clipping</div>
         </div>
         <div class="slider-container">
             <label for="jitter">Jitter:</label>
-            <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.1" value="0">
+            <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="jitter">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Random temporal misplacement of sample in normal distribution up to +/-0.5*time-period (1/fs)</div>
@@ -258,7 +263,7 @@
         </div>
         <div class="slider-container">
             <label for="oversampleTimes">Over Factor:</label>
-            <input type="range" id="oversampleTimes" name="oversampleTimes" min="0" max="6" step="1" value="2">
+            <input type="range" id="oversampleTimes" name="oversampleTimes" min="0" max="6" step="1" value="2"  list="ticksZero">
             <output class="valueSpan" name="oversampleTimes">x4</output>
             <span class="help-icon">?</span>
             <div class="help-popup">How many times the sample rate is increased for the non-linear processes to be applied</div>
@@ -290,7 +295,7 @@
 
         <div class="slider-container">
             <label for="filterSlope">Slope</label>
-            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12">
+            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12" list="ticksZero">
             <output class="valueSpan" name="filterSlope">12db/octave</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Slope of filter after cut-off</div>
@@ -371,7 +376,7 @@
         <h4>Higher harmonic shift</h4>
         <div class="slider-container">
             <label for="second">Relative Phase delay:</label>
-            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0">
+            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="higherHarmonicRelativeShift">0</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
@@ -389,8 +394,17 @@
         <div>
             <canvas id="fftCanvas" width ="800" height="200"></canvas>
         </div>
+        
+        <div class ="previewButtons">
+            <div class="previewButtons previewL">
+            </div>
+            <div class="previewButtons previewC">
+            </div>
+            <div class="previewButtons">
+                <button name="apiFFT" class = "previewButton">On</button>
+            </div>
+        </div>
         <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
-        <button id="hideFFT">Hide FFT</button>
     </div>
 
 

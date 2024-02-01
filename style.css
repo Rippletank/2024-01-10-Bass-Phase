@@ -197,6 +197,13 @@ canvas {
     border-radius: 5px;
 }
 
+.tooltip{
+    padding : 10px;
+    background: white;
+    border : 1px solid black;
+    border-radius : 5px;
+}
+
 
 #centerContainer {
     display: flex;

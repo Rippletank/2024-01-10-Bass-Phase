@@ -285,3 +285,53 @@ function toFilterFreq(x){
     return (20 * Math.pow(2,x)).toFixed(0) + "Hz";
 }
 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Setup canvas tooltips
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+document.querySelectorAll('canvas').forEach(canvas => {
+    let def = canvasTooltips[canvas.id];
+    if (!def) return;
+    // Create a tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.style.position = 'absolute';
+    tooltip.style.display = 'none';
+    tooltip.style.pointerEvents = 'none';
+
+    // Add the tooltip to the page
+    document.body.appendChild(tooltip);
+
+    // Add a mousemove event listener to the canvas
+    canvas.addEventListener('mousemove', function(event){
+            update(event);
+    });
+    
+    let update =(event)=>{
+        // Calculate the frequency and amplitude based on the mouse position
+        const rect = canvas.getBoundingClientRect();
+        const x = (event.clientX - rect.left)/rect.width;
+        const y = (event.clientY - rect.top)/rect.height;
+
+        tooltip.style.display = def.visible()?'block': 'none';
+
+        // Update the tooltip content
+        tooltip.innerHTML = def.text(x,y);
+
+        // Position the tooltip at the mouse position
+        tooltip.style.left = event.pageX - 30 + 'px';
+        tooltip.style.top = event.pageY + 30 + 'px';
+    };
+
+    // Hide the tooltip when the mouse leaves the canvas
+    canvas.addEventListener('mouseleave', function() {
+        tooltip.style.display = 'none';
+    });
+
+    // Show the tooltip when the mouse enters the canvas
+    canvas.addEventListener('mousedown', function(event) {
+        update(event);
+    });
+
+});

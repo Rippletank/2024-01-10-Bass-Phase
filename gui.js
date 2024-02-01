@@ -47,6 +47,7 @@ document.getElementById('fftPlayN').addEventListener('click', function() {
     play(2);
 });
 
+
 function play(index){
     playAudio(index, cachedPatchA, cachedPatchB);   
 }
@@ -68,6 +69,15 @@ previewButtons.forEach(function(button) {
                 DoFullPreviewUpdate();
             });
             button.isChecked =()=> previewSubject == sub;
+        break;
+        case 'a'://apiFFT
+            if (button.name=='apiFFT') {
+                button.addEventListener('click', function() {
+                    useFFT = !useFFT;
+                    updatePreviewButtonState();
+                });
+                button.isChecked =()=> useFFT;
+            }
         break;
         case 'F': //filter preview options
             let subF =parseInt(button.name[1]);

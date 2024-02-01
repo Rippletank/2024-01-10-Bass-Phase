@@ -27,15 +27,26 @@ function fftClear(canvasId){
     let ctx = canvas.getContext("2d");
     const w = canvas.width;
     const h = canvas.height;
-    ctx.fillStyle = "rgb(240, 240, 240)";
-    ctx.fillRect(0, 0, w, h);  
+    ctx.fillStyle = "rgba(240, 240, 240, 0.05)";
+    ctx.fillRect(0,0,w,h);  
 }
+
 
 
 
 let fftFrameCall = null;
 const fftStartF = 20;
 const fftEndF = 20000;
+let fftT = 0;
+let fftL = 0;
+let ffrW = 0;
+let fftH = 0;
+let fftCanvasWidth = 0;
+let fftCanvasHeight = 0;
+let octaveStep = 0;
+let freqStep = 0;
+let maxdb =0;
+let mindb =0;
 function startFFT(context, analyser, canvasId){
     if (fftFrameCall) return;
     if (!useFFT) {
@@ -44,26 +55,37 @@ function startFFT(context, analyser, canvasId){
     }
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
-    const w = canvas.width;
-    const h = canvas.height;
     const bufferLength = analyser.fftSize;
-    const maxLogF = Math.log2(fftEndF-fftStartF);
-    const octaveStep = maxLogF / w;
-    const freqStep = bufferLength / context.sampleRate;
-    const hScale = h / 256;
     const fft = new Uint8Array(bufferLength);
-    const bins = new Uint8Array(w);
+    maxdb = analyser.maxDecibels;
+    mindb = analyser.minDecibels;
     const fftDraw =()=>{
-        fftFrameCall = requestAnimationFrame(fftDraw);
+        fftFrameCall =useFFT? requestAnimationFrame(fftDraw): null;
+        
+        const w = canvas.width;
+        const h = canvas.height;
+        fftCanvasWidth = w;
+        fftCanvasHeight = h;
+        fftT = h*0.05;
+        fftL = h*0.05;
+        ffrW = w-fftL*2;
+        fftH = h-fftT*2;
+        
+        const maxLogF = Math.log2(fftEndF-fftStartF);
+        octaveStep = maxLogF / ffrW;
+        freqStep = bufferLength / context.sampleRate;
+        const hScale = fftH / 256;
+
+        //Draw the FFT
         analyser.getByteFrequencyData(fft);  
-        ctx.fillStyle = "rgb(240, 240, 240)";
-        ctx.fillRect(0, 0, w, h);        
+        ctx.fillStyle = "rgba(240, 240, 240, 0.05)";
+        ctx.fillRect(0,0,w,h);        
         ctx.lineWidth = 0.5;
-        ctx.strokeStyle = "rgb(0, 0, 0)";
+        ctx.strokeStyle = "rgb(0, 50, 0)";
         ctx.beginPath();
 
         let startBin = 0;
-        for (let i = 0; i < w; i++) {
+        for (let i = 0; i < ffrW; i++) {
             let endOctave = (i+1) * octaveStep;
             let endBin = Math.round((fftStartF + Math.pow(2,endOctave))  * freqStep );
             if (endBin>startBin){
@@ -71,16 +93,18 @@ function startFFT(context, analyser, canvasId){
                 for (let j = startBin; j < endBin; j++) {
                     max = Math.max(max,fft[j]);
                 }
-                let y = h - max * hScale;
+                let y = fftT+ fftH - max * hScale;
                 if (i === 0) {
-                    ctx.moveTo(i, y);
+                    ctx.moveTo(fftL+i, y);
                 } else {
-                    ctx.lineTo(i, y);
+                    ctx.lineTo(fftL+i, y);
                 }
                 startBin = endBin;
             }
         }
         ctx.stroke();
+
+
     }
     fftDraw();
 }
@@ -172,12 +196,11 @@ function paintFilterEnvelope(filter, maxLength, canvasId){
     const h = canvas.height;
     const step = canvas.width / maxLength;
     const scale  = filterEnvIsLog ? h * invLogMaxF : h/maxF;
-    const doLog = filterEnvIsLog;//for jit optimisation
 
     for (let i = 0; i < maxLength; i++) {
         if (i >= bufferSize) break;
         const f = c / b[i];
-        let y =h- scale *(doLog ? Math.log2(f-20) : f);
+        let y =h- scale *(filterEnvIsLog ? Math.log2(f-20) : f);
         if (i === 0) {
             ctx.moveTo(x, y);
         } else {
@@ -187,6 +210,32 @@ function paintFilterEnvelope(filter, maxLength, canvasId){
     }
     ctx.stroke();
 }
+
+
+let canvasTooltips =
+    {
+        fftCanvas:{
+            visible: ()=>useFFT && fftCanvasWidth>0,
+            text:(x,y)=>{
+                if (!useFFT || fftCanvasWidth==0) return '';
+                x*=fftCanvasWidth;
+                y*=fftCanvasHeight;
+                x-=fftL;
+                y-=fftT;
+                let amplitude = ' - '
+                let frequency = ' - '
+                if (x>=0 && x<=ffrW )
+                {
+                    frequency = (fftStartF + Math.pow(2,x*octaveStep)).toFixed(1) + 'Hz';
+                };
+                if (y>=0 && y<=fftH) {
+                    amplitude = (maxdb - y * (maxdb-mindb)/fftH).toFixed(1) + 'dB';
+                };
+                return frequency + '<br>' + amplitude;
+            }
+        }
+    };
+
 
 
 function doPreviewPaint(
