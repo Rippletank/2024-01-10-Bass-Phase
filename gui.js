@@ -79,6 +79,14 @@ previewButtons.forEach(function(button) {
                 button.isChecked =()=> useFFT;
             }
         break;
+        case 'q'://detailed FFT
+            if (button.name=='qDo') {
+                button.addEventListener('click', function() {
+                    updateDetailedFFT();
+                });
+                button.isChecked =()=> false;
+            }
+        break;
         case 'F': //filter preview options
             let subF =parseInt(button.name[1]);
             button.addEventListener('click', function() {

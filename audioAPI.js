@@ -88,7 +88,18 @@ function stop() {
 }
 
 
+function updateDetailedFFT(){   
 
+    const bufferLength = 65536;
+    const inLength = previewResult.samples.length;//1024
+    const fftInput = new Float32Array(bufferLength);
+    for(let i=0;i<bufferLength;i++){
+        fftInput[i]=previewResult.samples[i %  inLength];
+    }
+    distort(fftInput, previewResult.patch, previewResult.virtualSampleRate, true);//true for cyclic because 65536/1024 is an integer
+
+    paintDetailedFFT(fftInput, previewResult.virtualSampleRate, 'staticFFTCanvas');
+}
 
    
 let changed = true;

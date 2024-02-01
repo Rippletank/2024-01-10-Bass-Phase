@@ -37,16 +37,6 @@ function fftClear(canvasId){
 let fftFrameCall = null;
 const fftStartF = 20;
 const fftEndF = 20000;
-let fftT = 0;
-let fftL = 0;
-let ffrW = 0;
-let fftH = 0;
-let fftCanvasWidth = 0;
-let fftCanvasHeight = 0;
-let octaveStep = 0;
-let freqStep = 0;
-let maxdb =0;
-let mindb =0;
 function startFFT(context, analyser, canvasId){
     if (fftFrameCall) return;
     if (!useFFT) {
@@ -57,8 +47,16 @@ function startFFT(context, analyser, canvasId){
     let ctx = canvas.getContext("2d");
     const bufferLength = analyser.fftSize;
     const fft = new Uint8Array(bufferLength);
-    maxdb = analyser.maxDecibels;
-    mindb = analyser.minDecibels;
+    let freqStep = bufferLength / context.sampleRate;
+    let maxdb = analyser.maxDecibels;
+    let mindb = analyser.minDecibels;
+    let fftT = 0;
+    let fftL = 0;
+    let ffrW = 0;
+    let fftH = 0;
+    let fftCanvasWidth = 0;
+    let fftCanvasHeight = 0;
+    let octaveStep = 0;
     const fftDraw =()=>{
         fftFrameCall =useFFT? requestAnimationFrame(fftDraw): null;
         
@@ -71,9 +69,8 @@ function startFFT(context, analyser, canvasId){
         ffrW = w-fftL*2;
         fftH = h-fftT*2;
         
-        const maxLogF = Math.log2(fftEndF-fftStartF);
+        const maxLogF = Math.log2(fftEndF/fftStartF);
         octaveStep = maxLogF / ffrW;
-        freqStep = bufferLength / context.sampleRate;
         const hScale = fftH / 256;
 
         //Draw the FFT
@@ -87,7 +84,7 @@ function startFFT(context, analyser, canvasId){
         let startBin = 0;
         for (let i = 0; i < ffrW; i++) {
             let endOctave = (i+1) * octaveStep;
-            let endBin = Math.round((fftStartF + Math.pow(2,endOctave))  * freqStep );
+            let endBin = Math.round((fftStartF * Math.pow(2,endOctave))  * freqStep );
             if (endBin>startBin){
                 let max = 0;
                 for (let j = startBin; j < endBin; j++) {
@@ -107,8 +104,110 @@ function startFFT(context, analyser, canvasId){
 
     }
     fftDraw();
+    canvasTooltips.fftCanvas = {
+        visible: ()=>useFFT && fftCanvasWidth>0,
+        text:(x,y)=>{//x,y are 0-1
+            if (!useFFT || fftCanvasWidth==0) return '';
+            x*=fftCanvasWidth;
+            y*=fftCanvasHeight;
+            x-=fftL;
+            y-=fftT;
+            let amplitude = ' - '
+            let frequency = ' - '
+            if (x>=0 && x<=ffrW )
+            {
+                frequency = (fftStartF * Math.pow(2,x*octaveStep)).toFixed(1) + 'Hz';
+            };
+            if (y>=0 && y<=fftH) {
+                amplitude = (maxdb - y * (maxdb-mindb)/fftH).toFixed(1) + 'dB';
+            };
+            return frequency + '<br>' + amplitude;
+        }
+    }
+
 }
 
+
+
+let detailedMinDb =-120;
+let detailedMaxDb =0;
+let detailedMinF =960;
+let detailedMaxF =1040;
+//Buffer should be 64k samples long float32array
+function paintDetailedFFT(buffer, sampleRate, canvasId){
+    if (buffer.length!=65536) {
+        console.log('paintDetailedFFT buffer length is not 65536');
+        return;
+    }
+    let canvas = document.getElementById(canvasId);
+    let ctx = canvas.getContext("2d");
+    const w = canvas.width; 
+    const h = canvas.height;
+    const fftL= h*0.01;
+    const fftT= h*0.01;
+    const fftW = w-fftL*2;
+    const fftH = h-fftT*2;
+    const fftB = fftT+fftH;
+    const bufferLength = 65536;//fixed at max
+    let fft = getFFT64k(buffer);
+
+    const maxLogF = Math.log2(detailedMaxF/detailedMinF);
+    const octaveStep = maxLogF / fftW;
+    const freqStep = bufferLength / sampleRate;
+    const dbScale = (detailedMaxDb-detailedMinDb) / 20;
+    const dbOffset = detailedMinDb / 20;
+    const hScale = fftH/dbScale;
+ 
+    ctx.fillStyle = "rgb(245, 245, 245)";
+    ctx.fillRect(0,0,w,h);        
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(50, 0, 0)";
+    ctx.beginPath();
+
+    let startBin = Math.round((detailedMinF * Math.pow(2,octaveStep))  * freqStep );
+    for (let i = 0; i < fftW; i++) {
+        let endOctave = (i+1) * octaveStep;
+        let endBin = Math.round((detailedMinF * Math.pow(2,endOctave))  * freqStep );
+        if (endBin>startBin){
+            let max = 0;
+            for (let j = startBin; j < endBin; j++) {
+                max = Math.max(max,fft.magnitude[j]);
+            }
+            let y = fftB - ( (Math.log10(max) -dbOffset) * hScale);// (20*Math.log10(max) -detailedMinDb)/(detailedMaxDb-detailedMinDb) * fftH;
+            if (!y || y>fftB) y=fftB+2;
+            const x = fftL+i;
+            ctx.moveTo(x, fftB);
+            ctx.lineTo(x, y);  
+
+            // if (i === 0) {
+            //     ctx.moveTo(fftL+i, y);
+            // } else {
+            //     ctx.lineTo(fftL+i, y);
+            // }
+            startBin = endBin;
+        }
+    }
+    ctx.stroke();
+    canvasTooltips.staticFFTCanvas = {//same as canvas.id
+        visible: ()=>true,
+        text:(x,y)=>{//x,y are 0-1
+            x*=w;
+            y*=h;
+            x-=fftL;
+            y-=fftT;
+            let amplitude = ' - '
+            let frequency = ' - '
+            if (x>=0 && x<=fftW )
+            {
+                frequency = (detailedMinF * Math.pow(2,x*octaveStep)).toFixed(1) + 'Hz';
+            };
+            if (y>=0 && y<=fftH) {
+                amplitude = (detailedMaxDb - y * (detailedMaxDb-detailedMinDb)/fftH).toFixed(1) + 'dB';
+            };
+            return frequency + '<br>' + amplitude;
+        }
+    }
+}
 
 
 
@@ -212,26 +311,19 @@ function paintFilterEnvelope(filter, maxLength, canvasId){
 }
 
 
-let canvasTooltips =
+let canvasTooltips = //must have members defined here, but the values can be updated later 
     {
-        fftCanvas:{//same as canvas.id
-            visible: ()=>useFFT && fftCanvasWidth>0,
+        fftCanvas:{//same as ID of canvas
+            visible:()=>false,
             text:(x,y)=>{//x,y are 0-1
-                if (!useFFT || fftCanvasWidth==0) return '';
-                x*=fftCanvasWidth;
-                y*=fftCanvasHeight;
-                x-=fftL;
-                y-=fftT;
-                let amplitude = ' - '
-                let frequency = ' - '
-                if (x>=0 && x<=ffrW )
-                {
-                    frequency = (fftStartF + Math.pow(2,x*octaveStep)).toFixed(1) + 'Hz';
-                };
-                if (y>=0 && y<=fftH) {
-                    amplitude = (maxdb - y * (maxdb-mindb)/fftH).toFixed(1) + 'dB';
-                };
-                return frequency + '<br>' + amplitude;
+                return '';
+            }
+        },
+        staticFFTCanvas://same as id of canvas
+        {
+            visible: ()=>false,
+            text:()=>{
+                return 'Not calculated yet';
             }
         }
     };

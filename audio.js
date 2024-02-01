@@ -146,7 +146,8 @@ function getPreview(referencePatch, filterPreviewSubject){
         min:Math.min(...b),
         filter:filter,
         patch:patch,
-        distortedSamples:distorted
+        distortedSamples:distorted,
+        virtualSampleRate:sampleRate
     };
 }
 

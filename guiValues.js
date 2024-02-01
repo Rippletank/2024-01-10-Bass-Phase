@@ -291,8 +291,7 @@ function toFilterFreq(x){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 document.querySelectorAll('canvas').forEach(canvas => {
-    let def = canvasTooltips[canvas.id];
-    if (!def) return;
+    if (!canvasTooltips[canvas.id]) return;//confirm exist, but this might change
     // Create a tooltip element
     const tooltip = document.createElement('div');
     tooltip.className = 'tooltip';
@@ -313,6 +312,8 @@ document.querySelectorAll('canvas').forEach(canvas => {
         const rect = canvas.getBoundingClientRect();
         const x = (event.clientX - rect.left)/rect.width;
         const y = (event.clientY - rect.top)/rect.height;
+
+        let def = canvasTooltips[canvas.id];
 
         tooltip.style.display = def.visible()?'block': 'none';
 
