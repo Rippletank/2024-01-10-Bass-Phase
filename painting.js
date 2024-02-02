@@ -133,6 +133,7 @@ let detailedMinDb =-120;
 let detailedMaxDb =0;
 let detailedMinF =20;
 let detailedMaxF =20000;
+const scaleGap =30;
 //Buffer should be 64k samples long float32array
 function paintDetailedFFT(buffer, sampleRate, canvasId){
     if (buffer.length!=65536) {
@@ -146,7 +147,7 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     const fftL= h*0.01;
     const fftT= h*0.01;
     const fftW = w-fftL*2;
-    const fftH = h-fftT*2;
+    const fftH = h-fftT-scaleGap;
     const fftB = fftT+fftH;
     const bufferLength = 65536;//fixed at max
     let fft = getFFT64k(buffer);
@@ -186,6 +187,10 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
         }
     }
     ctx.stroke();
+    let positions = calculateLogScalePositions(detailedMinF, detailedMaxF);
+    drawLogScale(ctx, positions, fftL, fftW, fftT, fftB);
+
+
     canvasTooltips.staticFFTCanvas = {//same as canvas.id
         visible: ()=>true,
         text:(x,y)=>{//x,y are 0-1
@@ -204,21 +209,111 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
             };
             return frequency + '<br>' + amplitude;
         },
-        drag:(deltaX,deltaY) =>{//both -1=>1, scaled by dimensions of canvas
+        drag:(x, deltaX,deltaY) =>{//all -1=>1, scaled by dimensions of canvas
             const currentRange = Math.log2(detailedMaxF/detailedMinF);
-            let midRange = currentRange/2;
-            let deltaRange = midRange; //how wide either side of mid range
-            midRange -=midRange*deltaX;
+            let midRange = currentRange * x;//value at pointer
+            let deltaRange = currentRange; 
+            midRange -=deltaX;
 
-            if (Math.abs(deltaY)>0.5)deltaY = Math.sign(deltaY)*0.5;
+            if (Math.abs(deltaY)>0.9)deltaY = Math.sign(deltaY)*0.9;
             deltaRange *=Math.pow(2,deltaY);//up down to zoom in/out
 
-            detailedMinF = detailedMinF *Math.pow(2,midRange-deltaRange);
-            detailedMaxF = detailedMinF *Math.pow(2,midRange+deltaRange);
-            }
+            detailedMinF = detailedMinF *Math.pow(2,midRange-deltaRange * x);
+            detailedMaxF = detailedMinF *Math.pow(2,midRange+deltaRange * (1-x));
+            },
+        doubleTap:(x,y)=>{
+            canvasTooltips.staticFFTCanvas.drag(x,0,-1);
+        }
+    
     }
 }
 
+
+const minimumSpacing = 0.025;//full scale is 0-1
+function calculateLogScalePositions(minF, maxF) {
+    let positions = [];
+    const log2Max = Math.log2(maxF/minF);
+    const startF = floorPowerOfTen(minF);
+    const numberOfFirstSteps = Math.ceil(Math.log10(maxF/startF));
+    const fullRangeStep = largestPowerOfTenIncrement(minF, maxF);
+
+    //2 Steps - octaves - exponential increase in frequency
+    const maxLevels =4;
+    for (let i = 0; i <= numberOfFirstSteps; i++) {
+        const flow = startF * Math.pow(10, i);
+        const fhigh = startF * Math.pow(10, i + 1);
+        calculatePositions(positions, flow, fhigh, minF, maxF, log2Max, maxLevels);
+    }
+    return positions;
+}
+function calculatePositions(positions, flow, fhigh, minF, maxF, log2Max,maxLevels) {
+    if (maxLevels<=0) 
+    {
+        let x = relativePosOfF(flow, minF, log2Max);
+        positions.push({f: flow, x: x});
+        return;
+    }
+        if (flow<minF && fhigh<minF) return;
+        if(fhigh>maxF && flow>maxF) return;
+        let largestStep =largestPowerOfTenIncrement(flow,fhigh);
+        
+        let step = Math.pow(10,largestStep);
+        for(let j=0;j<10;j++){
+            let f1 = flow + j * step;
+            let f2 = f1 + step;
+            if (f1>maxF) break;
+            let x = relativePosOfF(f1, minF, log2Max);
+            let x1 = relativePosOfF(f2, minF, log2Max);
+            if (x1-x<minimumSpacing) 
+            {
+                if (j==0)
+                {positions.push({f: f1, x: x});}
+                continue;
+            };
+            calculatePositions(positions, f1, f2, minF, maxF, log2Max,maxLevels-1)
+        }
+}
+
+
+function relativePosOfF(f, minF, log2Max){ 
+    return Math.log2(f/minF)/log2Max;
+}
+
+function largestPowerOfTenIncrement(fLow, fHigh){
+    //largest power of 10 that is less than the difference
+    //To use for increment, eg 1000-500 = 500, so smallest is 100, so returns 2
+    //Or 1600-1400 = 200, smallest is 100, so returns 2
+    return Math.ceil(Math.log10(fHigh-fLow))-1;
+}
+
+function ceilPowerOfTen(f){
+    let p = Math.log10(f);
+    let n = Math.ceil(p);
+    return Math.pow(10,n);
+}
+function floorPowerOfTen(f){
+    let p = Math.log10(f);
+    let n = Math.floor(p);
+    return Math.pow(10,n);
+}
+
+// Draw the scale lines and labels
+function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
+    ctx.strokeStyle = "rgb(200, 200, 200)";
+    ctx.fillStyle = "rgb(50, 0, 0)";
+    ctx.font = (scaleGap*0.7).toFixed(0)+"px Arial";
+    ctx.textAlign = "center";
+    ctx.setLineDash([5, 15]);
+    for (let pos of positions) {
+        ctx.beginPath();
+        const x = pos.x*fftW+fftL;
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, fftB);
+        ctx.stroke();
+        ctx.fillText(pos.f, x, fftB + scaleGap*0.9);
+    }
+    ctx.setLineDash([]);
+}
 
 
 
@@ -334,7 +429,9 @@ let canvasTooltips = //must have members defined here, but the values can be upd
             visible: ()=>false,
             text:()=>{
                 return 'Not calculated yet';
-            }
+            },
+            drag:()=>{},
+            doubleTap:()=>{}//register double tap is needed, add method afterwards
         }
     };
 

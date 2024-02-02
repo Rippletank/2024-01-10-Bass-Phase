@@ -291,7 +291,8 @@ function toFilterFreq(x){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 document.querySelectorAll('canvas').forEach(canvas => {
-    if (!canvasTooltips[canvas.id]) return;//confirm exist, but this might change
+    let tooltipActions = canvasTooltips[canvas.id];
+    if (!tooltipActions) return;//confirm exist, but this might change
     // Create a tooltip element
     const tooltip = document.createElement('div');
     tooltip.className = 'tooltip';
@@ -313,7 +314,7 @@ document.querySelectorAll('canvas').forEach(canvas => {
             let dy = event.clientY - startY;
             startX = event.clientX;
             startY = event.clientY;
-            def.drag(dx/canvas.width, dy/canvas.height);
+            def.drag(event.clientX/canvas.width, dx/canvas.width, dy/canvas.height);
             repaintDetailedFFT();
         }
             update(event);
@@ -338,6 +339,13 @@ document.querySelectorAll('canvas').forEach(canvas => {
 
     };
 
+    if (tooltipActions.doubleTap){
+        canvas.addEventListener('dblclick', function(event) {
+            let def = canvasTooltips[canvas.id];
+            def.doubleTap(event.clientX/canvas.width, event.clientY/canvas.height);
+            repaintDetailedFFT();
+        });
+    }
     // Hide the tooltip when the mouse leaves the canvas
     canvas.addEventListener('mouseleave', function() {
         isDragging = false;

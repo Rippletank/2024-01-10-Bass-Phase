@@ -91,14 +91,14 @@ previewButtons.forEach(function(button) {
                     case '-':
                         action = ()=>
                         {
-                            canvasTooltips.staticFFTCanvas.drag(0,0.5);
+                            canvasTooltips.staticFFTCanvas.drag(0.5, 0,0.5);
                             repaintDetailedFFT();
                         }
                         break;
                     case '+':
                         action = ()=>
                             {   
-                                canvasTooltips.staticFFTCanvas.drag(0,-0.5);
+                                canvasTooltips.staticFFTCanvas.drag(0.5, 0,-0.5);
                                 repaintDetailedFFT();
                             }
                         break;
