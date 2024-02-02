@@ -57,6 +57,14 @@ let previewSubject =0;
 let previewButtons = document.querySelectorAll('.previewButton');
 previewButtons.forEach(function(button) {
     switch(button.name[0]){    
+        case 's'://Stereo 
+            button.addEventListener('click', function() {
+                isStereo = !isStereo;
+                updatePreviewButtonState();
+                setUpStereo();
+            });
+            button.isChecked =()=> isStereo;
+            break;
         case 'P': //patch to use for preview
             let sub =0;
             switch(button.name[1]){
@@ -451,6 +459,13 @@ function importCombinedPatchFromJSON(json){
     loadPatches(patchC, patchA,patchB,patch.testSubjects ?? defaultTestSubjectList);
 }
 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Functions for handling switching from mono to stereo
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+function setUpStereo(){
+
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setup which variables are going to be changeable individually for sounds

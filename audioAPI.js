@@ -103,7 +103,7 @@ function repaintDetailedFFT(){
 }
 
 
-   
+let isStereo = false;
 let changed = true;
 // Main update method - orchestrates the creation of the buffers and their display
 //Called at startup and whenever a parameter changes
