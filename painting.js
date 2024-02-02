@@ -368,28 +368,30 @@ function paintBuffer(buffer, maxLength, canvasId){
 
 //Envelope is an float array of values between 0 and 1 for each sample
 function paintEnvelope(envelop, maxLength, canvasId){
-    let b = envelop;
-    let bufferSize = b.length;
+    const b = envelop;
+    const bufferSize = b.length;
 
-    var canvas = document.getElementById(canvasId);
-    var ctx = canvas.getContext("2d");
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     ctx.beginPath();
     ctx.strokeStyle = "rgb(0, 128, 0)";
-    let x = 0;
     const h = canvas.height/2;
     const step = canvas.width / maxLength;
 
-    for (let i = 0; i < maxLength; i++) {
-        if (i >= bufferSize) break;
-        let y=h-b[i] * h;
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);//Minus to ensure positive is up
+    for(let pol =-1; pol<=1; pol+=2){
+        let x = 0;
+        for (let i = 0; i < maxLength; i++) {
+            if (i >= bufferSize) break;
+            let y=h-pol*b[i] * h;
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);//Minus to ensure positive is up
+            }
+            x += step;
         }
-        x += step;
     }
     ctx.stroke();
 }

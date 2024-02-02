@@ -47,6 +47,61 @@
         <option value="1">
     </datalist>
 
+    <!--**********************************************************************-->
+    <!--*****************  Start ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
+
+    <div class="bordered"  id="SoundASetup">
+        <h3>Sound A</h3>
+        <div>
+            <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <button id="playSoundA">Play A</button>
+    </div>
+
+
+
+    <div class="bordered" id="SoundBSetup">
+        <h3>Sound B</h3>
+        <div>
+            <canvas id="waveformB"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <button id="playSoundB">Play B</button>
+    </div>
+
+    <br>
+
+
+    <div id="centerContainer">
+        <div id="abxTestContainer">
+            <h3>ABX test</h3>
+            <ol id="results"></ol>
+            <button id="abxTest" class="testCenter">Test</button>
+            <div id="abxButtons"  style="display: none;">
+                <button id="buttonA">X is A</button>
+                <button id="play">Play X</button>
+                <button id="buttonB">X is B</button>
+            </div>
+            <p id="stats" class="testCenter"></p>
+            <br>
+            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
+        </div>
+    </div>
+    <div class="bordered">
+        <h3>Background info - see <a href="#Notes1">notes</a></h3>
+        <div class ="previewButtons">
+            <div class="previewButtons">
+                <button name="wShowF" class = "previewButton">Filter overlays</button>
+                <button name="wShowEG" class = "previewButton">Envelope overlays</button>
+            </div>
+        </div>
+    </div>
+
+    <!--**********************************************************************-->
+    <!--*******************  End ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
+    
+    
 
     <div class="bordered" id="CommonSettings">
         <h3>Sound Settings</h3>
@@ -448,61 +503,6 @@
     </div>
 
 
-    <!--**********************************************************************-->
-    <!--*****************  Start ABX Setup and Test  *************************-->
-    <!--**********************************************************************-->
-
-    <div class="bordered"  id="SoundASetup">
-        <h3>Sound A</h3>
-        <div>
-            <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <button id="playSoundA">Play A</button>
-    </div>
-
-
-
-    <div class="bordered" id="SoundBSetup">
-        <h3>Sound B</h3>
-        <div>
-            <canvas id="waveformB"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <button id="playSoundB">Play B</button>
-    </div>
-
-    <br>
-
-
-    <div id="centerContainer">
-        <div id="abxTestContainer">
-            <h3>ABX test</h3>
-            <ol id="results"></ol>
-            <button id="abxTest" class="testCenter">Test</button>
-            <div id="abxButtons"  style="display: none;">
-                <button id="buttonA">X is A</button>
-                <button id="play">Play X</button>
-                <button id="buttonB">X is B</button>
-            </div>
-            <p id="stats" class="testCenter"></p>
-            <br>
-            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
-        </div>
-    </div>
-    <div class="bordered">
-        <h3>Background info - see <a href="#Notes1">notes</a></h3>
-        <div class ="previewButtons">
-            <div class="previewButtons">
-                <button name="wShowF" class = "previewButton">Filter overlays</button>
-                <button name="wShowEG" class = "previewButton">Envelope overlays</button>
-            </div>
-        </div>
-    </div>
-
-    <!--**********************************************************************-->
-    <!--*******************  End ABX Setup and Test  *************************-->
-    <!--**********************************************************************-->
-    
-    
 
     <div id="Notes1" class="bordered">
         <h3>Notes: Background</h3>
