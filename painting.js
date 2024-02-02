@@ -45,6 +45,8 @@ function startFFT(context, analyser, canvasId){
     }
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     const bufferLength = analyser.fftSize;
     const fft = new Uint8Array(bufferLength);
     let freqStep = bufferLength / context.sampleRate;
@@ -77,7 +79,7 @@ function startFFT(context, analyser, canvasId){
         analyser.getByteFrequencyData(fft);  
         ctx.fillStyle = "rgba(240, 240, 240, 0.05)";
         ctx.fillRect(0,0,w,h);        
-        ctx.lineWidth = 0.5;
+        ctx.lineWidth = 1;
         ctx.strokeStyle = "rgb(0, 50, 0)";
         ctx.beginPath();
 
@@ -142,6 +144,8 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     }
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     const w = canvas.width; 
     const h = canvas.height;
     const fftL= h*0.01;
@@ -218,8 +222,12 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
             if (Math.abs(deltaY)>0.9)deltaY = Math.sign(deltaY)*0.9;
             deltaRange *=Math.pow(2,deltaY);//up down to zoom in/out
 
-            detailedMinF = detailedMinF *Math.pow(2,midRange-deltaRange * x);
-            detailedMaxF = detailedMinF *Math.pow(2,midRange+deltaRange * (1-x));
+            var newMinF = detailedMinF *Math.pow(2,midRange-deltaRange * x);
+            var newMaxF = detailedMinF *Math.pow(2,deltaRange );
+            newMinF = Math.min(Math.max(20,newMinF),18000);
+            newMaxF = Math.min(Math.max(50,newMaxF),20000);
+            detailedMinF = newMinF
+            detailedMaxF = Math.max(newMinF+0.1, newMaxF)
             },
         doubleTap:(x,y)=>{
             canvasTooltips.staticFFTCanvas.drag(x,0,-1);
@@ -242,11 +250,11 @@ function calculateLogScalePositions(minF, maxF) {
     for (let i = 0; i <= numberOfFirstSteps; i++) {
         const flow = startF * Math.pow(10, i);
         const fhigh = startF * Math.pow(10, i + 1);
-        calculatePositions(positions, flow, fhigh, minF, maxF, log2Max, maxLevels);
+        iteratedCalculatePositions(positions, flow, fhigh, minF, maxF, log2Max, maxLevels);
     }
     return positions;
 }
-function calculatePositions(positions, flow, fhigh, minF, maxF, log2Max,maxLevels) {
+function iteratedCalculatePositions(positions, flow, fhigh, minF, maxF, log2Max,maxLevels) {
     if (maxLevels<=0) 
     {
         let x = relativePosOfF(flow, minF, log2Max);
@@ -270,7 +278,7 @@ function calculatePositions(positions, flow, fhigh, minF, maxF, log2Max,maxLevel
                 {positions.push({f: f1, x: x});}
                 continue;
             };
-            calculatePositions(positions, f1, f2, minF, maxF, log2Max,maxLevels-1)
+            iteratedCalculatePositions(positions, f1, f2, minF, maxF, log2Max,maxLevels-1)
         }
 }
 
@@ -301,7 +309,7 @@ function floorPowerOfTen(f){
 function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
     ctx.strokeStyle = "rgb(200, 200, 200)";
     ctx.fillStyle = "rgb(50, 0, 0)";
-    ctx.font = (scaleGap*0.7).toFixed(0)+"px Arial";
+    ctx.font = (scaleGap*0.6).toFixed(0)+"px Arial";
     ctx.textAlign = "center";
     ctx.setLineDash([5, 15]);
     for (let pos of positions) {
@@ -323,6 +331,8 @@ function paintBuffer(buffer, maxLength, canvasId){
 
     var canvas = document.getElementById(canvasId);
     var ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     const h = canvas.height/2;
     const step = canvas.width / maxLength;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -363,6 +373,8 @@ function paintEnvelope(envelop, maxLength, canvasId){
 
     var canvas = document.getElementById(canvasId);
     var ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.beginPath();
     ctx.strokeStyle = "rgb(0, 128, 0)";
     let x = 0;
@@ -394,6 +406,8 @@ function paintFilterEnvelope(filter, maxLength, canvasId){
 
     var canvas = document.getElementById(canvasId);
     var ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.beginPath();
     ctx.strokeStyle = "rgb(0, 0, 128)";
     let x = 0;
@@ -452,6 +466,8 @@ function doPreviewPaint(
 ){
     let canvas = document.getElementById(id);
     let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     let w=canvas.width;
     let h=canvas.height;
     ctx.clearRect(0, 0, w, h);
@@ -464,7 +480,7 @@ function doPreviewPaint(
     ctx.beginPath();    
     let waveScale = 1/Math.max(Math.abs(min),Math.abs(max));
     //waveForm axis lines
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(150, 150, 150)";
     ctx.moveTo(wpCorner, wpCorner + 0.5 * wpSize);
     ctx.lineTo(wpCorner + wpSize, wpCorner + 0.5 * wpSize); 

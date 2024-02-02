@@ -237,15 +237,9 @@ function updatePreviewButtonState(){
 //Canvas resize handler
 window.addEventListener('resize', updateCanvas);
 function updateCanvas() {
-    let canvasA = document.getElementById('waveformA');
-    let canvasB = document.getElementById('waveformB');
-    let canvasN = document.getElementById('waveformNull');
-    let canvasP = document.getElementById('wavePreview');
-
-    canvasA.width = canvasA.offsetWidth;
-    canvasB.width = canvasB.offsetWidth;
-    canvasN.width = canvasN.offsetWidth;
-    canvasP.width = canvasN.offsetWidth;
+    document.querySelectorAll('canvas').forEach((canvas)=>{
+        canvas.width = canvas.offsetWidth;
+    });
     updateDisplay();
 }
 

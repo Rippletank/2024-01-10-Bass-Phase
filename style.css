@@ -16,6 +16,7 @@ canvas {
     width: 95%;
     height: 200px;
     margin: 0 auto;
+    aspect-ratio: 2.5;
 }
 
 .slider-container {

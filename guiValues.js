@@ -307,14 +307,15 @@ document.querySelectorAll('canvas').forEach(canvas => {
     let startX = 0;
     let startY = 0;
     // Add a mousemove event listener to the canvas
-    canvas.addEventListener('mousemove', function(event){
+    canvas.addEventListener('pointermove', function(event){
         if (isDragging){
             let def = canvasTooltips[canvas.id];
             let dx = event.clientX - startX;
             let dy = event.clientY - startY;
             startX = event.clientX;
             startY = event.clientY;
-            def.drag(event.clientX/canvas.width, dx/canvas.width, dy/canvas.height);
+            def.drag(event.clientX/canvas.clientWidth, dx/canvas.clientWidth, dy/canvas.clientHeight);
+            StopEventPropagation(event);
             repaintDetailedFFT();
         }
             update(event);
@@ -342,32 +343,50 @@ document.querySelectorAll('canvas').forEach(canvas => {
     if (tooltipActions.doubleTap){
         canvas.addEventListener('dblclick', function(event) {
             let def = canvasTooltips[canvas.id];
-            def.doubleTap(event.clientX/canvas.width, event.clientY/canvas.height);
+            def.doubleTap(event.clientX/canvas.clientWidth, event.clientY/canvas.clientHeight);
+            repaintDetailedFFT();
+        });
+        canvas.addEventListener('wheel', function(event) {
+            let def = canvasTooltips[canvas.id];
+            def.drag(event.clientX/canvas.clientWidth, event.deltaX/canvas.clientWidth, event.deltaY/canvas.clientHeight);
+            StopEventPropagation(event);
             repaintDetailedFFT();
         });
     }
     // Hide the tooltip when the mouse leaves the canvas
-    canvas.addEventListener('mouseleave', function() {
-        isDragging = false;
+    canvas.addEventListener('pointerleave', function() {
+        //isDragging = false;
         tooltip.style.display = 'none';
     });
 
     // Show the tooltip when the mouse enters the canvas
-    canvas.addEventListener('mousedown', function(event) {
+    canvas.addEventListener('pointerdown', function(event) {
         update(event);
         let def = canvasTooltips[canvas.id];
         if (def.drag){
             isDragging = true;
             startX = event.clientX;
             startY = event.clientY;
-            //canvas.setPointerCapture(event.pointerId);
+            canvas.setPointerCapture(event.pointerId);
+            StopEventPropagation(event);
         }
     });
     // Show the tooltip when the mouse enters the canvas
-    canvas.addEventListener('mouseup', function(event) {
-        isDragging = false;
-        //canvas.releasePointerCapture(event.pointerId); // Release the pointer
+    canvas.addEventListener('pointerup', function(event) {
+        if (isDragging){        
+            isDragging = false;
+            canvas.releasePointerCapture(event.pointerId); // Release the pointer
+        }
     update(event);
     });
 
 });
+
+//https://stackoverflow.com/questions/5429827/how-can-i-prevent-text-element-selection-with-cursor-drag
+function StopEventPropagation(e){
+    if(e.stopPropagation) e.stopPropagation();
+    if(e.preventDefault) e.preventDefault();
+    e.cancelBubble=true;
+    e.returnValue=false;
+    return false;
+}
