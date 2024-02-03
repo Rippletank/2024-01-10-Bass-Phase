@@ -53,7 +53,6 @@ function play(index){
 }
 
 //load settings for all of the little green buttons
-let previewSubject =0;
 let previewButtons = document.querySelectorAll('.previewButton');
 previewButtons.forEach(function(button) {
     switch(button.name[0]){    
@@ -67,16 +66,20 @@ previewButtons.forEach(function(button) {
             break;
         case 'P': //patch to use for preview
             let sub =0;
-            switch(button.name[1]){
-                case 'D': sub=0;break;
-                case 'A': sub=1;break;
-                case 'B': sub=2;break;
+            let chan=0;
+            switch(button.name){
+                case 'PD': sub=0;chan=0;break;
+                case 'PA': sub=1;chan=0;break;
+                case 'PAR': sub=1;chan=1;break;
+                case 'PB': sub=2;chan=0;break;
+                case 'PBR': sub=2;chan=1;break;
             };
             button.addEventListener('click', function() {
                 previewSubject = sub;
+                previewSubjectChannel = chan;
                 DoFullPreviewUpdate();
             });
-            button.isChecked =()=> previewSubject == sub;
+            button.isChecked =()=> previewSubject == sub && (!isStereo || previewSubjectChannel==chan);
         break;
         case 'a'://apiFFT
             if (button.name=='apiFFT') {
@@ -713,6 +716,7 @@ console.log("TestSubjectList: " + getTestSubjectList());
 //Functions for handling switching from mono to stereo
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let hideOnMonos = document.querySelectorAll('.hideForMono');
+let hideForStereo = document.querySelectorAll('.hideForStereo');
 hideOnMonos.forEach((element)=>element.style.display = isStereo? 'block':'none');
 
 function setUpStereo(syncValuesFromLeftToRight){
@@ -720,6 +724,7 @@ function setUpStereo(syncValuesFromLeftToRight){
         //Just led the testSubject list again
         loadTestSubjectList(getTestSubjectList())
         hideOnMonos.forEach((element)=>element.style.display = 'block');
+        hideForStereo.forEach((element)=>element.style.display = 'none');
         if (syncValuesFromLeftToRight) 
         {
             updateAllLabelsAndCachePatches(true)
@@ -732,6 +737,7 @@ function setUpStereo(syncValuesFromLeftToRight){
                 .forEach(copy=>copy.parentNode.removeChild(copy));
         });
         
+        hideForStereo.forEach((element)=>element.style.display = 'block');
         hideOnMonos.forEach((element)=>element.style.display = 'none');
     }
     changed=true;

@@ -209,6 +209,8 @@ function updateDisplay(){
 
 let previewResult = null;
 let filterPreviewSubject =0;
+let previewSubject =0;
+let previewSubjectChannel =0;
 function updatePreview(){
     previewResult = getPreview(getPreviewSubjectCachedPatch(), filterPreviewSubject);
     previewResult.fft = getFFT1024(previewResult.distortedSamples);
@@ -221,10 +223,10 @@ function getPreviewSubjectCachedPatch() {
             cachedPatch = cachedPatchCmn;
             break;
         case 1: 
-            cachedPatch = cachedPatchA;
+            cachedPatch =!isStereo || previewSubjectChannel==0? cachedPatchA : cachedPatchAR;
             break;  
         case 2: 
-            cachedPatch = cachedPatchB;
+            cachedPatch =  !isStereo || previewSubjectChannel==0? cachedPatchB : cachedPatchBR;
             break;  
     }
     return cachedPatch;
