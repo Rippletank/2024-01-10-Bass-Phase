@@ -577,7 +577,7 @@ function doPreviewPaint(
         ctx.lineWidth = 1;
         ctx.strokeStyle = "rgb(0, 140, 0)";
         const invW0 = filter.invW0[filter.invW0.length*0.5]
-        const rootW = patch.frequency * 2 * Math.PI  / filter.sampleRate;
+        const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / filter.sampleRate;
         for (let i = 1; i < count; i++) {
             let x =spL + i * spW / count;
             let w = i * rootW;

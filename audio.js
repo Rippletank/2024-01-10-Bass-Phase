@@ -43,7 +43,7 @@ function getAudioBuffer(
             
         if (envMode==1 ){
             //Mode1 - delay envelopes by the same as the phase delay
-            let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/patch.frequency ;
+            let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine) ;
             delay0 += patch.rootPhaseDelay<0 ? 0 : delay;
             delayN += patch.rootPhaseDelay<0 ? delay : 0;
         }
@@ -106,7 +106,7 @@ function preMaxCalcStartDelay(patches, sampleRate){
         let patch = patches[i];
         //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
         if(!patch || patch.rootPhaseDelay>=0) continue;
-        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/patch.frequency ;
+        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine);
         if (delay>maxDelay) maxDelay = delay;
     }
     return maxDelay;
@@ -126,7 +126,7 @@ function getPreview(referencePatch, filterPreviewSubject){
     };
     let bufferSize = 1024; //Number of samples
     return _buildPreview(patch, filterPreviewSubject,
-        bufferSize * patch.frequency, //Ensure is one complete per cycle
+        bufferSize * (patch.frequency+patch.frequencyFine), //Ensure is one complete per cycle
         bufferSize);
 }
 
@@ -205,8 +205,9 @@ function getBufferForLongFFT(samplerate, referencePatch){
         ...referencePatch
     };
     const bufferSize = 65536;
-    let numberOfWavesInBuffer = patch.frequency * bufferSize/samplerate;
-    const adjustedSampleRate = patch.frequency * bufferSize / Math.round(numberOfWavesInBuffer);//Tweak samplerate to give whole number of cycles in buffer - better FFT
+    let f = (patch.frequency+patch.frequencyFine);
+    let numberOfWavesInBuffer = f * bufferSize/samplerate;
+    const adjustedSampleRate = f * bufferSize / Math.round(numberOfWavesInBuffer);//Tweak samplerate to give whole number of cycles in buffer - better FFT
 
     return _buildPreview(patch, filterPreviewSubject,
         adjustedSampleRate, //Ensure is one complete per cycle
@@ -347,7 +348,7 @@ function buildFilter(
 //Generate the harmonic series
 function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
     const nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
-    const rootW = patch.frequency * 2 * Math.PI  / sampleRate;
+    const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / sampleRate;
     const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
     bufferSize=b.length;

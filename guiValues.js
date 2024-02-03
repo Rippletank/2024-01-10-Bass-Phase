@@ -103,8 +103,11 @@ const disableGroups =[
 function setValueFromPatch(ve, patch){
     switch (ve.name) {
         case "frequency": 
-            ve.textContent = patch.frequency.toFixed(0) + "Hz";
+            ve.textContent = (patch.frequency+patch.frequencyFine) .toFixed(2) + "Hz";
             break;
+            case "frequencyFine": 
+                ve.textContent = (patch.frequencyFine) .toFixed(2) + "Hz";
+                break;
         case "higherHarmonicRelativeShift": 
             ve.textContent = toPercent(patch.higherHarmonicRelativeShift);
             break;
@@ -275,7 +278,7 @@ function getPartialLevelLabel(level, polarity){
 
 
 function getPhaseLabel(patch){
-    let invFreq = 1000 / (patch.frequency * 2);
+    let invFreq = 1000 / ((patch.frequency+patch.frequencyFine)  * 2);
     let rootPhaseDelay = patch.rootPhaseDelay;
     let delayA = rootPhaseDelay * invFreq;
     return rootPhaseDelay.toFixed(2) + "π <br> (" + (delayA).toFixed(1) + "ms)";

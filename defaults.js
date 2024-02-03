@@ -347,6 +347,7 @@ let filterPresets = [
 function getDefaultPatch(){
     return {
         frequency: 50,//Hz
+        frequencyFine: 0,//Hz
         rootPhaseDelay: 0,//-1..1 => -PI..PI for phase shift of fundamental
         higherHarmonicRelativeShift: 0,//fraction of rootPhaseDelay for phase of higher harmonics
 

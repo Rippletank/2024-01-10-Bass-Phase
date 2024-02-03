@@ -246,8 +246,8 @@ function updatePreviewButtonState(){
 window.addEventListener('resize', updateCanvas);
 function updateCanvas() {
     document.querySelectorAll('canvas').forEach((canvas)=>{
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
     });
     updateDisplay();
 }
@@ -312,6 +312,11 @@ function setupNewSliderContainer(sliderContainer) {
         rangedInput.addEventListener('input', function() {
             handleValueChange();
         });
+        rangedInput.addEventListener('dblclick', function() {
+            let defaultValue = getDefaultPatch()[rangedInput.name] ?? rangedInput.value;  
+            rangedInput.value = defaultValue;
+            handleValueChange();
+        })
     });
 }
 function handleValueChange() {
