@@ -26,54 +26,93 @@ let generatedSampleRate = 0;//Sample rate used to generate current buffers
 // Update method to create a buffer
 function getAudioBuffer(
     sampleRate,//Samples per second
-    patch
+    patch,
+    patchR,
+    maxPreDelay
     ) {
     //Calculate max delay in samples
-        
-    let delay0 = 0;
-    let delayN = 0;
-    let phaseShift0 = 0;
-        
-    if (envMode==1 ){
-        //Mode1 - delay envelopes by the same as the phase delay
-        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/patch.frequency ;
-        delay0 = patch.rootPhaseDelay<0 ? 0 : delay;
-        delayN = patch.rootPhaseDelay<0 ? delay : 0;
-    }
-    else{
-        //Mode2 - Envelope fixed, shift phase in place
-        phaseShift0 = patch.rootPhaseDelay * Math.PI;
-    }
+    
+    let channels=[{patch:patch}];
+    if (patchR) channels.push({patch:patchR});
 
-    let bufferSize = Math.round(sampleRate 
-        * (patch.attack + patch.hold + decayLengthFactor * patch.decay + patch.envelopeFilter*0.0003) + delay0 + delayN ); //Allow for attack and 1.5* decay time + extra for filter smoothing
+    channels.forEach(c=>{
+        let patch = c.patch;
+        let delay0 = maxPreDelay;
+        let delayN = maxPreDelay;
+        let phaseShift0 = 0;
+            
+        if (envMode==1 ){
+            //Mode1 - delay envelopes by the same as the phase delay
+            let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/patch.frequency ;
+            delay0 += patch.rootPhaseDelay<0 ? 0 : delay;
+            delayN += patch.rootPhaseDelay<0 ? delay : 0;
+        }
+        else{
+            //Mode2 - Envelope fixed, shift phase in place
+            phaseShift0 = patch.rootPhaseDelay * Math.PI;
+        }
+    
+        let bufferSize = Math.round(sampleRate 
+            * (patch.attack + patch.hold + decayLengthFactor * patch.decay + patch.envelopeFilter*0.0003) + delay0 + delayN ); //Allow for attack and 1.5* decay time + extra for filter smoothing
+    
+            
+        c.bufferSize=bufferSize;
+        c.delay0=delay0;
+        c.delayN=delayN;
+        c.phaseShift0=phaseShift0;
+    });
 
 
+    maxBufferSize = channels.length>1 ? Math.max(channels[0].bufferSize,channels[1].bufferSize) : channels[0].bufferSize;
 
     //Create buffer
     let audioBuffer = new AudioBuffer({
-        length: bufferSize,
+        length: maxBufferSize,
         sampleRate: sampleRate,
-        numberOfChannels: 1
+        numberOfChannels: channels.length
       });
-      let b = audioBuffer.getChannelData(0);
-      let envelopeBuffer =buildEnvelopeBuffer(sampleRate, bufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
-      let filter =null;
-      if (patch.filterSlope!=0) 
-      {
-        filter = buildFilter(sampleRate, bufferSize, patch);
-      }
-      buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0);
-      
-      distort(b, patch, sampleRate, false);
-      
+     
+      let envelopeBuffers =[];
+      let filters =[];
+
+      for(let i=0;i<channels.length;i++){
+            let c = channels[i];
+            let patch = c.patch;
+            let b = audioBuffer.getChannelData(i);
+            let envelopeBuffer =buildEnvelopeBuffer(sampleRate, maxBufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
+            let filter =null;
+            if (patch.filterSlope!=0) 
+            {
+                filter = buildFilter(sampleRate, bufferSize, patch);
+            }
+            buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0);
+            
+            distort(b, patch, sampleRate, false);
+            envelopeBuffers.push(envelopeBuffer);
+            filters.push(filter);
+        }
       return {
             buffer:audioBuffer,
-            envelope:envelopeBuffer,
-            filter:filter
+            envelopes:envelopeBuffers,
+            filters:filters
       }
 
 }
+
+//takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
+function preMaxCalcStartDelay(patches, sampleRate){
+    let maxDelay = 0;
+    for (let i = 0; i < patches.length; i++) {
+        let patch = patches[i];
+        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
+        if(!patch || patch.rootPhaseDelay>=0) continue;
+        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/patch.frequency ;
+        if (delay>maxDelay) maxDelay = delay;
+    }
+    return maxDelay;
+
+}
+
 
 //Return object with 3 float arrays,
 // samples - the audio samples for one complete cycle

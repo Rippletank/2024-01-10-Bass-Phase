@@ -42,13 +42,13 @@ function ensureAudioContext(){
 
 
 // Play method, index 0 = A, 1 = B
-function playAudio(index, patchA, patchB) {
+function playAudio(index, patchA, patchB, patchAR, patchBR) {
     ensureAudioContext();
     //Can't reuse source node so create a new one
     stop();
     let newSourceNode = audioContext.createBufferSource();
     if (changed || generatedSampleRate != audioContext.sampleRate){
-        updateBuffersAndDisplay(patchA, patchB);
+        updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR);
     }
     newSourceNode.buffer = index==0 ? audioBufferA.buffer : (index==1 ? audioBufferB.buffer: nullTestBuffer);
     if (useFFT){
@@ -107,7 +107,7 @@ let isStereo = false;
 let changed = true;
 // Main update method - orchestrates the creation of the buffers and their display
 //Called at startup and whenever a parameter changes
-function updateBuffersAndDisplay(patchA, patchB) {
+function updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR) {
     changed = false;
     startUpdate();
     setTimeout(function() { //allow for UI to update to indicate busy
@@ -115,7 +115,7 @@ function updateBuffersAndDisplay(patchA, patchB) {
         ensureAudioContext();
         let t0 = performance.now();
     
-        updateBuffers(patchA, patchB);
+        updateBuffers(patchA, patchB, patchAR, patchBR);
         updateDisplay();
         fftClear('fftCanvas');
     
@@ -141,7 +141,7 @@ function endUpdate() {
 
 
 
-function updateBuffers(patchA, patchB) {
+function updateBuffers(patchA, patchB, patchAR, patchBR) {
     //Inefficient to create two buffers independently - 
     //envelope and all higher harmonics are the same, 
     //but performance is acceptable and code is maintainable  
@@ -149,14 +149,20 @@ function updateBuffers(patchA, patchB) {
     let sampleRate = audioContext ? audioContext.sampleRate: 44100;
     generatedSampleRate = sampleRate;//Store to check later, if changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
      
+    const maxPreDelay = preMaxCalcStartDelay([patchA, patchB, patchAR, patchBR], sampleRate);
+
     audioBufferA = getAudioBuffer(
         sampleRate, 
-        patchA
+        patchA,
+        isStereo? patchAR: null,
+        maxPreDelay
     );
 
     audioBufferB = getAudioBuffer(
         sampleRate, 
-        patchB
+        patchB,
+        isStereo? patchBR: null,
+        maxPreDelay
     );
 
     nullTestBuffer = buildNullTest(audioBufferA.buffer, audioBufferB.buffer);

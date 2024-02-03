@@ -49,7 +49,7 @@ document.getElementById('fftPlayN').addEventListener('click', function() {
 
 
 function play(index){
-    playAudio(index, cachedPatchA, cachedPatchB);   
+    playAudio(index, cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);   
 }
 
 //load settings for all of the little green buttons
@@ -250,7 +250,7 @@ function updateCanvas() {
     });
     updateDisplay();
 }
-
+updateCanvas();
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Generally methods for sliders and preset buttons
@@ -274,14 +274,14 @@ function initSliders(){
     setupPresetButtons();
     updatePreviewButtonState();
     
-    loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), defaultTestSubjectList);
+    loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), null, null, defaultTestSubjectList);
 
 
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
     setInterval(function() {
         if (!isMouseDown && changed && Date.now() - lastUpdate > 300) {
-            updateBuffersAndDisplay(cachedPatchA, cachedPatchB);
+            updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
         }
     }, 300); 
 }
@@ -355,7 +355,7 @@ function insertPresetButtons(id, presetList){
 }
 
 
-function loadPatches(patch, patchA, patchB, testSubjectList) {
+function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
     commonSectionNames.forEach((sectionName)=>{
         loadPatchIntoContainer(sectionName, patch);
     });
@@ -365,9 +365,11 @@ function loadPatches(patch, patchA, patchB, testSubjectList) {
     }
     loadPatchIntoContainer('SoundASetup', patchA ?? patch);
     loadPatchIntoContainer('SoundBSetup', patchB ??patch);
+    loadPatchIntoContainer('SoundARSetup', (patchAR ?? patchA) ?? patch);
+    loadPatchIntoContainer('SoundBRSetup', (patchBR ?? patchB) ??patch);
     updateAllLabelsAndCachePatches();
     updatePreview();
-    updateBuffersAndDisplay(cachedPatchA, cachedPatchB);
+    updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
 }
 
 
@@ -387,7 +389,9 @@ function loadPatchIntoContainer(id, patch) {
 
 let cachedPatchCmn = null;
 let cachedPatchA = null;
+let cachedPatchAR = null;
 let cachedPatchB = null;
+let cachedPatchBR = null;
 function updateAllLabelsAndCachePatches(){
     let patch = {};
     commonSectionNames.forEach((sectionName)=>{
@@ -406,10 +410,20 @@ function updateAllLabelsAndCachePatches(){
     updateLabelsFor('SoundASetup', patch);
     handleDisableGroups('SoundASetup', patch);
 
+    loadSliderValuesFromContainer('SoundARSetup', patch);
+    cachedPatchAR = {...patch};
+    updateLabelsFor('SoundARSetup', patch);
+    handleDisableGroups('SoundARSetup', patch);
+
     loadSliderValuesFromContainer('SoundBSetup', patch);
     cachedPatchB = {...patch};
     updateLabelsFor('SoundBSetup', patch);
     handleDisableGroups('SoundBSetup', patch);
+
+    loadSliderValuesFromContainer('SoundBRSetup', patch);
+    cachedPatchBR = {...patch};
+    updateLabelsFor('SoundBRSetup', patch);
+    handleDisableGroups('SoundBRSetup', patch);
 }
 
 
@@ -434,7 +448,9 @@ function exportCombinedPatchToJSON(){
     let patch = { 
         patchC: {...cachedPatchCmn}, 
         patchA: {...cachedPatchA},
+        patchAR: {...cachedPatchAR},
         patchB: {...cachedPatchB},
+        patchBR: {...cachedPatchBR},
         testSubjects: getTestSubjectList()
     };
     return JSON.stringify(patch);
@@ -449,14 +465,18 @@ function importCombinedPatchFromJSON(json){
     let patchC = {...getDefaultPatch()};
     let patchA = {...getDefaultAPatch()};
     let patchB = {...getDefaultBPatch()};
+    let patchAR = {...getDefaultBPatch()};
+    let patchBR = {...getDefaultBPatch()};
 
     // Overwrite with values from patch object
     Object.assign(patchC, patch.patchC);
     Object.assign(patchA, patch.patchA);
     Object.assign(patchB, patch.patchB);
+    Object.assign(patchAR, patch.patchAR);
+    Object.assign(patchBR, patch.patchBR);
 
     // Load the patches
-    loadPatches(patchC, patchA,patchB,patch.testSubjects ?? defaultTestSubjectList);
+    loadPatches(patchC, patchA, patchB, patchAR, patchBR, patch.testSubjects ?? defaultTestSubjectList);
 }
 
 
@@ -464,7 +484,18 @@ function importCombinedPatchFromJSON(json){
 //Functions for handling switching from mono to stereo
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function setUpStereo(){
-
+    if (isStereo) {
+        //Just led the testSubject list again
+        loadTestSubjectList(getTestSubjectList())
+    }
+    else {
+        //Remove all the stereo copies
+        SoundSetups.forEach((setup) => {
+            setup.containerR.querySelectorAll('.slider-container')
+                .forEach(copy=>copy.parentNode.removeChild(copy));
+        });
+    }
+    changed=true;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -474,12 +505,14 @@ function setUpStereo(){
 let sliderContainers = [];
 let SoundSetups = [                
     {
+        label:'A',
         container:document.getElementById('SoundASetup'),
-        button:document.getElementById('playSoundA')
+        containerR:document.getElementById('SoundARSetup')
     },
     {
+        label:'B',
         container: document.getElementById('SoundBSetup'),
-        button:document.getElementById('playSoundB')
+        containerR:document.getElementById('SoundBRSetup')
     }
 ];
 
@@ -498,24 +531,9 @@ document.querySelectorAll('.slider-container').forEach((div) => {
     checkbox.addEventListener('change', () => {
         // If checkbox is checked
         if (checkbox.checked) {
-            SoundSetups.forEach((setup) => {                
-                let copy = div.cloneNode(true);
-                setupNewSliderContainer(copy);
-                // Change the ID of labels and ranges
-                copy.querySelectorAll('label').forEach((label) => {
-                    label.htmlFor += 'A';
-                });
-                copy.querySelectorAll('input[type=range]').forEach((input)=>{
-                    input.id += 'A';
-                });
-                copy.querySelectorAll('input[type=checkbox]').forEach((input)=>{
-                    input.classList.add('hiddenCheckbox');
-                });
-
-                // Add the copies to 'SoundASetup' and 'SoundBSetup'
-                if (!setup.container.querySelector('[data-name="'+name+'"]')){
-                    setup.container.insertBefore(copy, setup.button);
-                }
+            SoundSetups.forEach((setup) => {  
+                setupSliderCopy(name, div, setup.container, setup.label);
+                if (isStereo) setupSliderCopy(name, div, setup.containerR, setup.label + "R")
             })
             
             // Disable the div
@@ -544,8 +562,10 @@ document.querySelectorAll('.slider-container').forEach((div) => {
             
             // Remove the copies from 'SoundASetup' and 'SoundBSetup'
             SoundSetups.forEach((setup) => {
-                let copy = setup.container.querySelector('[data-name="'+name+'"]');
-                copy && copy.parentNode.removeChild(copy);
+                let copies = 
+                    [...setup.container.querySelectorAll('[data-name="'+name+'"]'),
+                    ...setup.containerR.querySelectorAll('[data-name="'+name+'"]')];
+                copies.forEach(copy=>copy.parentNode.removeChild(copy));
             });
         }
         handleValueChange();
@@ -565,19 +585,39 @@ document.querySelectorAll('.slider-container').forEach((div) => {
         });
 });
 
+function setupSliderCopy(name, div, container, label) {
+    if (container.querySelector('[data-name="'+name+'"]'))  return;  //Already exists          
+    let copy = div.cloneNode(true);
+    setupNewSliderContainer(copy);
+    // Change the ID of labels and ranges and reset if source is disabled
+    copy.querySelectorAll('label').forEach((label) => {
+        label.htmlFor += label;
+        label.style.opacity = '1';
+    });
+    copy.querySelectorAll('input[type=range]').forEach((input)=>{
+        input.id += label;
+        input.style.pointerEvents = 'auto';
+        input.style.opacity = '1';
+    });
+    copy.querySelectorAll('output').forEach((output)=>{
+        output.style.opacity = '1';
+    });
+    copy.querySelectorAll('input[type=checkbox]').forEach((input)=>{
+        input.classList.add('hiddenCheckbox');
+    });
+    container.appendChild(copy);
+}
+
 
 function loadTestSubjectList(list)
 {
     if (!list) return;
     sliderContainers.forEach(
         (container)=>{
-            const startV =container.checkbox.checked;
+            //Could be more efficient, but this works when switching from mono to stereo
             container.checkbox.checked = list.includes(container.name);
-            if (startV != container.checkbox.checked)
-            {
-                const event = new Event('change');
-                container.checkbox.dispatchEvent(event);
-            }
+            const event = new Event('change');
+            container.checkbox.dispatchEvent(event);
         }
     );
 }
