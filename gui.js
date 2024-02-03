@@ -61,7 +61,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 isStereo = !isStereo;
                 updatePreviewButtonState();
-                setUpStereo();
+                setUpStereo(isStereo);
             });
             button.isChecked =()=> isStereo;
             break;
@@ -247,6 +247,7 @@ window.addEventListener('resize', updateCanvas);
 function updateCanvas() {
     document.querySelectorAll('canvas').forEach((canvas)=>{
         canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
     });
     updateDisplay();
 }
@@ -392,7 +393,7 @@ let cachedPatchA = null;
 let cachedPatchAR = null;
 let cachedPatchB = null;
 let cachedPatchBR = null;
-function updateAllLabelsAndCachePatches(){
+function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     let patch = {};
     commonSectionNames.forEach((sectionName)=>{
         loadSliderValuesFromContainer(sectionName, patch);
@@ -410,7 +411,12 @@ function updateAllLabelsAndCachePatches(){
     updateLabelsFor('SoundASetup', patch);
     handleDisableGroups('SoundASetup', patch);
 
-    loadSliderValuesFromContainer('SoundARSetup', patch);
+    if (syncLeftToRightValues){
+        loadPatchIntoContainer('SoundARSetup', patch);
+    }
+    else{
+        loadSliderValuesFromContainer('SoundARSetup', patch);
+    }
     cachedPatchAR = {...patch};
     updateLabelsFor('SoundARSetup', patch);
     handleDisableGroups('SoundARSetup', patch);
@@ -420,7 +426,12 @@ function updateAllLabelsAndCachePatches(){
     updateLabelsFor('SoundBSetup', patch);
     handleDisableGroups('SoundBSetup', patch);
 
-    loadSliderValuesFromContainer('SoundBRSetup', patch);
+    if (syncLeftToRightValues){
+        loadPatchIntoContainer('SoundBRSetup', patch);
+    }
+    else{
+        loadSliderValuesFromContainer('SoundBRSetup', patch);
+    }
     cachedPatchBR = {...patch};
     updateLabelsFor('SoundBRSetup', patch);
     handleDisableGroups('SoundBRSetup', patch);
@@ -480,23 +491,6 @@ function importCombinedPatchFromJSON(json){
 }
 
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Functions for handling switching from mono to stereo
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function setUpStereo(){
-    if (isStereo) {
-        //Just led the testSubject list again
-        loadTestSubjectList(getTestSubjectList())
-    }
-    else {
-        //Remove all the stereo copies
-        SoundSetups.forEach((setup) => {
-            setup.containerR.querySelectorAll('.slider-container')
-                .forEach(copy=>copy.parentNode.removeChild(copy));
-        });
-    }
-    changed=true;
-}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setup which variables are going to be changeable individually for sounds
@@ -586,7 +580,12 @@ document.querySelectorAll('.slider-container').forEach((div) => {
 });
 
 function setupSliderCopy(name, div, container, label) {
-    if (container.querySelector('[data-name="'+name+'"]'))  return;  //Already exists          
+    let existing = container.querySelector('[data-name="'+name+'"]');
+    if (existing)
+    {   //Already exists 
+        container.appendChild(existing);
+        return;           
+    } 
     let copy = div.cloneNode(true);
     setupNewSliderContainer(copy);
     // Change the ID of labels and ranges and reset if source is disabled
@@ -704,6 +703,34 @@ function handleDisableGroups(id, patch){
 initSliders();
 
 console.log("TestSubjectList: " + getTestSubjectList());    
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Functions for handling switching from mono to stereo
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+let hideOnMonos = document.querySelectorAll('.hideForMono');
+hideOnMonos.forEach((element)=>element.style.display = isStereo? 'block':'none');
+
+function setUpStereo(syncValuesFromLeftToRight){
+    if (isStereo) {
+        //Just led the testSubject list again
+        loadTestSubjectList(getTestSubjectList())
+        hideOnMonos.forEach((element)=>element.style.display = 'block');
+        if (syncValuesFromLeftToRight) 
+        {
+            updateAllLabelsAndCachePatches(true)
+        }
+    }
+    else {
+        //Remove all the stereo copies
+        SoundSetups.forEach((setup) => {
+            setup.containerR.querySelectorAll('.slider-container')
+                .forEach(copy=>copy.parentNode.removeChild(copy));
+        });
+        
+        hideOnMonos.forEach((element)=>element.style.display = 'none');
+    }
+    changed=true;
+}
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //ABX TEST GUI Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

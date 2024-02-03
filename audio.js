@@ -83,7 +83,7 @@ function getAudioBuffer(
             let filter =null;
             if (patch.filterSlope!=0) 
             {
-                filter = buildFilter(sampleRate, bufferSize, patch);
+                filter = buildFilter(sampleRate, maxBufferSize, patch);
             }
             buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0);
             
@@ -417,40 +417,46 @@ function mixInSine(
 }
 
 function getBufferMax(buffer){
-    let b = buffer.getChannelData(0);
-    let bufferSize = buffer.length;
     let max = 0;
-    for (let i = 0; i < bufferSize; i++) {
-        let val = Math.abs( b[i]);
-        if (val>max) max = val;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.getChannelData(chan);
+        let bufferSize = buffer.length;
+        for (let i = 0; i < bufferSize; i++) {
+            let val = Math.abs( b[i]);
+            if (val>max) max = val;
+        }
     }
     return max;
 }
 
 function scaleBuffer(buffer, scale){
-    let b = buffer.getChannelData(0);
-    let bufferSize = buffer.length;
     let max = 0;
-    for (let i = 0; i < bufferSize; i++) {
-        b[i]*=scale;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.getChannelData(chan);
+        let bufferSize = buffer.length;
+        for (let i = 0; i < bufferSize; i++) {
+            b[i]*=scale;
+        }
     }
     return max;
 }
 
 function buildNullTest(bufferA, bufferB){
     let length = Math.min(bufferA.length, bufferB.length);
-    var A = bufferA.getChannelData(0);
-    var B = bufferB.getChannelData(0);
     let nullTest = new AudioBuffer({
         length: length,
         sampleRate: bufferA.sampleRate,
-        numberOfChannels: 1
+        numberOfChannels: bufferA.numberOfChannels
       });
-      let b = nullTest.getChannelData(0);
-      for (let i = 0; i < length; i++) {
+    for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
+        var A = bufferA.getChannelData(channel);
+        var B = bufferB.getChannelData(channel);
+        let b = nullTest.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
         b[i] = A[i] - B[i];
-      }
-      return nullTest;
+        }
+    }
+    return nullTest;
 }
 
 

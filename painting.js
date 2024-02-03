@@ -164,7 +164,13 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     const hScale = fftH/dbScale;
  
     ctx.fillStyle = "rgb(245, 245, 245)";
-    ctx.fillRect(0,0,w,h);        
+    ctx.fillRect(0,0,w,h);  
+    
+    
+    let positions = calculateLogScalePositions(detailedMinF, detailedMaxF);
+    drawLogScale(ctx, positions, fftL, fftW, fftT, fftB);
+    
+
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(50, 0, 0)";
     ctx.fillStyle = "rgb(50, 0, 0)";
@@ -191,8 +197,6 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
         }
     }
     ctx.stroke();
-    let positions = calculateLogScalePositions(detailedMinF, detailedMaxF);
-    drawLogScale(ctx, positions, fftL, fftW, fftT, fftB);
 
 
     canvasTooltips.staticFFTCanvas = {//same as canvas.id
@@ -307,9 +311,9 @@ function floorPowerOfTen(f){
 
 // Draw the scale lines and labels
 function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
-    ctx.strokeStyle = "rgb(200, 200, 200)";
+    ctx.strokeStyle = "rgb(160, 210,  160)";
     ctx.fillStyle = "rgb(50, 0, 0)";
-    ctx.font = (scaleGap*0.6).toFixed(0)+"px Arial";
+    ctx.font = (scaleGap*0.37).toFixed(0)+"px Arial";
     ctx.textAlign = "center";
     ctx.setLineDash([5, 15]);
     for (let pos of positions) {
@@ -318,7 +322,7 @@ function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
         ctx.moveTo(x, 0);
         ctx.lineTo(x, fftB);
         ctx.stroke();
-        ctx.fillText(pos.f, x, fftB + scaleGap*0.9);
+        ctx.fillText(pos.f, x, fftB + scaleGap*0.6);
     }
     ctx.setLineDash([]);
 }
@@ -326,65 +330,37 @@ function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
 
 
 function paintBuffer(buffer, maxLength, canvasId){
-    let b = buffer.getChannelData(0);
-    let bufferSize = buffer.length;
 
     var canvas = document.getElementById(canvasId);
     var ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    const h = canvas.height/2;
-    const step = canvas.width / maxLength;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let bufferSize = buffer.length;
 
-    //Centre line
-    ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgb(50, 50, 50)";
-    ctx.beginPath();
-    ctx.moveTo(0, h);
-    ctx.lineTo(canvas.width, h);
-    ctx.stroke();
 
-    //Waveform
-    ctx.beginPath();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(0, 0, 0)";
-    let x = 0;
+    for (let chan = 0; chan < buffer.numberOfChannels ; chan++) {
+        let b = buffer.getChannelData(chan);
+        const h = canvas.height/(2*buffer.numberOfChannels);
+        const zeroY = h + chan * 2 * h;
+        const step = canvas.width / maxLength;
+        //Centre line
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = "rgb(50, 50, 50)";
+        ctx.beginPath();
+        ctx.moveTo(0, zeroY);
+        ctx.lineTo(canvas.width, zeroY);
+        ctx.stroke();
 
-    for (let i = 0; i < maxLength; i++) {
-        if (i >= bufferSize) break;
-        let y=h-b[i] * h;
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);//Minus to ensure positive is up
-        }
-        x += step;
-    }
-    ctx.stroke();
-    ctx.stroke();
-         
-}
-
-//Envelope is an float array of values between 0 and 1 for each sample
-function paintEnvelope(envelop, maxLength, canvasId){
-    const b = envelop;
-    const bufferSize = b.length;
-
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext("2d");
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(0, 128, 0)";
-    const h = canvas.height/2;
-    const step = canvas.width / maxLength;
-
-    for(let pol =-1; pol<=1; pol+=2){
+        //Waveform
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgb(0, 0, 0)";
         let x = 0;
+
         for (let i = 0; i < maxLength; i++) {
             if (i >= bufferSize) break;
-            let y=h-pol*b[i] * h;
+            let y=zeroY-b[i] * h;
             if (i === 0) {
                 ctx.moveTo(x, y);
             } else {
@@ -392,43 +368,84 @@ function paintEnvelope(envelop, maxLength, canvasId){
             }
             x += step;
         }
+        ctx.stroke();
     }
-    ctx.stroke();
+}
+
+//Envelope is an float array of values between 0 and 1 for each sample
+function paintEnvelope(envelopes, maxLength, canvasId){
+
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    for(let chan = 0; chan < envelopes.length; chan++){
+        const b = envelopes[chan];
+        const bufferSize = b.length;
+
+        ctx.beginPath();
+        ctx.strokeStyle = "rgb(0, 128, 0)";
+        const h = canvas.height/(2*envelopes.length);
+        const zeroY = h + chan * 2 * h;
+        const step = canvas.width / maxLength;
+
+        for(let pol =-1; pol<=1; pol+=2){
+            let x = 0;
+            for (let i = 0; i < maxLength; i++) {
+                if (i >= bufferSize) break;
+                let y=zeroY-pol*b[i] * h;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);//Minus to ensure positive is up
+                }
+                x += step;
+            }
+        }
+        ctx.stroke();
+    }
 }
 
 let filterEnvIsLog = true;
 //Filter is the filter object returned from the audio.js getFilter function
-function paintFilterEnvelope(filter, maxLength, canvasId){
-    if (!filter) return;
-    const b = filter.invW0;//1/wo  = sampleRate/(2*Math.PI*f0)
-    const maxF = filter.sampleRate/2;//-20 to avoid log(0)
-    const invLogMaxF =1/Math.log2(maxF-20);
-    const c = filter.sampleRate/(2*Math.PI);//retrieve f0 from 1/wo and scale to max frequency
-    const bufferSize = b.length;
-
+function paintFilterEnvelope(filters, maxLength, canvasId){
+    if (!filters) return;
+    
     var canvas = document.getElementById(canvasId);
     var ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(0, 0, 128)";
-    let x = 0;
-    const h = canvas.height;
-    const step = canvas.width / maxLength;
-    const scale  = filterEnvIsLog ? h * invLogMaxF : h/maxF;
 
-    for (let i = 0; i < maxLength; i++) {
-        if (i >= bufferSize) break;
-        const f = c / b[i];
-        let y =h- scale *(filterEnvIsLog ? Math.log2(f-20) : f);
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);//Minus to ensure positive is up
+    for (let chan = 0; chan < filters.length; chan++) {
+        const filter = filters[chan];
+        if (!filter) continue;
+        const b = filter.invW0;//1/wo  = sampleRate/(2*Math.PI*f0)
+        const maxF = filter.sampleRate/2;//-20 to avoid log(0)
+        const invLogMaxF =1/Math.log2(maxF-20);
+        const c = filter.sampleRate/(2*Math.PI);//retrieve f0 from 1/wo and scale to max frequency
+        const bufferSize = b.length;
+
+        ctx.beginPath();
+        ctx.strokeStyle = "rgb(0, 0, 128)";
+        let x = 0;
+        const h = canvas.height/filters.length;
+        const zeroY = h + chan * h;
+        const step = canvas.width / maxLength;
+        const scale  = filterEnvIsLog ? h * invLogMaxF : h/maxF;
+
+        for (let i = 0; i < maxLength; i++) {
+            if (i >= bufferSize) break;
+            const f = c / b[i];
+            let y =zeroY- scale *(filterEnvIsLog ? Math.log2(f-20) : f);
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);//Minus to ensure positive is up
+            }
+            x += step;
         }
-        x += step;
+        ctx.stroke();
     }
-    ctx.stroke();
 }
 
 

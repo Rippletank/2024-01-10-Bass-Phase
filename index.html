@@ -57,10 +57,10 @@
             <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
         </div>
         <div class="testSoundControls" id="SoundASetup">
-            <h3 class="stereoLabel">Left:</h3>
+            <h3 class="stereoLabel hideForMono">Left:</h3>
         </div>
-        <div class="testSoundControls" id="SoundARSetup">
-            <h3 class="stereoLabel">Right:</h3>
+        <div class="testSoundControls hideForMono" id="SoundARSetup">
+            <h3 class="stereoLabel hideForMono">Right:</h3>
         </div>
         <button id="playSoundA">Play A</button>
     </div>
@@ -73,10 +73,10 @@
             <canvas id="waveformB"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
         </div>
         <div class="testSoundControls" id="SoundBSetup">
-            <h3 class="stereoLabel">Left:</h3>
+            <h3 class="stereoLabel hideForMono">Left:</h3>
         </div>
-        <div class="testSoundControls" id="SoundBRSetup">
-            <h3 class="stereoLabel">Right:</h3>
+        <div class="testSoundControls hideForMono" id="SoundBRSetup">
+            <h3 class="stereoLabel hideForMono">Right:</h3>
         </div>
         <button id="playSoundB">Play B</button>
     </div>
@@ -293,14 +293,14 @@
         </div>
         <div class="slider-container">
             <label for="oddDistortion">Odd harmonic:</label>
-            <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.1" value="0"  list="ticksPlus1ZeroMinus1">
+            <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
             <output class="valueSpan" name="oddDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Third order Chebyshev polynomial distortion, generating third harmonic for a sine wave</div>
         </div>
         <div class="slider-container">
             <label for="evenDistortion">Even Harmonic:</label>
-            <input type="range" id="evenDistortion" name="evenDistortion" min="-1" max="1" step="0.1" value="0"  list="ticksPlus1ZeroMinus1">
+            <input type="range" id="evenDistortion" name="evenDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
             <output class="valueSpan" name="evenDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Second order Chebyshev polynomial distortion, generating second harmonic for a sine wave</div>
@@ -314,14 +314,14 @@
         </div>
         <div class="slider-container">
             <label for="clipDistortion">Clipping:</label>
-            <input type="range" id="clipDistortion" name="clipDistortion" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
+            <input type="range" id="clipDistortion" name="clipDistortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="clipDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Plain old full hard clipping</div>
         </div>
         <div class="slider-container">
             <label for="jitter">Jitter:</label>
-            <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
+            <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="jitter">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Random temporal misplacement of sample in normal distribution up to +/-0.5*time-period (1/fs)</div>
@@ -455,6 +455,14 @@
     </div>
     
     <div class="bordered">
+        <h3>Null test <span id="nullTestdb"></span></h3>        
+        <div>
+            <canvas id="waveformNull"  class="fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <button id="playSoundNull">Play</button>
+        <p>See <a href="#Notes1">explanation of Null Test</a></p>
+    </div>
+    <div class="bordered">
         <h3>FFT</h3>
         <div class="fftPlayButtons">
             <button id="fftPlayA" class="fftPlayButton">Play A</button>
@@ -474,7 +482,7 @@
                 <button name="apiFFT" class = "previewButton">On</button>
             </div>
         </div>
-        <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
+        <p>From playback.</p>
     </div>
     <div class="bordered">
         <h3>Static Detailed FFT </h3>
@@ -508,14 +516,6 @@
     </div>
 
 
-    <div class="bordered">
-        <h3>Null test <span id="nullTestdb"></span></h3>        
-        <div>
-            <canvas id="waveformNull"  class="fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <button id="playSoundNull">Play</button>
-        <p>See <a href="#Notes1">explanation of Null Test</a></p>
-    </div>
 
 
 

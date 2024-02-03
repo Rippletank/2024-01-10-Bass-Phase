@@ -194,12 +194,12 @@ function updateDisplay(){
     paintBuffer(audioBufferB.buffer, maxLength, "waveformB");
     paintBuffer(nullTestBuffer, maxLength, "waveformNull");
     if (showBufferEnvelopeOverlay){    
-        paintEnvelope(audioBufferA.envelope, maxLength, "waveformA");
-        paintEnvelope(audioBufferB.envelope, maxLength, "waveformB");
+        paintEnvelope(audioBufferA.envelopes, maxLength, "waveformA");
+        paintEnvelope(audioBufferB.envelopes, maxLength, "waveformB");
     }
     if (showBufferFilterOverlay){
-        paintFilterEnvelope(audioBufferA.filter, maxLength, "waveformA");
-        paintFilterEnvelope(audioBufferB.filter, maxLength, "waveformB");
+        paintFilterEnvelope(audioBufferA.filters, maxLength, "waveformA");
+        paintFilterEnvelope(audioBufferB.filters, maxLength, "waveformB");
     }
     paintPreview()
     let nullTest = document.getElementById('nullTestdb');
