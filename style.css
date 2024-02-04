@@ -288,7 +288,7 @@ canvas {
     filter: blur(4px);
 }
 
-.oversamplingReport{
+.paragraphReport{
     text-align: center;
     color: #6b8b6b;
 }

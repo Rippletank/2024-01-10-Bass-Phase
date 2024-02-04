@@ -306,6 +306,7 @@
             <span class="help-icon">?</span>
             <div class="help-popup">Turns distortion on and off and controls the overall amount</div>
         </div>
+        <p class="THDReport paragraphReport"></p>
         <div class="slider-container">
             <label for="oddDistortion">Odd harmonic:</label>
             <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
@@ -367,7 +368,7 @@
             <span class="help-icon">?</span>
             <div class="help-popup">The width of the transition band between pass and stop</div>
         </div>
-        <p class="oversamplingReport"></p>
+        <p class="oversamplingReport paragraphReport">Distortion processing off</p>
         <div class="presetHeader">
             <h3>Inharmonics</h3>
             <div id="inharmonicPresets" class="PresetButtons"></div>
@@ -595,10 +596,10 @@
         <p>With a significant hold time and no second harmonic shift, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
     </div>
     <script src="defaults.js"></script>
+    <script src="basicFFT.js"></script>
     <script src="oversampling.js"></script>
     <script src="distortion.js"></script>
     <script src="audio.js"></script>
-    <script src="basicFFT.js"></script>
     <script src="painting.js"></script>
     <script src="audioAPI.js"></script>
     <script src="guiValues.js"></script>

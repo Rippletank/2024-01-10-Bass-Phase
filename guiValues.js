@@ -234,7 +234,7 @@ function setValueFromPatch(ve, patch){
 
             
         case "oversampleTimes":
-            ve.textContent ='x'+allowedOversampleTimes[patch.oversampleTimes];break;
+            ve.textContent =allowedOversampleTimes[patch.oversampleTimes]+'x';break;
         case "oversampleStopDepth":
             ve.textContent ='-'+(70 +40 *patch.oversampleStopDepth).toFixed(0) + "db";break;
         case "oversampleTransition":

@@ -22,7 +22,7 @@ let distStopBand = 0;
 let distTransitionBand = 0;
 let filter = null;//generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.025/oversampling);
 let polyphaseKernels = null;//generateUpsamplingPolyphasekernals(filter, oversampling);
-let oversamplingReport ="";
+let oversamplingReport ="No oversampling filter generated yet.";
 let trueSampleRate = 0;
 
 function buildOSFilters(patch){
@@ -71,10 +71,13 @@ function distort(buffer, patch, sampleRate, isCyclic){
         jitter(ob, patch.jitter, rand, isCyclic);
     }
 
-    const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
-    cheb_3(ob, patch.distortion * patch.oddDistortion);
+    if (Math.abs(patch.oddDistortion)>0) cheb_3(ob, patch.distortion * patch.oddDistortion);
     if (patch.tanhDistortion>0 || Math.abs(patch.asymTanhDistortion)>0)tanh_Saturation(ob, 0.0005 +8 * patch.distortion * patch.tanhDistortion, patch.distortion * patch.asymTanhDistortion );
-    if (patch.clipDistortion>0)clip(ob, d, -d);
+    if (patch.clipDistortion>0)
+    {
+        const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
+        clip(ob, d, -d);
+    }
 
     if (oversampling>1) downsample(ob, buffer, filter, oversampling, isCyclic);
 }

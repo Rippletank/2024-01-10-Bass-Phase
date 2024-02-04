@@ -33,7 +33,7 @@ const defaultTestSubjectList =
 
 let wavePresets = [
     {
-        name:"default", 
+        name:"Default", 
         patch:{
             balance:0,
             oddLevel:1,
@@ -48,7 +48,7 @@ let wavePresets = [
         }
     },
     {
-        name:"square", 
+        name:"Square", 
         patch:{
             balance:0,
             oddLevel:1,
@@ -93,7 +93,7 @@ let wavePresets = [
         }
     },
     {
-        name:"stairs", 
+        name:"Stairs", 
         patch:{
             balance:0,
             oddLevel:1,
@@ -108,7 +108,7 @@ let wavePresets = [
         }
     },
     {
-        name:"pulse", 
+        name:"Pulse", 
         patch:{
             balance:0,
             oddLevel:1,
@@ -123,11 +123,11 @@ let wavePresets = [
         }
     },
     {
-        name:"sine", 
+        name:"Sine", 
         patch:{
             balance:-1,
             oddLevel:1,
-            oddFalloff:1,
+            oddFalloff:2,
             oddAlt:0,
             evenLevel:0,
             evenFalloff:1,
@@ -141,7 +141,7 @@ let wavePresets = [
 
 let envelopePresets = [
     {
-        name:"default",
+        name:"Default",
         patch:{
             attack:0.005,
             hold:0,
@@ -190,7 +190,7 @@ let envelopePresets = [
 
 let distortionPresets = [
     {
-        name:"default",
+        name:"Default",
         patch:{
             distortion:0,
             oddDistortion:0,
@@ -241,7 +241,7 @@ let distortionPresets = [
 
 let oversamplingPresets = [
     {
-        name:"default",
+        name:"Default",
         patch:{
             oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
             oversampleStopDepth:0.5,//-70db to -110db - default = -90db
@@ -276,7 +276,7 @@ let oversamplingPresets = [
 
 let filterPresets = [
     {   
-        name:"default",
+        name:"Default",
         patch:{
             filterF1:10,
             filterF2:10,
@@ -328,7 +328,7 @@ let filterPresets = [
         }
     },    
     {   
-        name:"off",
+        name:"Off",
         patch:{
             filterF1:10,
             filterF2:10,
@@ -352,7 +352,7 @@ function getDefaultPatch(){
         higherHarmonicRelativeShift: 0,//fraction of rootPhaseDelay for phase of higher harmonics
 
         //Harmonic series
-        balance:0,
+        balance:0,//-1..1 0 = all harmonics equal, -1 = fundamental only, 1 = higher harmonics only
         oddLevel: 1,//-1..1 level of odd harmonics
         oddAlt: 0,//0..1 How much the odd harmonics alternate in polarity
         oddFalloff: 1.8,//1..2 How much the odd harmonics fall off in amplitude as a power of 1/n

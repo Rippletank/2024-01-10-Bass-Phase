@@ -164,6 +164,7 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     let magnitude = [];
     let phase = [];
     let postProcessor = (n, w, level, phaseShift)=>{
+        //Capture the magnitude and phase of each harmonic - almost exactly like a FFT
         let l = level;
         if (filter){
             let c=w *filter.invW0[filter.invW0.length/2];
@@ -218,6 +219,55 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     };
 }
 
+
+let THDDefaultPatch = {
+    ...getDefaultPatch()
+}
+let THDSinePatch ={
+    ...wavePresets.filter(p=>p.name=="Sine")[0].patch
+}
+function measureTHDPercent(referencePatch){
+    if (referencePatch.distortion==0) return 0;
+
+    let patch = {
+        ...THDDefaultPatch,//all values covered
+        ...referencePatch,//distortion and oversampling parameters copied
+       ...THDSinePatch //Harmonic series set to sine wave
+    };
+
+    //Filter parameters ignored - no filter created
+    //Envelope parameters ignored - rectangular envelope created
+    //inharmonic parameters ignored - no inharmonics processed
+    //phase ignored - delay and phaseshift passed as zero
+    patch.frequency=1000;//1khz signal
+    patch.frequencyFine=0;//1khz signal
+
+
+    let bufferSize = 1024; //Number of samples
+    let sampleRate = bufferSize * (patch.frequency);
+    let envelopeBuffer =[];
+    let b = [];
+    for (let i = 0; i < bufferSize; i++) {
+        envelopeBuffer.push(1);
+        b.push(0);
+    }
+
+    buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, 0);
+    
+    distort(b, patch, sampleRate, true);
+
+    let fft = getFFT1024(b);
+
+    //Caluclate THD
+    let total = 0;
+    let harmonicsToInclude = 10;
+    for (let i = 2; i < harmonicsToInclude+2; i++) {
+        let vn = fft.magnitude[i];
+        total += vn * vn;
+    }
+    let THD = Math.sqrt(total) / fft.magnitude[1];
+    return THD*100;
+}
 
 
 function getBufferForLongFFT(samplerate, referencePatch){

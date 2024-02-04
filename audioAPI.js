@@ -211,9 +211,27 @@ let previewResult = null;
 let filterPreviewSubject =0;
 let previewSubject =0;
 let previewSubjectChannel =0;
+let previewTHDReport = 0;
 function updatePreview(){
-    previewResult = getPreview(getPreviewSubjectCachedPatch(), filterPreviewSubject);
+    const previewPatch = getPreviewSubjectCachedPatch();
+    previewResult = getPreview(previewPatch, filterPreviewSubject);
     previewResult.fft = getFFT1024(previewResult.distortedSamples);
+    
+    previewTHDReport =previewPatch.distortion>0 ? "THD: " + measureTHDPercent(previewPatch).toFixed(3)+"% ["+previewPatchName()+"]" : "Distortion off";
+}
+function previewPatchName(){
+    switch(previewSubject){
+        case 0: 
+            return "Common";
+            break;
+        case 1: 
+            return "Sound "+(!isStereo? "A" : (previewSubjectChannel==0? "A-L" : "A-R"));
+            break;  
+        case 2: 
+            return "Sound "+(!isStereo? "B" : (previewSubjectChannel==0? "B-L" : "B-R"));
+            break;  
+    }
+    return cachedPatch;
 }
 
 function getPreviewSubjectCachedPatch() {
@@ -268,10 +286,13 @@ function paintPreview(){
         distortionSpectrumShowPhase);
 
         putOversamplingReport();
+    
 }
 
+let THDReportElement = document.querySelectorAll('.THDReport');
 let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
 function putOversamplingReport(){
     oversamplingReportElements.forEach((element) =>element.textContent = oversamplingReport);
+    THDReportElement.forEach((element) =>element.textContent = previewTHDReport);
 }
 
