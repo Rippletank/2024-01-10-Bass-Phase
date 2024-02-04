@@ -221,17 +221,22 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
             const currentRange = Math.log2(detailedMaxF/detailedMinF);
             let midRange = currentRange * x;//value at pointer
             let deltaRange = currentRange; 
-            midRange -=deltaX;
-
+            midRange -=deltaX*currentRange;
+            //console.log(deltaX)
             if (Math.abs(deltaY)>0.9)deltaY = Math.sign(deltaY)*0.9;
             deltaRange *=Math.pow(2,deltaY);//up down to zoom in/out
 
             var newMinF = detailedMinF *Math.pow(2,midRange-deltaRange * x);
-            var newMaxF = detailedMinF *Math.pow(2,deltaRange );
+            var newMaxF = newMinF *Math.pow(2,deltaRange );
             newMinF = Math.min(Math.max(20,newMinF),18000);
             newMaxF = Math.min(Math.max(50,newMaxF),20000);
-            detailedMinF = newMinF
-            detailedMaxF = Math.max(newMinF+0.1, newMaxF)
+            if (newMaxF-newMinF<1) {
+                const ave = (newMaxF+newMinF)/2;
+                newMinF = ave-0.5;
+                newMaxF = ave+0.5;
+            }
+            detailedMinF = newMinF;
+            detailedMaxF = newMaxF;
             },
         doubleTap:(x,y)=>{
             canvasTooltips.staticFFTCanvas.drag(x,0,-1);
@@ -265,25 +270,25 @@ function iteratedCalculatePositions(positions, flow, fhigh, minF, maxF, log2Max,
         positions.push({f: flow, x: x});
         return;
     }
-        if (flow<minF && fhigh<minF) return;
-        if(fhigh>maxF && flow>maxF) return;
-        let largestStep =largestPowerOfTenIncrement(flow,fhigh);
-        
-        let step = Math.pow(10,largestStep);
-        for(let j=0;j<10;j++){
-            let f1 = flow + j * step;
-            let f2 = f1 + step;
-            if (f1>maxF) break;
-            let x = relativePosOfF(f1, minF, log2Max);
-            let x1 = relativePosOfF(f2, minF, log2Max);
-            if (x1-x<minimumSpacing) 
-            {
-                if (j==0)
-                {positions.push({f: f1, x: x});}
-                continue;
-            };
-            iteratedCalculatePositions(positions, f1, f2, minF, maxF, log2Max,maxLevels-1)
-        }
+    if (flow<minF && fhigh<minF) return;
+    if(fhigh>maxF && flow>maxF) return;
+    let largestStep =largestPowerOfTenIncrement(flow,fhigh);
+    
+    let step = Math.pow(10,largestStep);
+    for(let j=0;j<10;j++){
+        let f1 = flow + j * step;
+        let f2 = f1 + step;
+        if (f1>maxF) break;
+        let x = relativePosOfF(f1, minF, log2Max);
+        let x1 = relativePosOfF(f2, minF, log2Max);
+        if (x1-x<minimumSpacing) 
+        {
+            if (j==0)
+            {positions.push({f: f1, x: (x+x1)/2});}
+            continue;
+        };
+        iteratedCalculatePositions(positions, f1, f2, minF, maxF, log2Max, maxLevels-1)
+    }
 }
 
 
@@ -311,6 +316,11 @@ function floorPowerOfTen(f){
 
 // Draw the scale lines and labels
 function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
+    if (positions.length == 0) return;
+    const minF = positions[0].f;
+    const maxF = positions[positions.length-1].f;
+    const powerOfTen = largestPowerOfTenIncrement(positions[0].f, positions[positions.length-1].f);
+    const decimalsToUse = powerOfTen > 2 ? 0 : 1;
     ctx.strokeStyle = "rgb(160, 210,  160)";
     ctx.fillStyle = "rgb(50, 0, 0)";
     ctx.font = (scaleGap*0.37).toFixed(0)+"px Arial";
@@ -322,7 +332,7 @@ function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
         ctx.moveTo(x, 0);
         ctx.lineTo(x, fftB);
         ctx.stroke();
-        ctx.fillText(pos.f, x, fftB + scaleGap*0.6);
+        ctx.fillText(pos.f.toFixed(decimalsToUse), x, fftB + scaleGap*0.6);
     }
     ctx.setLineDash([]);
 }

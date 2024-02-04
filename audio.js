@@ -423,8 +423,8 @@ function AddInharmonics(patch, sampleRate, b, envelopeBuffer, delayN){
         let level = Math.pow(10,patch.inharmonicCLevel/20); 
         let f = patch.frequency+patch.frequencyFine;
         //Just intonation
-        let w = f * ptolemysScale[patch.inharmonicBSemitones % 12] //semitones
-                * (1+Math.floor(patch.inharmonicBSemitones/12)) //octaves if needed
+        let w = f * ptolemysScale[patch.inharmonicCSemitones % 12] //semitones
+                * (1+Math.floor(patch.inharmonicCSemitones/12)) //octaves if needed
         * 2 * Math.PI  / sampleRate; 
         mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
     }

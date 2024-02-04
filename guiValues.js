@@ -336,11 +336,11 @@ document.querySelectorAll('canvas').forEach(canvas => {
     canvas.addEventListener('pointermove', function(event){
         if (isDragging){
             let def = canvasTooltips[canvas.id];
-            let dx = event.clientX - startX;
-            let dy = event.clientY - startY;
-            startX = event.clientX;
-            startY = event.clientY;
-            def.drag(event.clientX/canvas.clientWidth, dx/canvas.clientWidth, 0/*dy/canvas.clientHeight*/);
+            let dx = event.offsetX - startX;
+            let dy = event.offsetY - startY;
+            startX = event.offsetX;
+            startY = event.offsetY;
+            def.drag(event.offsetX/canvas.clientWidth, dx/canvas.clientWidth, dy/canvas.clientHeight);
             StopEventPropagation(event);
             repaintDetailedFFT();
         }
@@ -350,8 +350,8 @@ document.querySelectorAll('canvas').forEach(canvas => {
     let update =(event)=>{
         // Calculate the frequency and amplitude based on the mouse position
         const rect = canvas.getBoundingClientRect();
-        const x = (event.clientX - rect.left)/rect.width;
-        const y = (event.clientY - rect.top)/rect.height;
+        const x = (event.offsetX - rect.left)/rect.width;
+        const y = (event.offsetY - rect.top)/rect.height;
 
         let def = canvasTooltips[canvas.id];
 
@@ -369,12 +369,14 @@ document.querySelectorAll('canvas').forEach(canvas => {
     if (tooltipActions.doubleTap){
         canvas.addEventListener('dblclick', function(event) {
             let def = canvasTooltips[canvas.id];
-            def.doubleTap(event.clientX/canvas.clientWidth, event.clientY/canvas.clientHeight);
+            if (!def || !def.visible || !def.visible()) return;
+            def.doubleTap(event.offsetX/canvas.clientWidth, event.offsetY/canvas.clientHeight);
             repaintDetailedFFT();
         });
         canvas.addEventListener('wheel', function(event) {
             let def = canvasTooltips[canvas.id];
-            def.drag(event.clientX/canvas.clientWidth, event.deltaX/canvas.clientWidth, event.deltaY/canvas.clientHeight);
+            if (!def || !def.visible || !def.visible()) return;
+            def.drag(event.offsetX/canvas.clientWidth, event.deltaX/canvas.clientWidth, event.deltaY/canvas.clientHeight);
             StopEventPropagation(event);
             repaintDetailedFFT();
         });
@@ -391,8 +393,8 @@ document.querySelectorAll('canvas').forEach(canvas => {
         let def = canvasTooltips[canvas.id];
         if (def.drag){
             isDragging = true;
-            startX = event.clientX;
-            startY = event.clientY;
+            startX = event.offsetX;
+            startY = event.offsetY;
             canvas.setPointerCapture(event.pointerId);
             StopEventPropagation(event);
         }
