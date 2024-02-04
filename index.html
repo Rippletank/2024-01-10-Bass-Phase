@@ -314,18 +314,18 @@
             <div class="help-popup">Third order Chebyshev polynomial distortion, generating third harmonic for a sine wave</div>
         </div>
         <div class="slider-container">
-            <label for="evenDistortion">Even Harmonic:</label>
-            <input type="range" id="evenDistortion" name="evenDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
-            <output class="valueSpan" name="evenDistortion">0%</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Second order Chebyshev polynomial distortion, generating second harmonic for a sine wave</div>
-        </div>
-        <div class="slider-container">
             <label for="tanhDistortion">Tanh Saturation:</label>
             <input type="range" id="tanhDistortion" name="tanhDistortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="tanhDistortion">0%</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Tanh distortion, used in Saturation modelling</div>
+            <div class="help-popup">Tanh distortion, commonly used in Saturation modelling</div>
+        </div>
+        <div class="slider-container">
+            <label for="asymTanhDistortion">Asym Tanh:</label>
+            <input type="range" id="asymTanhDistortion" name="asymTanhDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
+            <output class="valueSpan" name="asymTanhDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Asymmetric tanh based distortion, introduces some even harmonics</div>
         </div>
         <div class="slider-container">
             <label for="clipDistortion">Clipping:</label>
@@ -368,6 +368,39 @@
             <div class="help-popup">The width of the transition band between pass and stop</div>
         </div>
         <p class="oversamplingReport"></p>
+        <div class="presetHeader">
+            <h3>Inharmonics</h3>
+            <div id="inharmonicPresets" class="PresetButtons"></div>
+        </div>
+        <div class="slider-container">
+            <label for="inharmonicAFrequency">A (Frequency):</label>
+            <input type="range" id="inharmonicAFrequency" name="inharmonicAFrequency" min="20" max="2000" step="1" value="1000" class="mid-slider" list="ticksPlus1ZeroMinus1">
+            <label for="inharmonicALevel"  class="flipLabel">Level:</label>
+            <input type="range" id="inharmonicALevel" name="inharmonicALevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+            <output class="valueSpan" name="inharmonicA">-1</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Level and frequency of a tone, A, mixed in to the main sound. Frequency set directly. </div>
+        </div>
+        <div class="slider-container">
+            <label for="inharmonicBSemitones">B (Equal Temper.):</label>
+            <input type="range" id="inharmonicBSemitones" name="inharmonicBSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
+            <label for="inharmonicBLevel"  class="flipLabel">Level:</label>
+            <input type="range" id="inharmonicBLevel" name="inharmonicBLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+            <output class="valueSpan" name="inharmonicB">-1</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Equal temperament scale. </div>
+        </div>
+        <div class="slider-container">
+            <label for="inharmonicCSemitones">C (Just Intonation):</label>
+            <input type="range" id="inharmonicCSemitones" name="inharmonicCSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
+            <label for="inharmonicCLevel"  class="flipLabel">Level:</label>
+            <input type="range" id="inharmonicCLevel" name="inharmonicCLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+            <output class="valueSpan" name="inharmonicC">off</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Ptolemy's intense diatonic scale. </div>
+        </div>
+
+
     </div>
 
 

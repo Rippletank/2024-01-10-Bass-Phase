@@ -87,6 +87,8 @@ function getAudioBuffer(
             }
             buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0);
             
+            AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
+
             distort(b, patch, sampleRate, false);
             envelopeBuffers.push(envelopeBuffer);
             filters.push(filter);
@@ -127,11 +129,12 @@ function getPreview(referencePatch, filterPreviewSubject){
     let bufferSize = 1024; //Number of samples
     return _buildPreview(patch, filterPreviewSubject,
         bufferSize * (patch.frequency+patch.frequencyFine), //Ensure is one complete per cycle
-        bufferSize);
+        bufferSize,
+        false);
 }
 
 
-function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize){
+function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false){
     let envelopeBuffer =[];
     let b = [];
     for (let i = 0; i < bufferSize; i++) {
@@ -179,6 +182,25 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize){
     }
     buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
     
+
+    if (includeInharmonics){
+        let window =[];
+        let a0 = 0.35875;
+        let a1 = 0.48829;
+        let a2 = 0.14128;
+        let a3 = 0.01168;
+        for (let i = 0; i < bufferSize; i++) {
+            //Blackman-harris window (bufferSize-1) to ensure 1 at end
+            //https://en.wikipedia.org/wiki/Window_function
+            window.push( 
+                a0 - a1 * Math.cos(2 * Math.PI * i / (bufferSize - 1)) 
+                    + a2 * Math.cos(4 * Math.PI * i / (bufferSize - 1)) 
+                    - a3 * Math.cos(6 * Math.PI * i / (bufferSize - 1))
+            );
+        }    
+        AddInharmonics(patch, sampleRate, b, window, 0);
+    } 
+
     let distorted =[...b];
     distort(distorted, patch, sampleRate, true);
 
@@ -211,7 +233,8 @@ function getBufferForLongFFT(samplerate, referencePatch){
 
     return _buildPreview(patch, filterPreviewSubject,
         adjustedSampleRate, //Ensure is one complete per cycle
-        bufferSize);
+        bufferSize,
+        true);
 }
 
 
@@ -379,6 +402,34 @@ function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, dela
         if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);
     }
 }
+
+let pythagoreanScale=[1, 256/243, 9/8, 32/27, 81/64, 4/3, /*1024/729,*/ 729/512, 3/2, 128/81, 27/16, 16/9, 243/128, 2];
+let ptolemysScale=[   1, 256/243, 9/8, 32/27, 5/4,   4/3, /*1024/729,*/ 729/512, 3/2, 128/81, 27/16, 16/9, 15/8, 2];
+function AddInharmonics(patch, sampleRate, b, envelopeBuffer, delayN){
+    if (patch.inharmonicALevel>-91){
+        let level = Math.pow(10,patch.inharmonicALevel/20); 
+        let w = patch.inharmonicAFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+    if (patch.inharmonicBLevel>-91){
+        let level = Math.pow(10,patch.inharmonicBLevel/20); 
+        let f = patch.frequency+patch.frequencyFine;
+        //Equal temperament
+        let w = f * Math.pow(2, patch.inharmonicBSemitones/12) // (2^(1/12))^semitones
+            * 2 * Math.PI  / sampleRate; 
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+    if (patch.inharmonicCLevel>-91){
+        let level = Math.pow(10,patch.inharmonicCLevel/20); 
+        let f = patch.frequency+patch.frequencyFine;
+        //Just intonation
+        let w = f * ptolemysScale[patch.inharmonicBSemitones % 12] //semitones
+                * (1+Math.floor(patch.inharmonicBSemitones/12)) //octaves if needed
+        * 2 * Math.PI  / sampleRate; 
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+}
+
 
 
 //Generate a single sine wave and mix into the buffer

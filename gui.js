@@ -518,13 +518,20 @@ let SoundSetups = [
     }
 ];
 
+function getSliderElements (sliderContainer){
+    return {
+        div:sliderContainer,
+        sliders:sliderContainer.querySelectorAll('input[type=range]'),
+        labels:sliderContainer.querySelectorAll('label'),
+        outputs:sliderContainer.querySelectorAll('output')
+    }
+}
+
 // For each div
 document.querySelectorAll('.slider-container').forEach((div) => {
-    let sliders = div.querySelectorAll('input[type=range]');
-    let labels = div.querySelectorAll('label');
-    let outputs = div.querySelectorAll('output');
+    let ctrls =getSliderElements(div);
 
-    let name = sliders[0].name;
+    let name = ctrls.sliders[0].name;
     div.setAttribute('data-name',name);
 
     let checkbox = document.createElement('input');
@@ -539,26 +546,26 @@ document.querySelectorAll('.slider-container').forEach((div) => {
             })
             
             // Disable the div
-            sliders.forEach((input)=>{
+            ctrls.sliders.forEach((input)=>{
                 input.style.pointerEvents = 'none';
                 input.style.opacity = '0.3';
             });
-            labels.forEach((input)=>{
+            ctrls.labels.forEach((input)=>{
                 input.style.opacity = '0.5';
             });
-            outputs.forEach((input)=>{
+            ctrls.outputs.forEach((input)=>{
                 input.style.opacity = '0.3';
             });
         } else {
             // Enable the div
-            sliders.forEach((input)=>{
+            ctrls.sliders.forEach((input)=>{
                 input.style.pointerEvents = 'auto';
                 input.style.opacity = '1';
             });
-            labels.forEach((input)=>{
+            ctrls.labels.forEach((input)=>{
                 input.style.opacity = '1';
             });
-            outputs.forEach((input)=>{
+            ctrls.outputs.forEach((input)=>{
                 input.style.opacity ='1';
             });
             
@@ -581,9 +588,9 @@ document.querySelectorAll('.slider-container').forEach((div) => {
             name:name,
             div:div,
             checkbox:checkbox,
-            sliders:sliders,
-            labels:labels,
-            outputs:outputs
+            sliders:ctrls.sliders,
+            labels:ctrls.labels,
+            outputs:ctrls.outputs
         });
 });
 
@@ -654,7 +661,25 @@ function handleDisableGroups(id, patch){
         const action =  allNamesValid && allMatch && hasKeys ?
             (slider)=>slider.classList.add("blurredDisabled")
             : (slider)=>slider.classList.remove("blurredDisabled");
-        const slidersForId = sliderContainers.filter((container)=>container.parentId ==id);
+        const testSliders =SoundSetups.reduce((setup,prev) => 
+        { 
+
+        },[]);
+        const slidersForId =
+            [ ...sliderContainers.filter((container)=>container.parentId ==id),
+              ...SoundSetups.reduce((prev, setup) =>[...prev,setup.container,setup.containerR],[])
+                .filter((container)=>container.id ==id)
+                .reduce((prev,container)=> //Get all the sliders in the container, if there is a match
+                [
+                    ...prev,
+                    ...container.querySelectorAll('.slider-container')
+                ],[])
+                .reduce((prev,sliderContainer)=>{ // recreate the sliderContainer object
+                    const ctrls =getSliderElements(sliderContainer);
+                    ctrls.name = ctrls.sliders[0].name;
+                    return [...prev,ctrls];
+                },[])
+            ];
         slidersForId.filter((container)=>group.dependents.includes(container.name))
             .forEach((container)=>{
                 container.sliders.forEach((slider)=>

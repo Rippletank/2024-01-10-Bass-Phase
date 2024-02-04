@@ -72,9 +72,9 @@ function distort(buffer, patch, sampleRate, isCyclic){
     }
 
     const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
-    cheb_2_3(ob, patch.distortion * patch.evenDistortion, patch.distortion * patch.oddDistortion);
-    if (patch.tanhDistortion>0)tanh_clip(ob, 0.0005 +8 * patch.distortion * patch.tanhDistortion );
-    clip(ob, d, -d);
+    cheb_3(ob, patch.distortion * patch.oddDistortion);
+    if (patch.tanhDistortion>0 || Math.abs(patch.asymTanhDistortion)>0)tanh_Saturation(ob, 0.0005 +8 * patch.distortion * patch.tanhDistortion, patch.distortion * patch.asymTanhDistortion );
+    if (patch.clipDistortion>0)clip(ob, d, -d);
 
     if (oversampling>1) downsample(ob, buffer, filter, oversampling, isCyclic);
 }
@@ -115,13 +115,14 @@ function clip(buffer,  thresholdHigh, thresholdLow){
         buffer[i] = v > thresholdHigh ? thresholdHigh : (v < thresholdLow ? thresholdLow : v);
     }
 }
-function tanh_clip(buffer, A)
+function tanh_Saturation(buffer, A, asymA)
 {
     let length = buffer.length;
-    const A0 = Math.tanh(A);
+    const A0 = Math.tanh(A*(1+Math.abs(asymA)));
     for(let i=0;i<length;i++){
         let v =buffer[i];
-        buffer[i] = Math.tanh(A * v)/A0;
+        const asym = Math.tanh(v);
+        buffer[i] = Math.tanh(A * (v + asymA*asym*asym))/A0;
     }
 }
 
@@ -138,6 +139,12 @@ function cheb_2(buffer,  amount){
     let length = buffer.length;
     for(let i=0;i<length;i++){
         let v =buffer[i];
+        //Unacceptable dc offset for silent audio with even harmonics
+        //Can't correct without dynamically adjusting dc offset
+        //A fixed amount of dc correction causes big DC offsets in high amplitude signals
+        //If not corrected, causes clicking at start and end
+        //If corrected, causes uselessly asymmetric waveforms
+        //Dymanically adjusting DC introduces an unecessary variable to testing
         buffer[i] += amount*(2* v * v  -1);
     }
 }
@@ -154,7 +161,7 @@ function cheb_2_3(buffer, even, odd){
         const v =buffer[i];
         //buffer[i] -= odd*( 4*v*v*v - 3*v) + even*(2* v * v  -1);
         const v2 = v*v;
-        buffer[i] -= odd*( 4*v2 - 3 )*v + (2* v2 - 1) * even;
+        buffer[i] -= odd*( 4*v2 - 3 )*v + (2* v2 - 1) * even;//Unacceptable dc offset for silent audio with even harmonics
     }
 }
 

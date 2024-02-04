@@ -30,8 +30,8 @@ const disableGroups =[
         ],
         dependents:[
             "oddDistortion",
-            "evenDistortion",
             "tanhDistortion",
+            "asymTanhDistortion",
             "clipDistortion",
             "jitter",
             "oversampleTimes",
@@ -221,12 +221,12 @@ function setValueFromPatch(ve, patch){
             break;
         case "oddDistortion":
             ve.textContent =toPercent(patch.oddDistortion);break;
-        case "evenDistortion":
-            ve.textContent =toPercent(patch.evenDistortion);break;
+        case "asymDistortion":
+            ve.textContent =toPercent(patch.asymDistortion);break;
         case "clipDistortion":
             ve.textContent =toPercent(patch.clipDistortion);break;
-        case "tanhDistortion":
-            ve.textContent =toPercent(patch.tanhDistortion*8);break;
+        case "asymTanhDistortion":
+            ve.textContent =toPercent(patch.asymTanhDistortion);break;
         case "tanhDistortion":
             ve.textContent =toPercent(patch.tanhDistortion);break;
         case "jitter": 
@@ -239,6 +239,25 @@ function setValueFromPatch(ve, patch){
             ve.textContent ='-'+(70 +40 *patch.oversampleStopDepth).toFixed(0) + "db";break;
         case "oversampleTransition":
             ve.textContent =(0.005 +0.025 *patch.oversampleTransition).toFixed(3) + " of fc";break;
+
+        case "inharmonicA":
+            ve.innerHTML =
+                toInharmonicString(
+                    patch.inharmonicALevel, 
+                    patch.inharmonicAFrequency.toFixed(0)+'Hz');
+            break;
+        case "inharmonicB":
+            ve.innerHTML =
+                toInharmonicString(
+                    patch.inharmonicBLevel, 
+                    patch.inharmonicBSemitones.toFixed(0)+' semitones');
+            break;
+        case "inharmonicC":
+            ve.innerHTML =
+                toInharmonicString(
+                    patch.inharmonicCLevel, 
+                    patch.inharmonicCSemitones.toFixed(0)+' semitones');
+            break;
     }
 }
 
@@ -254,6 +273,10 @@ function toReciprocal(value){
     
 }
 
+function toInharmonicString(level, pitchString){
+    if (level<=-90) return "<b>off</b>";
+    return level.toFixed(0) + "db &nbsp; " + pitchString;
+}
 function toFalloffString(value){
     let result = "";
     if (value==0) result = "1";
@@ -317,7 +340,7 @@ document.querySelectorAll('canvas').forEach(canvas => {
             let dy = event.clientY - startY;
             startX = event.clientX;
             startY = event.clientY;
-            def.drag(event.clientX/canvas.clientWidth, dx/canvas.clientWidth, dy/canvas.clientHeight);
+            def.drag(event.clientX/canvas.clientWidth, dx/canvas.clientWidth, 0/*dy/canvas.clientHeight*/);
             StopEventPropagation(event);
             repaintDetailedFFT();
         }

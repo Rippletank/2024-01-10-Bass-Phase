@@ -194,7 +194,7 @@ let distortionPresets = [
         patch:{
             distortion:0,
             oddDistortion:0,
-            evenDistortion:0,
+            asymTanhDistortion:0,
             clipDistortion:0,
             tanhDistortion:0.4,
             jitter:0,
@@ -205,7 +205,7 @@ let distortionPresets = [
         patch:{
             distortion:0.2,
             oddDistortion:0,
-            evenDistortion:0,
+            asymTanhDistortion:0,
             clipDistortion:0,
             tanhDistortion:0.4,
             jitter:0,
@@ -216,7 +216,7 @@ let distortionPresets = [
         patch:{
             distortion:0.5,
             oddDistortion:0.5,
-            evenDistortion:0.1,
+            asymTanhDistortion:0.4,
             clipDistortion:0,
             tanhDistortion:0.7,
             jitter:0,
@@ -381,13 +381,21 @@ function getDefaultPatch(){
 
         distortion:0,//0..1 0 = off, 1 = max distortion
         oddDistortion:0,//Third order Chebyshev polynomial distortion
-        evenDistortion:0,//second order Chebyshev polynomial distortion
-        clipDistortion:0,//0..1 0 = off, 1 = max distortion
+        asymTanhDistortion:0,//+/-1 tanh^2 distortion mixed into the tanh distortion
         tanhDistortion:0.4,//0= off
+        clipDistortion:0,//0..1 0 = off, 1 = max distortion
 
         oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
         oversampleStopDepth:0.5,//-70db to -110db - default = -90db
-        oversampleTransition:0.7//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
+        oversampleTransition:0.7,//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
+
+        inharmonicALevel:-91,//-91..0, in db -91 is off
+        inharmonicBLevel:-91,//-91..0, in db -91 is off
+        inharmonicCLevel:-91,//-91..0, in db -91 is off
+        inharmonicAFrequency:1000,//Hz (for now?)
+        inharmonicBSemitones:1,//semitones above root
+        inharmonicCSemitones:1,//semitones above root
+
     }
 }
 
