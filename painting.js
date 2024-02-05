@@ -177,11 +177,17 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     ctx.beginPath();
 
     const desiredStartF =detailedMinF* Math.pow(2,-octaveStep);
-    let startBin = Math.floor( desiredStartF * freqStep );
+    let startBin = Math.floor( desiredStartF * freqStep )-1;
     const actualStartF = startBin / freqStep;
-    let lastX = fftL + fftW * relativePosOfF(actualStartF, detailedMinF, maxLogF);
+    let lastX = fftW * relativePosOfF(actualStartF, detailedMinF, maxLogF);
+
+    //fill in past the end of last visible bin - otherwise will end in middle of view
+    let fillinBin = Math.ceil((detailedMinF * Math.pow(2,(fftW+1) * octaveStep))  * freqStep ) + 1;
+    let fillinF = fillinBin/freqStep;
+    let fillinX = fftW * relativePosOfF(fillinF, detailedMinF, maxLogF)+1;
+    
     let isFirst = true;
-    for (let i = 0; i < fftW; i++) {
+    for (let i = lastX; i < fillinX; i++) {
         let endOctave = (i+1) * octaveStep;
         let endBin = Math.round((detailedMinF * Math.pow(2,endOctave))  * freqStep );
         if (endBin>startBin){
@@ -211,6 +217,8 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
             lastX=x;
         }
     }
+
+
     ctx.stroke();
 
 
@@ -270,7 +278,7 @@ function calculateLogScalePositions(minF, maxF) {
     const fullRangeStep = largestPowerOfTenIncrement(minF, maxF);
 
     //2 Steps - octaves - exponential increase in frequency
-    const maxLevels =3;
+    const maxLevels =4;
     for (let i = 0; i <= numberOfFirstSteps; i++) {
         const flow = startF * Math.pow(10, i);
         const fhigh = startF * Math.pow(10, i + 1);
@@ -344,8 +352,8 @@ function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
     for (let pos of positions) {
         ctx.beginPath();
         const x = pos.x*fftW+fftL;
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, fftB);
+        ctx.moveTo(x, fftT);
+        ctx.lineTo(x, fftB+3);
         ctx.stroke();
         ctx.fillText(pos.f.toFixed(decimalsToUse), x, fftB + scaleGap*0.6);
     }
