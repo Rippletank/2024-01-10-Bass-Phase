@@ -65,18 +65,21 @@ function distort(buffer, patch, sampleRate, isCyclic){
 
     let ob =oversampling==1 ? buffer :  upsample(buffer, filter, polyphaseKernels, isCyclic);
 
-    if (patch.jitter>0) 
-    {
-        const rand= new SeededSplitMix32Random();//Might reuse for stereo
-        jitter(ob, patch.jitter, rand, isCyclic);
-    }
 
+    if (Math.abs(patch.hyperbolicDistortion)>0)hyperbolicAsymmetry(ob, patch.hyperbolicDistortion * patch.distortion);
     if (Math.abs(patch.oddDistortion)>0) cheb_3(ob, patch.distortion * patch.oddDistortion);
-    if (patch.tanhDistortion>0 || Math.abs(patch.asymTanhDistortion)>0)tanh_Saturation(ob, 0.0005 +8 * patch.distortion * patch.tanhDistortion, patch.distortion * patch.asymTanhDistortion );
+    
+    if (patch.tanhDistortion>0>0)tanh_Saturation(ob, 0.0005 +8 * patch.distortion * patch.tanhDistortion, 0);
+
     if (patch.clipDistortion>0)
     {
         const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
         clip(ob, d, -d);
+    }
+    if (patch.jitter>0) 
+    {
+        const rand= new SeededSplitMix32Random();//Might reuse for stereo
+        jitter(ob, patch.jitter, rand, isCyclic);
     }
 
     if (oversampling>1) downsample(ob, buffer, filter, oversampling, isCyclic);
@@ -111,6 +114,14 @@ function jitter(buffer, amount, rand, isCyclic){
 }
 
 
+function parabolicAymmetry(buffer, amount){
+    let length = buffer.length;
+    for(let i=0;i<length;i++){
+        let v =buffer[i];
+        buffer[i] = v > thresholdHigh ? thresholdHigh : (v < thresholdLow ? thresholdLow : v);
+    }
+}
+
 function clip(buffer,  thresholdHigh, thresholdLow){
     let length = buffer.length;
     for(let i=0;i<length;i++){
@@ -118,7 +129,31 @@ function clip(buffer,  thresholdHigh, thresholdLow){
         buffer[i] = v > thresholdHigh ? thresholdHigh : (v < thresholdLow ? thresholdLow : v);
     }
 }
-function tanh_Saturation(buffer, A, asymA)
+
+function hyperbolicAsymmetry(buffer, amount){
+    const tanhA=  1;
+    let length = buffer.length;
+    const A =-Math.pow(10,0.3+5*(1-Math.abs(amount)));
+    const B = Math.sqrt(Math.abs(A));
+    const s = Math.sign(amount);
+    const minimum = -B*0.8;
+    for(let i=0;i<length;i++){
+        let x =s *buffer[i];
+        if (x<minimum) x=minimum;//Clipping fuse - prevent hyperbolic blowing up
+        buffer[i] = s*( A/(x+B)+B);
+    }
+}
+
+function tanh_Saturation(buffer, A)
+{
+    let length = buffer.length;
+    const A0 = Math.tanh(A);
+    for(let i=0;i<length;i++){
+        let v =buffer[i];
+        buffer[i] = Math.tanh(A * v)/A0;
+    }
+}
+function tanh_AsymSaturation(buffer, A, asymA)
 {
     let length = buffer.length;
     const A0 = Math.tanh(A*(1+Math.abs(asymA)));
@@ -128,6 +163,16 @@ function tanh_Saturation(buffer, A, asymA)
         buffer[i] = Math.tanh(A * (v + asymA*asym*asym))/A0;
     }
 }
+// function tanh_Saturation(buffer, A, asymA)
+// {
+//     let length = buffer.length;
+//     const A0 = Math.tanh(A*(1+Math.abs(asymA)));
+//     for(let i=0;i<length;i++){
+//         let v =buffer[i];
+//         const asym = Math.tanh(v);
+//         buffer[i] = Math.tanh(A * (v + asymA*asym*asym))/A0;
+//     }
+// }
 
 //Chebyshev polynomials
 //https://mathworld.wolfram.com/ChebyshevPolynomialoftheFirstKind.html

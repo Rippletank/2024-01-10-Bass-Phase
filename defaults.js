@@ -194,7 +194,7 @@ let distortionPresets = [
         patch:{
             distortion:0,
             oddDistortion:0,
-            asymTanhDistortion:0,
+            hyperbolicDistortion:0,
             clipDistortion:0,
             tanhDistortion:0.4,
             jitter:0,
@@ -205,7 +205,7 @@ let distortionPresets = [
         patch:{
             distortion:0.2,
             oddDistortion:0,
-            asymTanhDistortion:0,
+            hyperbolicDistortion:0,
             clipDistortion:0,
             tanhDistortion:0.4,
             jitter:0,
@@ -216,7 +216,7 @@ let distortionPresets = [
         patch:{
             distortion:0.5,
             oddDistortion:0.5,
-            asymTanhDistortion:0.4,
+            hyperbolicDistortion:0.4,
             clipDistortion:0,
             tanhDistortion:0.7,
             jitter:0,
@@ -381,7 +381,7 @@ function getDefaultPatch(){
 
         distortion:0,//0..1 0 = off, 1 = max distortion
         oddDistortion:0,//Third order Chebyshev polynomial distortion
-        asymTanhDistortion:0,//+/-1 tanh^2 distortion mixed into the tanh distortion
+        hyperbolicDistortion:0,//+/-1 Hyperbolic distortion - mild asymmetry
         tanhDistortion:0.4,//0= off
         clipDistortion:0,//0..1 0 = off, 1 = max distortion
 

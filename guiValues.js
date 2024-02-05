@@ -31,7 +31,7 @@ const disableGroups =[
         dependents:[
             "oddDistortion",
             "tanhDistortion",
-            "asymTanhDistortion",
+            "hyperbolicDistortion",
             "clipDistortion",
             "jitter",
             "oversampleTimes",
@@ -225,8 +225,8 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.asymDistortion);break;
         case "clipDistortion":
             ve.textContent =toPercent(patch.clipDistortion);break;
-        case "asymTanhDistortion":
-            ve.textContent =toPercent(patch.asymTanhDistortion);break;
+        case "hyperbolicDistortion":
+            ve.textContent =toPercent(patch.hyperbolicDistortion);break;
         case "tanhDistortion":
             ve.textContent =toPercent(patch.tanhDistortion);break;
         case "jitter": 

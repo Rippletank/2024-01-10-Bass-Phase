@@ -308,6 +308,13 @@
         </div>
         <p class="THDReport paragraphReport"></p>
         <div class="slider-container">
+            <label for="hyperbolicDistortion">Hyperbolic Asym:</label>
+            <input type="range" id="hyperbolicDistortion" name="hyperbolicDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
+            <output class="valueSpan" name="hyperbolicDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Asymmetric harbolic function for even harmonics</div>
+        </div>
+        <div class="slider-container">
             <label for="oddDistortion">Odd harmonic:</label>
             <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
             <output class="valueSpan" name="oddDistortion">0%</output>
@@ -320,13 +327,6 @@
             <output class="valueSpan" name="tanhDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Tanh distortion, commonly used in Saturation modelling</div>
-        </div>
-        <div class="slider-container">
-            <label for="asymTanhDistortion">Asym Tanh:</label>
-            <input type="range" id="asymTanhDistortion" name="asymTanhDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
-            <output class="valueSpan" name="asymTanhDistortion">0%</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Asymmetric tanh based distortion, introduces some even harmonics</div>
         </div>
         <div class="slider-container">
             <label for="clipDistortion">Clipping:</label>
