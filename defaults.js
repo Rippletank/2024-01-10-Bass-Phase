@@ -20,8 +20,12 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Default values and presets - no knowledge of anything else in the code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const smallestLevel=-100;//db
+const zeroLevel=Math.pow(10,smallestLevel/20);//-100db global minimum level for calculations
 
-let defaultTestSubjectList = 
+const allowedOversampleTimes = [1,2,3,4,6,8,12,16];
+
+const defaultTestSubjectList = 
 [
     "rootPhaseDelay"
 ];
@@ -29,8 +33,9 @@ let defaultTestSubjectList =
 
 let wavePresets = [
     {
-        name:"default", 
+        name:"Default", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1.8,
             oddAlt:0,
@@ -43,8 +48,9 @@ let wavePresets = [
         }
     },
     {
-        name:"square", 
+        name:"Square", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:0,
@@ -59,6 +65,7 @@ let wavePresets = [
     {
         name:"Saw", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:0,
@@ -73,6 +80,7 @@ let wavePresets = [
     {
         name:"Triangle", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:2,
             oddAlt:1,
@@ -85,8 +93,9 @@ let wavePresets = [
         }
     },
     {
-        name:"stairs", 
+        name:"Stairs", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:0,
@@ -99,8 +108,9 @@ let wavePresets = [
         }
     },
     {
-        name:"pulse", 
+        name:"Pulse", 
         patch:{
+            balance:0,
             oddLevel:1,
             oddFalloff:1,
             oddAlt:1,
@@ -111,12 +121,27 @@ let wavePresets = [
             altW:0.75,
             altOffset:0,
         }
+    },
+    {
+        name:"Sine", 
+        patch:{
+            balance:-1,
+            oddLevel:1,
+            oddFalloff:2,
+            oddAlt:0,
+            evenLevel:0,
+            evenFalloff:1,
+            evenAlt:0,
+            sinCos:0,
+            altW:0.5,
+            altOffset:0,
+        }
     }
 ];
 
 let envelopePresets = [
     {
-        name:"default",
+        name:"Default",
         patch:{
             attack:0.005,
             hold:0,
@@ -163,9 +188,95 @@ let envelopePresets = [
 
 ];
 
+let distortionPresets = [
+    {
+        name:"Default",
+        patch:{
+            distortion:0,
+            hyperbolicDistortion:0,
+            oddDistortion:0,
+            tanhDistortion:0.4,
+            clipDistortion:0,
+            jitter:0,
+        }
+    },
+    {
+        name:"Light",
+        patch:{
+            distortion:0.2,
+            hyperbolicDistortion:0.1,
+            oddDistortion:0,
+            tanhDistortion:0.06,
+            clipDistortion:0,
+            jitter:0,
+        }
+    },
+    {
+        name:"Heavy",
+        patch:{
+            distortion:0.5,
+            hyperbolicDistortion:0.4,
+            oddDistortion:0.5,
+            tanhDistortion:0.7,
+            clipDistortion:0,
+            jitter:0,
+        }
+    },
+    {
+        name:"Jitter",
+        patch:{
+            distortion:1,
+            hyperbolicDistortion:0,
+            oddDistortion:0,
+            tanhDistortion:0,
+            clipDistortion:0,
+            jitter:0.8,
+            oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.5
+        }
+    },
+];
+
+
+let oversamplingPresets = [
+    {
+        name:"Default",
+        patch:{
+            oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.7
+        }
+    },
+    {
+        name:"Mid CPU",
+        patch:{
+            oversampleTimes:3,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.5
+        }
+    },
+    {
+        name:"Hi-Q",
+        patch:{
+            oversampleTimes:5,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.6,//-70db to -110db - default = -90db
+            oversampleTransition:0.2
+        }
+    },
+    {
+        name:"Off",
+        patch:{
+            oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+            oversampleTransition:0.5
+        }
+    },
+];
+
 let filterPresets = [
     {   
-        name:"default",
+        name:"Default",
         patch:{
             filterF1:10,
             filterF2:10,
@@ -217,7 +328,7 @@ let filterPresets = [
         }
     },    
     {   
-        name:"off",
+        name:"Off",
         patch:{
             filterF1:10,
             filterF2:10,
@@ -236,10 +347,12 @@ let filterPresets = [
 function getDefaultPatch(){
     return {
         frequency: 50,//Hz
+        frequencyFine: 0,//Hz
         rootPhaseDelay: 0,//-1..1 => -PI..PI for phase shift of fundamental
         higherHarmonicRelativeShift: 0,//fraction of rootPhaseDelay for phase of higher harmonics
 
         //Harmonic series
+        balance:0,//-1..1 0 = all harmonics equal, -1 = fundamental only, 1 = higher harmonics only
         oddLevel: 1,//-1..1 level of odd harmonics
         oddAlt: 0,//0..1 How much the odd harmonics alternate in polarity
         oddFalloff: 1.8,//1..2 How much the odd harmonics fall off in amplitude as a power of 1/n
@@ -265,6 +378,24 @@ function getDefaultPatch(){
         decayF: 0.2,// time in seconds to get to 1/1024 (-60db) of start value -> exponential decay
         filterSlope:12,//db/octave, 0=off
         filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
+
+        distortion:0,//0..1 0 = off, 1 = max distortion
+        oddDistortion:0,//Third order Chebyshev polynomial distortion
+        hyperbolicDistortion:0,//+/-1 Hyperbolic distortion - mild asymmetry
+        tanhDistortion:0.4,//0= off
+        clipDistortion:0,//0..1 0 = off, 1 = max distortion
+
+        oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
+        oversampleStopDepth:0.5,//-70db to -110db - default = -90db
+        oversampleTransition:0.7,//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
+
+        inharmonicALevel:-91,//-91..0, in db -91 is off
+        inharmonicBLevel:-91,//-91..0, in db -91 is off
+        inharmonicCLevel:-91,//-91..0, in db -91 is off
+        inharmonicAFrequency:1000,//Hz (for now?)
+        inharmonicBSemitones:1,//semitones above root
+        inharmonicCSemitones:1,//semitones above root
+
     }
 }
 

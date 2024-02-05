@@ -3,3 +3,17 @@ https://www.audiolabs-erlangen.de/resources/webMUSHRA
 https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations#Magnitude_(gain)%E2%80%93phase_relation
 https://courses.engr.illinois.edu/ece486/fa2021/documentation/lectures/slides/Lecture17B_BodeGainPhaseRelation.pdf
 https://en.wikipedia.org/wiki/ABX_test
+
+
+Solving Ordinary Differential Equations for systems at audio rates (first order):
+https://ccrma.stanford.edu/~dtyeh/papers/DavidYehThesissinglesided.pdf
+
+Loudspeaker non-linearity modelling
+https://repository.library.northeastern.edu/files/neu:336724/fulltext.pdf
+
+Discretization of ordinary differential - comprehensive introduction to all aspects
+https://people.sc.fsu.edu/~jpeterson/IVP.pdf
+
+Filter design - in particular manipulating understanding s-plane and z-plane representations
+https://www.kvraudio.com/forum/viewtopic.php?t=350246 && https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf?sscid=11k8_zwuzf
+

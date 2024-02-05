@@ -1,4 +1,3 @@
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Audio Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -27,51 +26,95 @@ let generatedSampleRate = 0;//Sample rate used to generate current buffers
 // Update method to create a buffer
 function getAudioBuffer(
     sampleRate,//Samples per second
-    patch
+    patch,
+    patchR,
+    maxPreDelay
     ) {
     //Calculate max delay in samples
-        
-    let delay0 = 0;
-    let delayN = 0;
-    let phaseShift0 = 0;
-        
-    if (envMode==1 ){
-        //Mode1 - delay envelopes by the same as the phase delay
-        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/patch.frequency ;
-        delay0 = patch.rootPhaseDelay<0 ? 0 : delay;
-        delayN = patch.rootPhaseDelay<0 ? delay : 0;
-    }
-    else{
-        //Mode2 - Envelope fixed, shift phase in place
-        phaseShift0 = patch.rootPhaseDelay * Math.PI;
-    }
+    
+    let channels=[{patch:patch}];
+    if (patchR) channels.push({patch:patchR});
 
-    let bufferSize = Math.round(sampleRate 
-        * (patch.attack + patch.hold + decayLengthFactor * patch.decay + patch.envelopeFilter*0.0003) + delay0 + delayN ); //Allow for attack and 1.5* decay time + extra for filter smoothing
+    channels.forEach(c=>{
+        let patch = c.patch;
+        let delay0 = maxPreDelay;
+        let delayN = maxPreDelay;
+        let phaseShift0 = 0;
+            
+        if (envMode==1 ){
+            //Mode1 - delay envelopes by the same as the phase delay
+            let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine) ;
+            delay0 += patch.rootPhaseDelay<0 ? 0 : delay;
+            delayN += patch.rootPhaseDelay<0 ? delay : 0;
+        }
+        else{
+            //Mode2 - Envelope fixed, shift phase in place
+            phaseShift0 = patch.rootPhaseDelay * Math.PI;
+        }
+    
+        let bufferSize = Math.round(sampleRate 
+            * (patch.attack + patch.hold + decayLengthFactor * patch.decay + patch.envelopeFilter*0.0003) + delay0 + delayN ); //Allow for attack and 1.5* decay time + extra for filter smoothing
+    
+            
+        c.bufferSize=bufferSize;
+        c.delay0=delay0;
+        c.delayN=delayN;
+        c.phaseShift0=phaseShift0;
+    });
 
 
+    maxBufferSize = channels.length>1 ? Math.max(channels[0].bufferSize,channels[1].bufferSize) : channels[0].bufferSize;
 
     //Create buffer
     let audioBuffer = new AudioBuffer({
-        length: bufferSize,
+        length: maxBufferSize,
         sampleRate: sampleRate,
-        numberOfChannels: 1
+        numberOfChannels: channels.length
       });
-      let b = audioBuffer.getChannelData(0);
-      let envelopeBuffer =buildEnvelopeBuffer(sampleRate, bufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
-      let filter =null;
-      if (patch.filterSlope!=0) 
-      {
-        filter = buildFilter(sampleRate, bufferSize, patch);
-      }
-      buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0);
+     
+      let envelopeBuffers =[];
+      let filters =[];
+
+      for(let i=0;i<channels.length;i++){
+            let c = channels[i];
+            let patch = c.patch;
+            let b = audioBuffer.getChannelData(i);
+            let envelopeBuffer =buildEnvelopeBuffer(sampleRate, maxBufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
+            let filter =null;
+            if (patch.filterSlope!=0) 
+            {
+                filter = buildFilter(sampleRate, maxBufferSize, patch);
+            }
+            buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0);
+            
+            AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
+
+            distort(b, patch, sampleRate, false);
+            envelopeBuffers.push(envelopeBuffer);
+            filters.push(filter);
+        }
       return {
             buffer:audioBuffer,
-            envelope:envelopeBuffer,
-            filter:filter
+            envelopes:envelopeBuffers,
+            filters:filters
       }
 
 }
+
+//takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
+function preMaxCalcStartDelay(patches, sampleRate){
+    let maxDelay = 0;
+    for (let i = 0; i < patches.length; i++) {
+        let patch = patches[i];
+        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
+        if(!patch || patch.rootPhaseDelay>=0) continue;
+        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine);
+        if (delay>maxDelay) maxDelay = delay;
+    }
+    return maxDelay;
+
+}
+
 
 //Return object with 3 float arrays,
 // samples - the audio samples for one complete cycle
@@ -83,8 +126,15 @@ function getPreview(referencePatch, filterPreviewSubject){
         ...defaultPatch,
         ...referencePatch
     };
-    let bufferSize = 1000; //Number of samples
-    let sampleRate = bufferSize * patch.frequency;//Ensure is one complete per cycle
+    let bufferSize = 1024; //Number of samples
+    return _buildPreview(patch, filterPreviewSubject,
+        bufferSize * (patch.frequency+patch.frequencyFine), //Ensure is one complete per cycle
+        bufferSize,
+        false);
+}
+
+
+function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false){
     let envelopeBuffer =[];
     let b = [];
     for (let i = 0; i < bufferSize; i++) {
@@ -114,6 +164,7 @@ function getPreview(referencePatch, filterPreviewSubject){
     let magnitude = [];
     let phase = [];
     let postProcessor = (n, w, level, phaseShift)=>{
+        //Capture the magnitude and phase of each harmonic - almost exactly like a FFT
         let l = level;
         if (filter){
             let c=w *filter.invW0[filter.invW0.length/2];
@@ -131,6 +182,29 @@ function getPreview(referencePatch, filterPreviewSubject){
         phase.push(phaseShift);
     }
     buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
+    
+
+    if (includeInharmonics){
+        let window =[];
+        let a0 = 0.35875;
+        let a1 = 0.48829;
+        let a2 = 0.14128;
+        let a3 = 0.01168;
+        for (let i = 0; i < bufferSize; i++) {
+            //Blackman-harris window (bufferSize-1) to ensure 1 at end
+            //https://en.wikipedia.org/wiki/Window_function
+            window.push( 
+                a0 - a1 * Math.cos(2 * Math.PI * i / (bufferSize - 1)) 
+                    + a2 * Math.cos(4 * Math.PI * i / (bufferSize - 1)) 
+                    - a3 * Math.cos(6 * Math.PI * i / (bufferSize - 1))
+            );
+        }    
+        AddInharmonics(patch, sampleRate, b, window, 0);
+    } 
+
+    let distorted =[...b];
+    distort(distorted, patch, sampleRate, true);
+
     return {
         samples:b,
         magnitude:magnitude,
@@ -139,10 +213,79 @@ function getPreview(referencePatch, filterPreviewSubject){
         max:Math.max(...b),
         min:Math.min(...b),
         filter:filter,
-        patch:patch
+        patch:patch,
+        distortedSamples:distorted,
+        virtualSampleRate:sampleRate
     };
 }
 
+
+let THDDefaultPatch = {
+    ...getDefaultPatch()
+}
+let THDSinePatch ={
+    ...wavePresets.filter(p=>p.name=="Sine")[0].patch
+}
+function measureTHDPercent(referencePatch){
+    if (referencePatch.distortion==0) return 0;
+
+    let patch = {
+        ...THDDefaultPatch,//all values covered
+        ...referencePatch,//distortion and oversampling parameters copied
+       ...THDSinePatch //Harmonic series set to sine wave
+    };
+
+    //Filter parameters ignored - no filter created
+    //Envelope parameters ignored - rectangular envelope created
+    //inharmonic parameters ignored - no inharmonics processed
+    //phase ignored - delay and phaseshift passed as zero
+    patch.frequency=1000;//1khz signal
+    patch.frequencyFine=0;//1khz signal
+
+
+    let bufferSize = 1024; //Number of samples
+    let sampleRate = bufferSize * (patch.frequency);
+    let envelopeBuffer =[];
+    let b = [];
+    for (let i = 0; i < bufferSize; i++) {
+        envelopeBuffer.push(1);
+        b.push(0);
+    }
+
+    buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, 0);
+    
+    distort(b, patch, sampleRate, true);
+
+    let fft = getFFT1024(b);
+
+    //Caluclate THD
+    let total = 0;
+    let harmonicsToInclude = 10;
+    for (let i = 2; i < harmonicsToInclude+2; i++) {
+        let vn = fft.magnitude[i];
+        total += vn * vn;
+    }
+    let THD = Math.sqrt(total) / fft.magnitude[1];
+    return THD*100;
+}
+
+
+function getBufferForLongFFT(samplerate, referencePatch){
+    let defaultPatch = getDefaultPatch();
+    let patch = {
+        ...defaultPatch,
+        ...referencePatch
+    };
+    const bufferSize = 65536;
+    let f = (patch.frequency+patch.frequencyFine);
+    let numberOfWavesInBuffer = f * bufferSize/samplerate;
+    const adjustedSampleRate = f * bufferSize / Math.round(numberOfWavesInBuffer);//Tweak samplerate to give whole number of cycles in buffer - better FFT
+
+    return _buildPreview(patch, filterPreviewSubject,
+        adjustedSampleRate, //Ensure is one complete per cycle
+        bufferSize,
+        true);
+}
 
 
 //Generate a single envelope, shared by all harmonics
@@ -278,10 +421,14 @@ function buildFilter(
 //Generate the harmonic series
 function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
     const nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
-    const rootW = patch.frequency * 2 * Math.PI  / sampleRate;
+    const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / sampleRate;
     const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
     bufferSize=b.length;
+
+    //Balance settings
+    const firstLevel = patch.balance<=0 ? 1 : (patch.balance==1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance)); //-75db
+    const higherLevel = patch.balance>=0 ? 1 : (patch.balance==-1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance)); //-75db
 
     //Alt needed for triangle wave causing polarity to flip for each successive harmonic
     const altW = patch.altW * Math.PI;   
@@ -290,26 +437,52 @@ function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, dela
     for (let n = 1; n < harmonics; n++) {
         let w = rootW * n;
         if (w>=nyquistW) return;//Nyquist limit
-        let level = 0;
+        let level = n==1 ? firstLevel : higherLevel;
         let isEven = n % 2 == 0;
         let delay = n==1 ? delay0 : delayN + delayScale/w;
         let phaseShift = phaseShift0 * (n==1 ? 1 :patch.higherHarmonicRelativeShift);
         if (isEven){
-            level = patch.evenLevel * ((Math.sin(n*altW - altOffset)-1) * patch.evenAlt + 1) * Math.pow(n,-patch.evenFalloff );
+            level *= patch.evenLevel * ((Math.sin(n*altW - altOffset)-1) * patch.evenAlt + 1) * Math.pow(n,-patch.evenFalloff );
         }
         else{
 
-            level=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
+            level*=patch.oddLevel * ((Math.sin(n*altW- altOffset)-1) * patch.oddAlt + 1) * Math.pow(n,-patch.oddFalloff);  
         }        
         mixInSine( b, w, filter,  envelopeBuffer, level ,delay, phaseShift + sinCos );
         if (postProcessor) postProcessor(n, w, level, phaseShift+ sinCos + delay * w);
     }
 }
 
+let pythagoreanScale=[1, 256/243, 9/8, 32/27, 81/64, 4/3, /*1024/729,*/ 729/512, 3/2, 128/81, 27/16, 16/9, 243/128, 2];
+let ptolemysScale=[   1, 256/243, 9/8, 32/27, 5/4,   4/3, /*1024/729,*/ 729/512, 3/2, 128/81, 27/16, 16/9, 15/8, 2];
+function AddInharmonics(patch, sampleRate, b, envelopeBuffer, delayN){
+    if (patch.inharmonicALevel>-91){
+        let level = Math.pow(10,patch.inharmonicALevel/20); 
+        let w = patch.inharmonicAFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+    if (patch.inharmonicBLevel>-91){
+        let level = Math.pow(10,patch.inharmonicBLevel/20); 
+        let f = patch.frequency+patch.frequencyFine;
+        //Equal temperament
+        let w = f * Math.pow(2, patch.inharmonicBSemitones/12) // (2^(1/12))^semitones
+            * 2 * Math.PI  / sampleRate; 
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+    if (patch.inharmonicCLevel>-91){
+        let level = Math.pow(10,patch.inharmonicCLevel/20); 
+        let f = patch.frequency+patch.frequencyFine;
+        //Just intonation
+        let w = f * ptolemysScale[patch.inharmonicCSemitones % 12] //semitones
+                * (1+Math.floor(patch.inharmonicCSemitones/12)) //octaves if needed
+        * 2 * Math.PI  / sampleRate; 
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+}
+
+
 
 //Generate a single sine wave and mix into the buffer
-const smallestLevel=-100;//db
-const zeroLevel=Math.pow(10,smallestLevel/20);//-100db
 function mixInSine(
     buffer, 
     w, //Hz 
@@ -320,14 +493,15 @@ function mixInSine(
     phaseOffset
     ) {
         if (Math.abs(amplitude)<zeroLevel) return;
-    let theta = phaseOffset + (Math.floor(delay) + 1 - delay) * w; //Phase accumulator + correction for fractional delay
+    let theta = phaseOffset //Phase accumulator 
+            + (((Math.floor(delay) + 1 - delay) % 1) -1) * w; //correction for fractional delay and also -1 to allow theta to be incremented at start of loop
     let env = -1;
     const bufferSize = buffer.length;
     for (let i = 0; i < bufferSize; i++) {
         if (i >= delay)   {
             env++;//call here to advance even if level is zero
             //Phase accumulator
-            theta += w;
+            theta += w;//call here to allow continue to still cause increments
             let l=envelopeBuffer[env];
             if (l<zeroLevel) continue;
             if (filter){
@@ -345,40 +519,46 @@ function mixInSine(
 }
 
 function getBufferMax(buffer){
-    let b = buffer.getChannelData(0);
-    let bufferSize = buffer.length;
     let max = 0;
-    for (let i = 0; i < bufferSize; i++) {
-        let val = Math.abs( b[i]);
-        if (val>max) max = val;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.getChannelData(chan);
+        let bufferSize = buffer.length;
+        for (let i = 0; i < bufferSize; i++) {
+            let val = Math.abs( b[i]);
+            if (val>max) max = val;
+        }
     }
     return max;
 }
 
 function scaleBuffer(buffer, scale){
-    let b = buffer.getChannelData(0);
-    let bufferSize = buffer.length;
     let max = 0;
-    for (let i = 0; i < bufferSize; i++) {
-        b[i]*=scale;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.getChannelData(chan);
+        let bufferSize = buffer.length;
+        for (let i = 0; i < bufferSize; i++) {
+            b[i]*=scale;
+        }
     }
     return max;
 }
 
 function buildNullTest(bufferA, bufferB){
     let length = Math.min(bufferA.length, bufferB.length);
-    var A = bufferA.getChannelData(0);
-    var B = bufferB.getChannelData(0);
     let nullTest = new AudioBuffer({
         length: length,
         sampleRate: bufferA.sampleRate,
-        numberOfChannels: 1
+        numberOfChannels: bufferA.numberOfChannels
       });
-      let b = nullTest.getChannelData(0);
-      for (let i = 0; i < length; i++) {
+    for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
+        var A = bufferA.getChannelData(channel);
+        var B = bufferB.getChannelData(channel);
+        let b = nullTest.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
         b[i] = A[i] - B[i];
-      }
-      return nullTest;
+        }
+    }
+    return nullTest;
 }
 
 

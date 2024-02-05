@@ -36,31 +36,47 @@
         <option value="1">
     </datalist>
 
+    
+
+    <datalist id="ticksZero">
+        <option value="0">
+    </datalist>
     <datalist id="ticks0half1">
         <option value="0">
         <option value="0.5">
         <option value="1">
     </datalist>
 
-
     <!--**********************************************************************-->
     <!--*****************  Start ABX Setup and Test  *************************-->
     <!--**********************************************************************-->
 
-    <div class="bordered"  id="SoundASetup">
+    <div class="bordered">
         <h3>Sound A</h3>
-        <div>
-            <canvas id="waveformA"  class="waveformCanvas" width ="800" height="200"></canvas>
+        <div class="canvasBox">
+            <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <div class="testSoundControls" id="SoundASetup">
+            <h3 class="stereoLabel hideForMono">Left:</h3>
+        </div>
+        <div class="testSoundControls hideForMono" id="SoundARSetup">
+            <h3 class="stereoLabel hideForMono">Right:</h3>
         </div>
         <button id="playSoundA">Play A</button>
     </div>
 
 
 
-    <div class="bordered" id="SoundBSetup">
+    <div class="bordered">
         <h3>Sound B</h3>
-        <div>
-            <canvas id="waveformB"  class="waveformCanvas" width ="800" height="200"></canvas>
+        <div class="canvasBox">
+            <canvas id="waveformB"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <div class="testSoundControls" id="SoundBSetup">
+            <h3 class="stereoLabel hideForMono">Left:</h3>
+        </div>
+        <div class="testSoundControls hideForMono" id="SoundBRSetup">
+            <h3 class="stereoLabel hideForMono">Right:</h3>
         </div>
         <button id="playSoundB">Play B</button>
     </div>
@@ -84,11 +100,30 @@
         </div>
     </div>
     <div class="bordered">
-        <h3>Background info - see <a href="#Notes1">notes</a></h3>
+        <h3>Background info - see <a href="#Notes1">notes</a> </h3>
         <div class ="previewButtons">
+            <div class="previewButtons previewL">
+                <button name="sStereo" class = "previewButton">Stereo</button>
+            </div>
+            <div class="previewButtons previewC">
+                <button name="xSave" class = "previewButton">save</button>
+                <button name="xLoad" class = "previewButton">load</button>
+                <button name="xCopy" class = "previewButton">copy</button>
+                <button name="xPaste" class = "previewButton">paste</button>
+            </div>
             <div class="previewButtons">
-                <button id="waveformShowF" class = "previewButton">Filter overlays</button>
-                <button id="waveformShowEG" class = "previewButton">Envelope overlays</button>
+                <button name="wShowF" class = "previewButton">Filter overlays</button>
+                <button name="wShowEG" class = "previewButton">Envelope overlays</button>
+            </div>
+        </div>
+        <div class ="previewButtons spaceTop">
+            <div class="previewButtons previewL">
+            </div>
+            <div class="previewButtons previewC">
+                <select id="serverPresetList" title="Server Presets"></select>
+            </div>
+            <div class="previewButtons">
+                <p>Background info - see <a href="#Notes1">notes</a> </p>
             </div>
         </div>
     </div>
@@ -97,26 +132,42 @@
     <!--*******************  End ABX Setup and Test  *************************-->
     <!--**********************************************************************-->
     
+    
+
     <div class="bordered" id="CommonSettings">
         <h3>Sound Settings</h3>
         <div class="slider-container">
             <label for="freq">Frequency:</label>
-            <input type="range" id="freq" name="frequency" min="20" max="200" step="1" value="50">
+            <input type="range" id="freq" name="frequency" min="20" max="2000" step="1" value="50">
             <output  class="valueSpan" name="frequency">50Hz</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Frequency of first harmonic (fundamental)</div>
         </div>
+        <div class="slider-container">
+            <label for="freqFine">Frequency (fine):</label>
+            <input type="range" id="freqFine" name="frequencyFine" min="-5" max="5" step="0.01" value="0">
+            <output  class="valueSpan" name="frequencyFine">0Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Fine adjust for frequency</div>
+        </div>
 
         
-        <div class="presetHeader">
+        <div class="presetHeader topSpaced">
             <h4>Harmonic Series</h4>
             <div id="wavePresetButtons" class="PresetButtons"></div>
         </div>
         <div class="slider-container">
+            <label for="balance">Balance (1st↔higher):</label>
+            <input type="range" id="balance" name="balance" min="-1" max="1" step="0.001" value="0" list="ticksPlus1ZeroMinus1">
+            <output class="valueSpan" name="balance">same</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the balance between the first harmonic and the others.</div>
+        </div>
+        <div class="slider-container">
             <label for="even">Even Level:</label>
             <input type="range" id="even" name="evenLevel" min="-1" max="1" step="0.1" value="-1" class="mid-slider" list="ticksPlus1ZeroMinus1">
-            <label for="evenAlternating"  class="flipLabel">Alt Amt:</label>
-            <input type="range" id="evenAlternating" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
+            <label for="evenAlt"  class="flipLabel">Alt Amt:</label>
+            <input type="range" id="evenAlt" name="evenAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
             <output class="valueSpan" name="even">-1</output>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
@@ -132,8 +183,8 @@
         <div class="slider-container">
             <label for="odd">Odd Level:</label>
             <input type="range" id="odd" name="oddLevel" min="-1" max="1" step="0.1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
-            <label for="oddAlternating"  class="flipLabel">Alt Amt:</label>
-            <input type="range" id="oddAlternating" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
+            <label for="oddAlt"  class="flipLabel">Alt Amt:</label>
+            <input type="range" id="oddAlt" name="oddAlt" min="0" max="1" step="0.1" value="0" class="short-slider" list="ticksPlus1Zero">
             <output class="valueSpan" name="odd">1</output>
             <span class="help-icon">?</span>
             <div class="help-popup">First slider controls the level and polarity of the harmonics. The second slider controls how much the polarity alternates, full on will alternate polarity for each harmonic added. </div>
@@ -166,30 +217,34 @@
             <span class="help-icon">?</span>
             <div class="help-popup">Adjusts where the positive, negative and zero values of the alternations falls. When at zero, with Alternation Freq set to 2, the alternations fall on odd harmonics. Change to +/-1 to fall on even harmonics.</div>
         </div>      
-        <div>
-            <canvas id="wavePreview"  width ="800" height="200"></canvas>
+        <div class="canvasBox">
+            <canvas id="wavePreview"  width ="2000" height="500"></canvas>
         </div>
         <div class ="previewButtons">
             <div class="previewButtons previewL">
-                <button id="previewD" class = "previewButton">def</button>
-                <button id="previewA" class = "previewButton">A</button>
-                <button id="previewB" class = "previewButton">B</button>
+                <button name="PD" class = "previewButton">def</button>
+                <button name="PA" class = "previewButton hideForStereo">A</button>
+                <button name="PB" class = "previewButton hideForStereo">B</button>
+                <button name="PA" class = "previewButton hideForMono">A-L</button>
+                <button name="PAR" class = "previewButton hideForMono">A-R</button>
+                <button name="PB" class = "previewButton hideForMono">B-L</button>
+                <button name="PBR" class = "previewButton hideForMono">B-R</button>
             </div>
             <div class="previewButtons previewC">
-                <button id="previewF0" class = "previewButton">off</button>
-                <button id="previewF1" class = "previewButton">F1</button>
-                <button id="previewF2" class = "previewButton">F2</button>
-                <button id="previewF3" class = "previewButton">F3</button>
+                <button name="F0" class = "previewButton">off</button>
+                <button name="F1" class = "previewButton">F1</button>
+                <button name="F2" class = "previewButton">F2</button>
+                <button name="F3" class = "previewButton">F3</button>
             </div>
 
             <div class="previewButtons">
-                <button id="fullButton" class = "previewButton">Full</button>
-                <button id="phaseButton" class = "previewButton">Φ</button>
-                <button id="polarityButton" class = "previewButton">+/-</button>
+                <button name="HFull" class = "previewButton">Full</button>
+                <button name="HPhase" class = "previewButton">Φ</button>
+                <button name="HPolarity" class = "previewButton">+/-</button>
             </div>
         </div>
 
-        <div class="presetHeader">
+        <div class="presetHeader topSpaced">
             <h4>Envelope</h4>
             <div id="envelopPresetButtons" class="PresetButtons"></div>
         </div>
@@ -225,16 +280,157 @@
             <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
         </div>
     </div>
-    <div class="bordered" id="FilterSetup">
-        <h3>Filter Settings</h3>
+
+
+    <div class="bordered" id="DistortionSetup">
         <div class="presetHeader">
-            <h4>Filter</h4>
+            <h3>Distortion Settings</h3>
+            <div id="distortionPresets" class="PresetButtons"></div>
+        </div>
+     
+        <div class="canvasBox">
+            <canvas id="distortionPreview"  width ="2000" height="500"></canvas>
+        </div>
+        <div class ="previewButtons bottomSpaced">
+            <div class="previewButtons previewL">
+                <button name="PD" class = "previewButton">def</button>
+                <button name="PA" class = "previewButton hideForStereo">A</button>
+                <button name="PB" class = "previewButton hideForStereo">B</button>
+                <button name="PA" class = "previewButton hideForMono">A-L</button>
+                <button name="PAR" class = "previewButton hideForMono">A-R</button>
+                <button name="PB" class = "previewButton hideForMono">B-L</button>
+                <button name="PBR" class = "previewButton hideForMono">B-R</button>
+            </div>
+            <div class="previewButtons previewC">
+                <button name="F0" class = "previewButton">off</button>
+                <button name="F1" class = "previewButton">F1</button>
+                <button name="F2" class = "previewButton">F2</button>
+                <button name="F3" class = "previewButton">F3</button>
+            </div>
+
+            <div class="previewButtons">
+                <button name="DFull" class = "previewButton">Full</button>
+                <button name="DPhase" class = "previewButton">Φ</button>
+                <button name="DPolarity" class = "previewButton">+/-</button>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <label for="distortion"><b>Distortion Level:</b></label>
+            <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="distortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Turns distortion on and off and controls the overall amount</div>
+        </div>
+        <p class="THDReport paragraphReport"></p>
+        <div class="slider-container">
+            <label for="hyperbolicDistortion">Hyperbolic Asym:</label>
+            <input type="range" id="hyperbolicDistortion" name="hyperbolicDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
+            <output class="valueSpan" name="hyperbolicDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Asymmetric harbolic function for even harmonics</div>
+        </div>
+        <div class="slider-container">
+            <label for="oddDistortion">Odd harmonic:</label>
+            <input type="range" id="oddDistortion" name="oddDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
+            <output class="valueSpan" name="oddDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Third order Chebyshev polynomial distortion, generating third harmonic for a sine wave</div>
+        </div>
+        <div class="slider-container">
+            <label for="tanhDistortion">Tanh Saturation:</label>
+            <input type="range" id="tanhDistortion" name="tanhDistortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="tanhDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Tanh distortion, commonly used in Saturation modelling</div>
+        </div>
+        <div class="slider-container">
+            <label for="clipDistortion">Clipping:</label>
+            <input type="range" id="clipDistortion" name="clipDistortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="clipDistortion">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Plain old full hard clipping</div>
+        </div>
+        <div class="slider-container">
+            <label for="jitter">Jitter:</label>
+            <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="jitter">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Random temporal misplacement of sample in normal distribution up to +/-0.5*time-period (1/fs)</div>
+        </div>
+        
+        <div class="presetHeader">
+            <h3>Over-sampling</h3>
+            <div id="oversamplingPresets" class="PresetButtons"></div>
+        </div>
+        <div class="slider-container">
+            <label for="oversampleTimes">Over Factor:</label>
+            <input type="range" id="oversampleTimes" name="oversampleTimes" min="0" max="6" step="1" value="2"  list="ticksZero">
+            <output class="valueSpan" name="oversampleTimes">x4</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">How many times the sample rate is increased for the non-linear processes to be applied</div>
+        </div>
+        <div class="slider-container">
+            <label for="oversampleStopDepth">Stop Band:</label>
+            <input type="range" id="oversampleStopDepth" name="oversampleStopDepth" min="0" max="1" step="0.1" value="0.5">
+            <output class="valueSpan" name="oversampleStopDepth">90db%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">The amount of cut in the stop-band.</div>
+        </div>
+        <div class="slider-container">
+            <label for="oversampleTransition">Transition Width:</label>
+            <input type="range" id="oversampleTransition" name="oversampleTransition" min="0." max="1" step="0.1" value="0.5">
+            <output class="valueSpan" name="oversampleTransition">0.1 x fc</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">The width of the transition band between pass and stop</div>
+        </div>
+        <p class="oversamplingReport paragraphReport">Distortion processing off</p>
+        <div class="presetHeader">
+            <h3>Inharmonics</h3>
+            <div id="inharmonicPresets" class="PresetButtons"></div>
+        </div>
+        <div class="slider-container">
+            <label for="inharmonicAFrequency">A (Frequency):</label>
+            <input type="range" id="inharmonicAFrequency" name="inharmonicAFrequency" min="20" max="2000" step="1" value="1000" class="mid-slider" list="ticksPlus1ZeroMinus1">
+            <label for="inharmonicALevel"  class="flipLabel">Level:</label>
+            <input type="range" id="inharmonicALevel" name="inharmonicALevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+            <output class="valueSpan" name="inharmonicA">-1</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Level and frequency of a tone, A, mixed in to the main sound. Frequency set directly. </div>
+        </div>
+        <div class="slider-container">
+            <label for="inharmonicBSemitones">B (Equal Temper.):</label>
+            <input type="range" id="inharmonicBSemitones" name="inharmonicBSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
+            <label for="inharmonicBLevel"  class="flipLabel">Level:</label>
+            <input type="range" id="inharmonicBLevel" name="inharmonicBLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+            <output class="valueSpan" name="inharmonicB">-1</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Equal temperament scale. </div>
+        </div>
+        <div class="slider-container">
+            <label for="inharmonicCSemitones">C (Just Intonation):</label>
+            <input type="range" id="inharmonicCSemitones" name="inharmonicCSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
+            <label for="inharmonicCLevel"  class="flipLabel">Level:</label>
+            <input type="range" id="inharmonicCLevel" name="inharmonicCLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+            <output class="valueSpan" name="inharmonicC">off</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Ptolemy's intense diatonic scale. </div>
+        </div>
+
+
+    </div>
+
+
+
+    <div class="bordered" id="FilterSetup">
+        <div class="presetHeader">
+            <h3>Filter Settings</h3>
             <div id="filterPresetButtons" class="PresetButtons"></div>
         </div>
 
         <div class="slider-container">
             <label for="filterSlope">Slope</label>
-            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12">
+            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12" list="ticksZero">
             <output class="valueSpan" name="filterSlope">12db/octave</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Slope of filter after cut-off</div>
@@ -290,6 +486,8 @@
 
     </div>
 
+
+
     <div class="bordered" id="TestSetup">
         <h3>Phase shift settings</h3>
         <h4>Root Phase shift</h4>
@@ -313,7 +511,7 @@
         <h4>Higher harmonic shift</h4>
         <div class="slider-container">
             <label for="second">Relative Phase delay:</label>
-            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0">
+            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="higherHarmonicRelativeShift">0</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
@@ -322,31 +520,73 @@
     </div>
     
     <div class="bordered">
+        <h3>Null test <span id="nullTestdb"></span></h3>        
+        <div class="canvasBox">
+            <canvas id="waveformNull"  class="fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <button id="playSoundNull">Play</button>
+        <p>See <a href="#Notes1">explanation of Null Test</a></p>
+    </div>
+    <div class="bordered">
         <h3>FFT</h3>
         <div class="fftPlayButtons">
             <button id="fftPlayA" class="fftPlayButton">Play A</button>
             <button id="fftPlayB" class="fftPlayButton">Play B</button>
             <button id="fftPlayN" class="fftPlayButton">Play Null</button>
         </div>
-        <div>
-            <canvas id="fftCanvas" width ="800" height="200"></canvas>
+        <div class="canvasBox">
+            <canvas id="fftCanvas"></canvas>
         </div>
-        <p>Only really useful for testing and development. Set to "Tone" envelope preset.</p>
-        <button id="hideFFT">Hide FFT</button>
+        
+        <div class ="previewButtons">
+            <div class="previewButtons previewL">
+            </div>
+            <div class="previewButtons previewC">
+            </div>
+            <div class="previewButtons">
+                <button name="apiFFT" class = "previewButton">On</button>
+            </div>
+        </div>
+        <p>From playback.</p>
     </div>
-
-
     <div class="bordered">
-        <h3>Null test <span id="nullTestdb"></span></h3>        
-        <div>
-            <canvas id="waveformNull" width ="800" height="200"></canvas>
+        <h3>Static Detailed FFT </h3>
+        <div class="canvasBox">
+            <canvas id="staticFFTCanvas" width ="2000" height="500"></canvas>
         </div>
-        <button id="playSoundNull">Play</button>
-        <p>See <a href="#Notes1">explanation of Null Test</a></p>
+        
+        <div class ="previewButtons bottomSpaced">
+            <div class="previewButtons previewL">
+                <button name="PD" class = "previewButton">def</button>
+                <button name="PA" class = "previewButton hideForStereo">A</button>
+                <button name="PB" class = "previewButton hideForStereo">B</button>
+                <button name="PA" class = "previewButton hideForMono">A-L</button>
+                <button name="PAR" class = "previewButton hideForMono">A-R</button>
+                <button name="PB" class = "previewButton hideForMono">B-L</button>
+                <button name="PBR" class = "previewButton hideForMono">B-R</button>
+            </div>
+            <div class="previewButtons previewC">
+                <button name="F0" class = "previewButton">off</button>
+                <button name="F1" class = "previewButton">F1</button>
+                <button name="F2" class = "previewButton">F2</button>
+                <button name="F3" class = "previewButton">F3</button>
+            </div>
+
+            <div class="previewButtons">
+                <button name="qd120" class = "previewButton">120</button>
+                <button name="qd90" class = "previewButton">90</button>
+                <button name="qd60" class = "previewButton">60</button>
+                <button name="qf-" class = "previewButton">F-</button>
+                <button name="qfR" class = "previewButton">R</button>
+                <button name="qf+" class = "previewButton">F+</button>
+                <button name="qDo" class = "previewButton">Update</button>
+            </div>
+        </div>
     </div>
 
 
-    
+
+
 
     <div id="Notes1" class="bordered">
         <h3>Notes: Background</h3>
@@ -369,13 +609,16 @@
         <p>Play back and image of the null test result is of the normalised version. Peak level is measured before any normalising.</p> 
         <p>The null test should only contain the first harmonic (and second if it is shifted, too) plus a little distortion for short attacks and/or low smoothing due to offset attack starts.</p>
         <p>Changes to harmonics controls should not affect the sound of the null test result (with no second harmonic shift).</p>
-        <p>The null test is messed up if either phase shift is negative because then the algorithm delays the higher harmonics instead and leaves the first harmonic at the start.</p>  
-        <p>The envelope offset will affect the null results. Increase the hold time to generate a constant level section to give more predictable null test results.</p> 
         <p>With a significant hold time and no second harmonic shift, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
     </div>
     <script src="defaults.js"></script>
+    <script src="basicFFT.js"></script>
+    <script src="oversampling.js"></script>
+    <script src="distortion.js"></script>
     <script src="audio.js"></script>
+    <script src="painting.js"></script>
     <script src="audioAPI.js"></script>
+    <script src="guiValues.js"></script>
     <script src="gui.js"></script>
 </body>
 </html>

@@ -16,6 +16,7 @@ canvas {
     width: 95%;
     height: 200px;
     margin: 0 auto;
+    aspect-ratio: 2.5;
 }
 
 .slider-container {
@@ -110,13 +111,29 @@ canvas {
     z-index: 1000;
 }
 
+
+.slider-container .blurredDisabled{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+}
 .presetHeader{
     display: flex;
     align-items: center;
+}
+
+.topSpaced{
     margin-top: 2em;
 }
 
+.bottomSpaced{
+    margin-bottom: 2em;
+}
+
 .presetHeader h4{
+    flex-basis: 20%;
+}
+.presetHeader h3{
     flex-basis: 20%;
 }
 .PresetButtons {
@@ -140,6 +157,10 @@ canvas {
  margin-top: 2em;
  margin-bottom: 0.5em;
 }
+#distortionPreview{
+ margin-top: 2em;
+ margin-bottom: 0.5em;
+}
 
 .previewButtons {
     margin-top: 0em;
@@ -149,7 +170,14 @@ canvas {
     display: flex;
     justify-content:right;
 }
+.previewButtons p{
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
 
+.spaceTop{
+    margin-top: 1.5em;
+}
 .previewButtons .previewL{
     margin-right:auto;
     justify-content:left;
@@ -182,6 +210,18 @@ canvas {
     border-radius: 5px;
 }
 
+.tooltip{
+    padding : 10px;
+    background: white;
+    border : 1px solid black;
+    border-radius : 5px;
+}
+
+#serverPresetList{
+    padding-left: 2em;
+    padding-right: 2em;
+    padding-top: 0em;
+}
 
 #centerContainer {
     display: flex;
@@ -230,6 +270,11 @@ canvas {
     margin: 10px;
     padding: 10px;
 }
+.testSoundControls {
+
+    margin: 0px;
+    padding: 10px;
+}
 
 .bordered h3{
    margin-top: 0.1em; 
@@ -249,4 +294,13 @@ canvas {
 
 .waveformCanvas {
     margin-bottom: 2em;
+}
+
+.blur {
+    filter: blur(4px);
+}
+
+.paragraphReport{
+    text-align: center;
+    color: #6b8b6b;
 }

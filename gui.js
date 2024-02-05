@@ -15,8 +15,12 @@
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//GUI wiring up Code - handles creation of the patch objects and value display on GUI
-//Calls play and refresh methods inside audioAPI.js
+//GUI wiring up Code - handles connecting the GUI to the audio code 
+//Doesn't know anything about the contents of the patch, audio calculations or Web Audio API
+//Patch values handled by guiValues.js
+//Audio API handled by audioAPI.js (including calls to painting.js to update preview and waveform displays)
+//Audio calculations handled by audio.js and distortion.js 
+//Distortion fft shown using fft.js
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -43,78 +47,208 @@ document.getElementById('fftPlayN').addEventListener('click', function() {
     play(2);
 });
 
+
 function play(index){
-    playAudio(index, cachedPatchA, cachedPatchB);   
+    playAudio(index, cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);   
 }
 
-//FFT buttons
-document.getElementById('hideFFT').addEventListener('click', function() {
-    useFFT = !useFFT;
-    if (!useFFT) fftClear();
-    this.textContent = useFFT ? "Hide FFT" : "Show FFT";
-});
-
-//Waveform overlay buttons
-document.getElementById('waveformShowF').addEventListener('click', function() {
-    showBufferFilterOverlay=!showBufferFilterOverlay;
-    updatePreviewButtonState();
-    updateDisplay();
-});
-document.getElementById('waveformShowEG').addEventListener('click', function() {
-    showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
-    updatePreviewButtonState();
-    updateDisplay();
-});
-
-
-//Harmonics Preview option buttons
-document.getElementById('fullButton').addEventListener('click', function() {
-    previewSpectrumFullWidth=!previewSpectrumFullWidth;
-    updatePreviewButtonState();
-    paintPreview();
-});
-
-document.getElementById('phaseButton').addEventListener('click', function() {
-    previewSpectrumShowPhase=!previewSpectrumShowPhase;
-    updatePreviewButtonState();
-    paintPreview();
-});
-
-document.getElementById('polarityButton').addEventListener('click', function() {
-    previewSpectrumPolarity=!previewSpectrumPolarity;
-    updatePreviewButtonState();
-    paintPreview();
-});
-
-let previewSubject =0;
-document.getElementById('previewD').addEventListener('click', function() {
-    previewSubject = 0;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewA').addEventListener('click', function() {
-    previewSubject = 1;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewB').addEventListener('click', function() {
-    previewSubject = 2;
-    DoFullPreviewUpdate();
-});
-
-document.getElementById('previewF0').addEventListener('click', function() {
-    filterPreviewSubject = 0;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewF1').addEventListener('click', function() {
-    filterPreviewSubject = 1;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewF2').addEventListener('click', function() {
-    filterPreviewSubject = 2;
-    DoFullPreviewUpdate();
-});
-document.getElementById('previewF3').addEventListener('click', function() {
-    filterPreviewSubject = 3;
-    DoFullPreviewUpdate();
+//load settings for all of the little green buttons
+let previewButtons = document.querySelectorAll('.previewButton');
+previewButtons.forEach(function(button) {
+    switch(button.name[0]){    
+        case 's'://Stereo 
+            button.addEventListener('click', function() {
+                isStereo = !isStereo;
+                updatePreviewButtonState();
+                setUpStereo(isStereo);
+            });
+            button.isChecked =()=> isStereo;
+            break;
+        case 'P': //patch to use for preview
+            let sub =0;
+            let chan=0;
+            switch(button.name){
+                case 'PD': sub=0;chan=0;break;
+                case 'PA': sub=1;chan=0;break;
+                case 'PAR': sub=1;chan=1;break;
+                case 'PB': sub=2;chan=0;break;
+                case 'PBR': sub=2;chan=1;break;
+            };
+            button.addEventListener('click', function() {
+                previewSubject = sub;
+                previewSubjectChannel = chan;
+                DoFullPreviewUpdate();
+            });
+            button.isChecked =()=> previewSubject == sub && (!isStereo || previewSubjectChannel==chan);
+        break;
+        case 'a'://apiFFT
+            if (button.name=='apiFFT') {
+                button.addEventListener('click', function() {
+                    useFFT = !useFFT;
+                    updatePreviewButtonState();
+                });
+                button.isChecked =()=> useFFT;
+            }
+        break;
+        case 'q'://detailed FFT
+            let action = null;
+            let checked = null;
+            if (button.name=='qDo') {
+                action = ()=>updateDetailedFFT();
+                checked =()=> false;
+            }
+            else if (button.name[1]=='f') {
+                switch(button.name[2]){
+                    case '-':
+                        action = ()=>
+                        {
+                            canvasTooltips.staticFFTCanvas.drag(0.5, 0,0.5);
+                            repaintDetailedFFT();
+                        }
+                        break;
+                    case '+':
+                        action = ()=>
+                            {   
+                                canvasTooltips.staticFFTCanvas.drag(0.5, 0,-0.5);
+                                repaintDetailedFFT();
+                            }
+                        break;
+                    case 'R':
+                        action = ()=>
+                        {
+                            detailedMinF =20;
+                            detailedMaxF =20000;
+                            repaintDetailedFFT();
+                        };
+                        break;
+                }
+                checked =()=> false;
+            }
+            else if (button.name[1]=='d') {
+                let target =90;
+                switch(button.name[2]){
+                    case '6'://60db
+                        target=-60;
+                        break;
+                    case '9'://90db
+                        target=-90;
+                        break;
+                    case '1'://120db
+                        target=-120;
+                        break;
+                }
+                action = ()=>
+                    {
+                        detailedMinDb =target;
+                        repaintDetailedFFT();
+                        updatePreviewButtonState();
+                    }
+                checked =()=> detailedMinDb ==target;
+            }
+            button.addEventListener('click', function() {
+                action();
+            });
+            button.isChecked =checked;
+        break;
+        case 'F': //filter preview options
+            let subF =parseInt(button.name[1]);
+            button.addEventListener('click', function() {
+                filterPreviewSubject = subF;
+                DoFullPreviewUpdate();
+            });
+            button.isChecked =()=> filterPreviewSubject == subF;
+        break;
+        case 'H'://Harmonics preview view options
+            let fh = ()=>{};//function to call when clicked
+            let ch = ()=>false;//isChecked function
+            switch(button.name){
+                case 'HFull': 
+                    fh=()=>previewSpectrumFullWidth=!previewSpectrumFullWidth;
+                    ch=()=>previewSpectrumFullWidth;
+                    break;
+                case 'HPhase': 
+                    fh=()=>previewSpectrumShowPhase=!previewSpectrumShowPhase;
+                    ch=()=>previewSpectrumShowPhase;
+                    break;
+                case 'HPolarity': 
+                    fh=()=>previewSpectrumPolarity=!previewSpectrumPolarity;
+                    ch=()=>previewSpectrumPolarity;
+                    break;
+            }
+            button.addEventListener('click', function() {
+                fh();
+                updatePreviewButtonState();
+                paintPreview();
+            });
+            button.isChecked =ch;
+        break;
+        case 'x'://Harmonics preview view options
+            let xa = ()=>{};//function to call when clicked
+            let xc = ()=>false;//isChecked function
+            switch(button.name){
+                case 'xSave': 
+                    xa=()=>saveFullPatchToFile();
+                    break;
+                case 'xLoad': 
+                    xa=()=>loadFullPatchFromFile();
+                    break;
+                case 'xCopy': 
+                    xa=()=>saveFullPatchToClipboard();
+                    break;
+                case 'xPaste': 
+                    xa=()=>loadFullPatchFromClipboard();
+                    break;
+            }
+            button.addEventListener('click', function() {
+                xa();
+            });
+            button.isChecked =xc;
+        break;
+        case 'D'://Harmonics preview view options
+            let fd = ()=>{};//function to call when clicked
+            let cd = ()=>false;//isChecked function
+            switch(button.name){
+                case 'DFull': 
+                    fd=()=>distortionSpectrumFullWidth=!distortionSpectrumFullWidth;
+                    cd=()=>distortionSpectrumFullWidth;
+                    break;
+                case 'DPhase': 
+                    fd=()=>distortionSpectrumShowPhase=!distortionSpectrumShowPhase;
+                    cd=()=>distortionSpectrumShowPhase;
+                    break;
+                case 'DPolarity': 
+                    fd=()=>distortionSpectrumPolarity=!distortionSpectrumPolarity;
+                    cd=()=>distortionSpectrumPolarity;
+                    break;
+            }
+            button.addEventListener('click', function() {
+                fd();
+                updatePreviewButtonState();
+                paintPreview();
+            });
+            button.isChecked =cd;
+        break;
+        case 'w': //Waveform A/B options
+            let fw = ()=>{};//function to call when clicked
+            let cw = ()=>false;//isChecked function
+            switch(button.name){
+                case 'wShowF': 
+                    fw=()=>showBufferFilterOverlay=!showBufferFilterOverlay;
+                    cw=()=>showBufferFilterOverlay;
+                    break;
+                case 'wShowEG': 
+                    fw=()=>showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
+                    cw=()=>showBufferEnvelopeOverlay;
+                break;
+            }
+            button.addEventListener('click', function() {
+                fw();
+                updatePreviewButtonState();
+                updateDisplay();
+            });
+            button.isChecked =cw;
+        break;
+    }
 });
 
 function DoFullPreviewUpdate(){
@@ -123,108 +257,71 @@ function DoFullPreviewUpdate(){
     paintPreview();
 }
 
-let subjectBtns=null;
-let previewBtns = null;
-let filterPreBtns = null;
-let bufferPreviewBtns = null;
+
 function updatePreviewButtonState(){
-    subjectBtns = subjectBtns ?? [
-        document.getElementById('previewD'),
-        document.getElementById('previewA'),
-        document.getElementById('previewB')
-    ];
-    subjectBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
+    previewButtons.forEach((button)=>{
+        const checked = button.isChecked();
+        button.classList.add(checked ? 'button-selected' : 'button-unselected');
+        button.classList.remove(checked ? 'button-unselected' : 'button-selected');
     });
-    for (let i=0; i<subjectBtns.length; i++){
-        subjectBtns[i].classList.add(i==previewSubject ? 'button-selected' : 'button-unselected');
-    }
-    previewBtns = previewBtns ?? [
-        document.getElementById('fullButton'),
-        document.getElementById('phaseButton'),
-        document.getElementById('polarityButton')
-    ];
-    previewBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
-    });
-    previewBtns[0].classList.add(previewSpectrumFullWidth ? 'button-selected' : 'button-unselected');
-    previewBtns[1].classList.add(previewSpectrumShowPhase ? 'button-selected' : 'button-unselected');
-    previewBtns[2].classList.add(previewSpectrumPolarity ? 'button-selected' : 'button-unselected');
-
-    filterPreBtns = filterPreBtns ?? [
-        document.getElementById('previewF0'),
-        document.getElementById('previewF1'),
-        document.getElementById('previewF2'),
-        document.getElementById('previewF3')
-    ];
-    filterPreBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
-    });
-    for (let i=0; i<filterPreBtns.length; i++){
-        filterPreBtns[i].classList.add(i==filterPreviewSubject ? 'button-selected' : 'button-unselected');
-    }    
-
-    bufferPreviewBtns = bufferPreviewBtns ?? [
-        document.getElementById('waveformShowF'),
-        document.getElementById('waveformShowEG')
-    ];
-
-    bufferPreviewBtns.forEach(function(button) {
-        button.classList.remove('button-selected');
-        button.classList.remove('button-unselected');
-    });
-    bufferPreviewBtns[0].classList.add(showBufferFilterOverlay ? 'button-selected' : 'button-unselected');
-    bufferPreviewBtns[1].classList.add(showBufferEnvelopeOverlay ? 'button-selected' : 'button-unselected');
 }
 
 
 //Canvas resize handler
 window.addEventListener('resize', updateCanvas);
 function updateCanvas() {
-    let canvasA = document.getElementById('waveformA');
-    let canvasB = document.getElementById('waveformB');
-    let canvasN = document.getElementById('waveformNull');
-    let canvasP = document.getElementById('wavePreview');
-
-    canvasA.width = canvasA.offsetWidth;
-    canvasB.width = canvasB.offsetWidth;
-    canvasN.width = canvasN.offsetWidth;
-    canvasP.width = canvasN.offsetWidth;
+    document.querySelectorAll('canvas').forEach((canvas)=>{
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+    });
     updateDisplay();
 }
-
+updateCanvas();
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Generally methods for sliders and preset buttons
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+const commonSectionNames = [
+    'CommonSettings', 
+    'FilterSetup', 
+    'TestSetup', 
+    'DistortionSetup'];
 
 
 function initSliders(){
     //Call once only at startup
-    wireUpSlidersForContainer('CommonSettings');
-    wireUpSlidersForContainer('FilterSetup');
-    wireUpSlidersForContainer('TestSetup');
+    commonSectionNames.forEach((sectionName)=>{
+        wireUpSlidersForContainer(sectionName);
+    });
     wireUpSlidersForContainer('SoundASetup');
     wireUpSlidersForContainer('SoundBSetup');
     setupPresetButtons();
     updatePreviewButtonState();
     
-    loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), defaultTestSubjectList);
+    loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), null, null, defaultTestSubjectList);
 
 
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
     setInterval(function() {
-        if (changed && Date.now() - lastUpdate > 800) {
-            updateBuffersAndDisplay(cachedPatchA, cachedPatchB);
+        if (!isMouseDown && changed && Date.now() - lastUpdate > 300) {
+            updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
         }
-    }, 500); 
+    }, 300); 
 }
+
+
+//Detect Mouse down status - allow full update skips when mouse is down
+let isMouseDown = false;
+window.addEventListener('mousedown', function() {
+    isMouseDown = true;
+});
+window.addEventListener('mouseup', function() {
+    isMouseDown = false;
+});
+
 
 let lastUpdate=0;
 function wireUpSlidersForContainer(id) {
@@ -240,6 +337,11 @@ function setupNewSliderContainer(sliderContainer) {
         rangedInput.addEventListener('input', function() {
             handleValueChange();
         });
+        rangedInput.addEventListener('dblclick', function() {
+            let defaultValue = getDefaultPatch()[rangedInput.name] ?? rangedInput.value;  
+            rangedInput.value = defaultValue;
+            handleValueChange();
+        })
     });
 }
 function handleValueChange() {
@@ -267,6 +369,8 @@ function setupPresetButtons(){
     insertPresetButtons('wavePresetButtons', wavePresets);
     insertPresetButtons('envelopPresetButtons', envelopePresets);
     insertPresetButtons('filterPresetButtons', filterPresets);
+    insertPresetButtons('distortionPresets', distortionPresets);
+    insertPresetButtons('oversamplingPresets', oversamplingPresets);
 }
 
 function insertPresetButtons(id, presetList){     
@@ -281,19 +385,22 @@ function insertPresetButtons(id, presetList){
     });
 }
 
-function loadPatches(patch, patchA, patchB, testSubjectList) {
-    loadPatchIntoContainer('CommonSettings', patch);
-    loadPatchIntoContainer('FilterSetup', patch);
-    loadPatchIntoContainer('TestSetup', patch);
+
+function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
+    commonSectionNames.forEach((sectionName)=>{
+        loadPatchIntoContainer(sectionName, patch);
+    });
     if(testSubjectList)
     {
         loadTestSubjectList(testSubjectList);
     }
     loadPatchIntoContainer('SoundASetup', patchA ?? patch);
     loadPatchIntoContainer('SoundBSetup', patchB ??patch);
+    loadPatchIntoContainer('SoundARSetup', (patchAR ?? patchA) ?? patch);
+    loadPatchIntoContainer('SoundBRSetup', (patchBR ?? patchB) ??patch);
     updateAllLabelsAndCachePatches();
     updatePreview();
-    updateBuffersAndDisplay(cachedPatchA, cachedPatchB);
+    updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
 }
 
 
@@ -309,26 +416,51 @@ function loadPatchIntoContainer(id, patch) {
     });
 }
 
-let cachedPatchCmn = null;
-let cachedPatchA = null;
-let cachedPatchB = null;
-function updateAllLabelsAndCachePatches(){
+
+
+
+function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     let patch = {};
-    loadSliderValuesFromContainer('CommonSettings', patch);
-    loadSliderValuesFromContainer('FilterSetup', patch);
-    loadSliderValuesFromContainer('TestSetup', patch);
-    updateLabelsFor('CommonSettings', patch);
-    updateLabelsFor('FilterSetup', patch);
-    updateLabelsFor('TestSetup', patch);
+    commonSectionNames.forEach((sectionName)=>{
+        loadSliderValuesFromContainer(sectionName, patch);
+    });
+    commonSectionNames.forEach((sectionName)=>{
+        updateLabelsFor(sectionName, patch);
+    });
+    commonSectionNames.forEach((sectionName)=>{
+        handleDisableGroups(sectionName, patch);
+    });
     cachedPatchCmn = {...patch};
 
     loadSliderValuesFromContainer('SoundASetup', patch);
     cachedPatchA = {...patch};
     updateLabelsFor('SoundASetup', patch);
+    handleDisableGroups('SoundASetup', patch);
+
+    if (syncLeftToRightValues){
+        loadPatchIntoContainer('SoundARSetup', patch);
+    }
+    else{
+        loadSliderValuesFromContainer('SoundARSetup', patch);
+    }
+    cachedPatchAR = {...patch};
+    updateLabelsFor('SoundARSetup', patch);
+    handleDisableGroups('SoundARSetup', patch);
 
     loadSliderValuesFromContainer('SoundBSetup', patch);
     cachedPatchB = {...patch};
     updateLabelsFor('SoundBSetup', patch);
+    handleDisableGroups('SoundBSetup', patch);
+
+    if (syncLeftToRightValues){
+        loadPatchIntoContainer('SoundBRSetup', patch);
+    }
+    else{
+        loadSliderValuesFromContainer('SoundBRSetup', patch);
+    }
+    cachedPatchBR = {...patch};
+    updateLabelsFor('SoundBRSetup', patch);
+    handleDisableGroups('SoundBRSetup', patch);
 }
 
 
@@ -338,139 +470,185 @@ function updateLabelsFor(containerId, patch) {
     var element = document.getElementById(containerId);
     var valueElements = element.querySelectorAll('.valueSpan');
     valueElements.forEach(function(ve) {
-        switch (ve.name) {
-            case "frequency": 
-                ve.textContent = patch.frequency.toFixed(0) + "Hz";
-                break;
-            case "higherHarmonicRelativeShift": 
-                ve.textContent = toPercent(patch.higherHarmonicRelativeShift);
-                break;
-            case "odd": 
-                ve.textContent = getPartialLevelLabel(patch.oddLevel,patch.oddAlt);
-                break;
-            case "even": 
-                ve.textContent = getPartialLevelLabel(patch.evenLevel, patch.evenAlt);
-                break;
-            case "oddFalloff": 
-                ve.innerHTML = toFalloffString(patch.oddFalloff);
-                break;
-            case "evenFalloff":
-                ve.innerHTML = toFalloffString(patch.evenFalloff);
-                break;
-                break;
-            case "altW":
-                ve.innerHTML = "Every "+ toReciprocal(patch.altW) +" steps &nbsp; (Duty: " +toPercent(patch.altW)+")";
-                break;
-            case "altOffset":
-                let isInt = Math.round(patch.altOffset) ==patch.altOffset;
-                let valText = patch.altOffset.toFixed(1);
-                if (isInt){
-                    switch(patch.altOffset){
-                        case -1: valText =valText + ' step &nbsp; Even -↔+ &nbsp; Odd 0↔0';break;
-                        case 0: valText =valText +  ' steps &nbsp; Even 0↔0 &nbsp; Odd +↔-';break;
-                        case 1: valText = valText + ' step &nbsp; Even +↔- &nbsp; Odd 0↔0';break;
-                    }
-                }
-                else{
-                    valText =valText +' steps &nbsp;&nbsp; both';
-                }
-                ve.innerHTML = valText;
-                break;
-            case "sinCos":
-                let type = "&nbsp;";
-                if (patch.sinCos==0) type = "sin(t)";
-                if (patch.sinCos==-1) type = "-cos(t)";
-                if (patch.sinCos==1) type = "cos(t)";
-                ve.innerHTML = (patch.sinCos*0.5).toFixed(2)+'π &nbsp;&nbsp; '+type;
-                break;
-
-                
-            case "attack": ve.textContent = patch.attack + "s";break;  
-            case "decay": ve.textContent = patch.decay + "s";break;
-            case "hold": ve.textContent = patch.hold + "s";break;
-            case "envelopeFilter": 
-                if (patch.envelopeFilter==0) 
-                    {
-                        ve.innerHTML = "<b>OFF</b>";
-                    }
-                    else
-                    {
-                        ve.textContent = patch.envelopeFilter.toFixed(0);
-                    }
-                break;
-
-
-            case "attackF": ve.textContent = patch.attackF + "s";break;  
-            case "decayF": ve.textContent = patch.decayF + "s";break;
-            case "holdF": ve.textContent = patch.holdF + "s";break;
-            case "filterF1": ve.textContent = toFilterFreq(patch.filterF1);break;
-            case "filterF2": ve.textContent = toFilterFreq(patch.filterF2);break;
-            case "filterF3": ve.textContent = toFilterFreq(patch.filterF3);break;
-            case "filterSlope": 
-            if (patch.filterSlope==0) 
-                {
-                    ve.innerHTML = "<b>OFF</b>";
-                }
-                else
-                {
-                    ve.textContent = patch.filterSlope.toFixed(0)+"db/oct";
-                }
-            break;
-
-            case "rootPhaseDelay": 
-                ve.innerHTML =getPhaseLabel(patch);break;
-        }
+        setValueFromPatch(ve, patch);
     });
 }
 
-function toPercent(value){
-    return (value*100).toFixed(0) + "%";
-}   
-function toReciprocal(value){
-    if (value>0.5) return (1/value).toFixed(2);
-    if (value>0.01) return (1/value).toFixed(1);
-    if (value>0.001) return (1/value).toFixed(0);
-    return "∞"
-    
-}
 
-function toFalloffString(value){
-    let result = "";
-    if (value==0) result = "1";
-    else if (value==1) result = "1/n";
-    else result = "1/n<sup>" + value + "</sup>";
-    return result;
-}
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Import/Export Patch
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-function getPartialLevelLabel(level, polarity){
-    level = level ;
-    polarity =polarity;
-    let value = "off"
-    if (level!=0)
-    {
-        if (polarity==0) 
-            value = level.toFixed(1);
-        else
-            value = level.toFixed(1) +"↔" + (level *(-2 * polarity +1)).toFixed(1);
-    }
-    return value;
-}
+function exportCombinedPatchToJSON(){
+    updateAllLabelsAndCachePatches();
 
-
-function getPhaseLabel(patch){
-    let invFreq = 1000 / (patch.frequency * 2);
-    let rootPhaseDelay = patch.rootPhaseDelay;
-    let delayA = rootPhaseDelay * invFreq;
-    return rootPhaseDelay.toFixed(2) + "π <br> (" + (delayA).toFixed(1) + "ms)";
-}
-
-function toFilterFreq(x){
-    return (20 * Math.pow(2,x)).toFixed(0) + "Hz";
+    let patch = { 
+        patchC: {...cachedPatchCmn}, 
+        patchA: {...cachedPatchA},
+        patchAR: {...cachedPatchAR},
+        patchB: {...cachedPatchB},
+        patchBR: {...cachedPatchBR},
+        testSubjects: getTestSubjectList()
+    };
+    return JSON.stringify(patch);
 }
 
 
 
+function importCombinedPatchFromJSON(json){
+    // Initialize with default values
+    let patch = JSON.parse(json);
+    importCombinedPatchFromPatch(patch);
+}
+function importCombinedPatchFromPatch(patch){
 
+    let patchC = {...getDefaultPatch()};
+    let patchA = {...getDefaultAPatch()};
+    let patchB = {...getDefaultBPatch()};
+    let patchAR = {...getDefaultBPatch()};
+    let patchBR = {...getDefaultBPatch()};
+
+    // Overwrite with values from patch object
+    Object.assign(patchC, patch.patchC);
+    Object.assign(patchA, patch.patchA);
+    Object.assign(patchB, patch.patchB);
+    Object.assign(patchAR, patch.patchAR);
+    Object.assign(patchBR, patch.patchBR);
+
+    // Load the patches
+    loadPatches(patchC, patchA, patchB, patchAR, patchBR, patch.testSubjects ?? defaultTestSubjectList);
+}
+
+
+function saveFullPatchToFile(){
+    let json = exportCombinedPatchToJSON();
+    n_saveToFile(json)
+}
+function loadFullPatchFromFile(){
+    n_loadFromFile(json=>importCombinedPatchFromJSON(json));
+
+}
+function saveFullPatchToClipboard(){
+    let json = exportCombinedPatchToJSON();
+    n_saveToClipboard(json)
+}
+function loadFullPatchFromClipboard(){
+
+    n_loadFromClipboard(json=>importCombinedPatchFromJSON(json));
+}
+
+// Save to file
+function n_saveToFile(json) {
+    let blob = new Blob([json], {type: "application/json"});
+    let url = URL.createObjectURL(blob);
+
+    let link = document.createElement('a');
+    link.download = 'filename.json';
+    link.href = url;
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+// Load from file
+function n_loadFromFile(loadProc) {
+    return new Promise(() => {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+
+        input.onchange = (event) => {
+            let file = event.target.files[0];
+
+            let reader = new FileReader();
+            reader.onload = (event) => {
+                let contents = event.target.result;
+                console.log("File accessed ok");
+                console.log(contents) 
+                loadProc(contents)
+            };
+            reader.onerror = (error) => {
+                console.error("File could not be read! Code " + event.target.error.code);
+            };
+
+            reader.readAsText(file);
+        };
+
+        input.click();
+    });
+}
+
+// Save to clipboard
+function n_saveToClipboard(json) {
+    navigator.clipboard.writeText(json).then(() => {
+        console.log('Copying to clipboard was successful!');
+    }, (err) => {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+// Load from clipboard
+function n_loadFromClipboard(loadProc) {
+    return navigator.clipboard.readText().then((text) => {
+        console.log('Pasted content: ', text);
+        loadProc(text)
+        return text;
+    }, (err) => {
+        console.error('Could not paste text: ', err);
+    });
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Server preset Patch list
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+let serverPresetList = [];
+fetch('/presets/presetList.json')
+    .then(response => response.json())
+    .then(manifest => {
+        if (!Array.isArray(manifest)) throw new Error('Manifest is not an array');
+        manifest.forEach(file => {
+            if (file.name && file.path && file.path.endsWith('.json')) {
+                serverPresetList.push(file);
+            }
+    })})
+    .then(() => {
+        loadIntoDropdown('serverPresetList', serverPresetList);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+
+function loadIntoDropdown(id, list) {
+    let select = document.getElementById(id);
+    select.innerHTML = '';
+
+    let defOption = document.createElement('option');
+    defOption.textContent = "Server Presets";
+    defOption.value = "";
+    select.appendChild(defOption);
+
+    list.forEach(item => {
+        let option = document.createElement('option');
+        option.textContent = item.name;
+        option.value = item.path;
+        select.appendChild(option);
+    });
+
+
+    select.addEventListener('change', () => {
+        if (!select.value || select.value === "") return;
+        fetch(`/presets/${select.value}`)
+            .then(response => response.json())
+            .then(patch => {
+                importCombinedPatchFromPatch(patch)
+                console.log(patch);  
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    });
+
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setup which variables are going to be changeable individually for sounds
@@ -479,22 +657,31 @@ function toFilterFreq(x){
 let sliderContainers = [];
 let SoundSetups = [                
     {
+        label:'A',
         container:document.getElementById('SoundASetup'),
-        button:document.getElementById('playSoundA')
+        containerR:document.getElementById('SoundARSetup')
     },
     {
+        label:'B',
         container: document.getElementById('SoundBSetup'),
-        button:document.getElementById('playSoundB')
+        containerR:document.getElementById('SoundBRSetup')
     }
 ];
 
+function getSliderElements (sliderContainer){
+    return {
+        div:sliderContainer,
+        sliders:sliderContainer.querySelectorAll('input[type=range]'),
+        labels:sliderContainer.querySelectorAll('label'),
+        outputs:sliderContainer.querySelectorAll('output')
+    }
+}
+
 // For each div
 document.querySelectorAll('.slider-container').forEach((div) => {
-    let sliders = div.querySelectorAll('input[type=range]');
-    let labels = div.querySelectorAll('label');
-    let outputs = div.querySelectorAll('output');
+    let ctrls =getSliderElements(div);
 
-    let name = sliders[0].name;
+    let name = ctrls.sliders[0].name;
     div.setAttribute('data-name',name);
 
     let checkbox = document.createElement('input');
@@ -503,54 +690,41 @@ document.querySelectorAll('.slider-container').forEach((div) => {
     checkbox.addEventListener('change', () => {
         // If checkbox is checked
         if (checkbox.checked) {
-            SoundSetups.forEach((setup) => {                
-                let copy = div.cloneNode(true);
-                setupNewSliderContainer(copy);
-                // Change the ID of labels and ranges
-                copy.querySelectorAll('label').forEach((label) => {
-                    label.htmlFor += 'A';
-                });
-                copy.querySelectorAll('input[type=range]').forEach((input)=>{
-                    input.id += 'A';
-                });
-                copy.querySelectorAll('input[type=checkbox]').forEach((input)=>{
-                    input.classList.add('hiddenCheckbox');
-                });
-
-                // Add the copies to 'SoundASetup' and 'SoundBSetup'
-                if (!setup.container.querySelector('[data-name="'+name+'"]')){
-                    setup.container.insertBefore(copy, setup.button);
-                }
+            SoundSetups.forEach((setup) => {  
+                setupSliderCopy(name, div, setup.container, setup.label);
+                if (isStereo) setupSliderCopy(name, div, setup.containerR, setup.label + "R")
             })
             
             // Disable the div
-            sliders.forEach((input)=>{
+            ctrls.sliders.forEach((input)=>{
                 input.style.pointerEvents = 'none';
                 input.style.opacity = '0.3';
             });
-            labels.forEach((input)=>{
-                input.style.opacity = '0.4';
+            ctrls.labels.forEach((input)=>{
+                input.style.opacity = '0.5';
             });
-            outputs.forEach((input)=>{
+            ctrls.outputs.forEach((input)=>{
                 input.style.opacity = '0.3';
             });
         } else {
             // Enable the div
-            sliders.forEach((input)=>{
+            ctrls.sliders.forEach((input)=>{
                 input.style.pointerEvents = 'auto';
                 input.style.opacity = '1';
             });
-            labels.forEach((input)=>{
+            ctrls.labels.forEach((input)=>{
                 input.style.opacity = '1';
             });
-            outputs.forEach((input)=>{
+            ctrls.outputs.forEach((input)=>{
                 input.style.opacity ='1';
             });
             
             // Remove the copies from 'SoundASetup' and 'SoundBSetup'
             SoundSetups.forEach((setup) => {
-                let copy = setup.container.querySelector('[data-name="'+name+'"]');
-                copy && copy.parentNode.removeChild(copy);
+                let copies = 
+                    [...setup.container.querySelectorAll('[data-name="'+name+'"]'),
+                    ...setup.containerR.querySelectorAll('[data-name="'+name+'"]')];
+                copies.forEach(copy=>copy.parentNode.removeChild(copy));
             });
         }
         handleValueChange();
@@ -560,11 +734,43 @@ document.querySelectorAll('.slider-container').forEach((div) => {
     div.insertBefore(checkbox, div.firstChild);
     sliderContainers.push(
         {
+            parentId:div.parentNode.id,
             name:name,
             div:div,
-            checkbox:checkbox
+            checkbox:checkbox,
+            sliders:ctrls.sliders,
+            labels:ctrls.labels,
+            outputs:ctrls.outputs
         });
 });
+
+function setupSliderCopy(name, div, container, label) {
+    let existing = container.querySelector('[data-name="'+name+'"]');
+    if (existing)
+    {   //Already exists 
+        container.appendChild(existing);
+        return;           
+    } 
+    let copy = div.cloneNode(true);
+    setupNewSliderContainer(copy);
+    // Change the ID of labels and ranges and reset if source is disabled
+    copy.querySelectorAll('label').forEach((label) => {
+        label.htmlFor += label;
+        label.style.opacity = '1';
+    });
+    copy.querySelectorAll('input[type=range]').forEach((input)=>{
+        input.id += label;
+        input.style.pointerEvents = 'auto';
+        input.style.opacity = '1';
+    });
+    copy.querySelectorAll('output').forEach((output)=>{
+        output.style.opacity = '1';
+    });
+    copy.querySelectorAll('input[type=checkbox]').forEach((input)=>{
+        input.classList.add('hiddenCheckbox');
+    });
+    container.appendChild(copy);
+}
 
 
 function loadTestSubjectList(list)
@@ -572,13 +778,10 @@ function loadTestSubjectList(list)
     if (!list) return;
     sliderContainers.forEach(
         (container)=>{
-            const startV =container.checkbox.checked;
+            //Could be more efficient, but this works when switching from mono to stereo
             container.checkbox.checked = list.includes(container.name);
-            if (startV != container.checkbox.checked)
-            {
-                const event = new Event('change');
-                container.checkbox.dispatchEvent(event);
-            }
+            const event = new Event('change');
+            container.checkbox.dispatchEvent(event);
         }
     );
 }
@@ -593,10 +796,127 @@ function getTestSubjectList(){
     return list;
 }
 
+
+function handleDisableGroups(id, patch){
+    const testSubjects = getTestSubjectList();
+    disableGroups.forEach((group)=>{
+        
+        let allNamesValid = true;
+        const hasKeys = group.masters.length>0;
+        let allMatch = true;
+        for (let key of group.masters) {
+            allNamesValid &=  !testSubjects.includes(key.name) 
+            allMatch &=  patch[key.name] == key.value 
+        }
+        const action =  allNamesValid && allMatch && hasKeys ?
+            (slider)=>slider.classList.add("blurredDisabled")
+            : (slider)=>slider.classList.remove("blurredDisabled");
+        const testSliders =SoundSetups.reduce((setup,prev) => 
+        { 
+
+        },[]);
+        const slidersForId =
+            [ ...sliderContainers.filter((container)=>container.parentId ==id),
+              ...SoundSetups.reduce((prev, setup) =>[...prev,setup.container,setup.containerR],[])
+                .filter((container)=>container.id ==id)
+                .reduce((prev,container)=> //Get all the sliders in the container, if there is a match
+                [
+                    ...prev,
+                    ...container.querySelectorAll('.slider-container')
+                ],[])
+                .reduce((prev,sliderContainer)=>{ // recreate the sliderContainer object
+                    const ctrls =getSliderElements(sliderContainer);
+                    ctrls.name = ctrls.sliders[0].name;
+                    return [...prev,ctrls];
+                },[])
+            ];
+        slidersForId.filter((container)=>group.dependents.includes(container.name))
+            .forEach((container)=>{
+                container.sliders.forEach((slider)=>
+                {
+                    action(slider)
+                })
+                container.labels.forEach((slider)=>
+                {
+                    action(slider)
+                })
+                container.outputs.forEach((slider)=>
+                {
+                    action(slider)
+                })
+            });
+        
+        slidersForId.filter((container)=> container.sliders && container.sliders.length>1)
+            .forEach((container)=>{
+                container.sliders.forEach((slider)=>
+                {
+                    if (group.dependents.includes(slider.name))
+                    {
+                        action(slider);
+                    }
+                })
+            })
+        slidersForId.filter((container)=> container.labels && container.labels.length>1)
+            .forEach((container)=>{
+                container.labels.forEach((label)=>
+                {
+                    if (group.dependents.includes(label.htmlFor))
+                    {
+                        action(label);
+                    }
+                })
+            })
+        slidersForId.filter((container)=> container.outputs && container.outputs.length>1)
+            .forEach((container)=>{
+                container.outputs.forEach((slider)=>
+                {
+                    if (group.dependents.includes(slider.name))
+                    {
+                        action(slider);
+                    }
+                })
+            })
+        }
+    );
+}
+
+
+
 //Initialise display of waveform and audio buffers on first load
 initSliders();
 
 console.log("TestSubjectList: " + getTestSubjectList());    
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Functions for handling switching from mono to stereo
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+let hideOnMonos = document.querySelectorAll('.hideForMono');
+let hideForStereo = document.querySelectorAll('.hideForStereo');
+hideOnMonos.forEach((element)=>element.style.display = isStereo? 'block':'none');
+
+function setUpStereo(syncValuesFromLeftToRight){
+    if (isStereo) {
+        //Just led the testSubject list again
+        loadTestSubjectList(getTestSubjectList())
+        hideOnMonos.forEach((element)=>element.style.display = 'block');
+        hideForStereo.forEach((element)=>element.style.display = 'none');
+        if (syncValuesFromLeftToRight) 
+        {
+            updateAllLabelsAndCachePatches(true)
+        }
+    }
+    else {
+        //Remove all the stereo copies
+        SoundSetups.forEach((setup) => {
+            setup.containerR.querySelectorAll('.slider-container')
+                .forEach(copy=>copy.parentNode.removeChild(copy));
+        });
+        
+        hideForStereo.forEach((element)=>element.style.display = 'block');
+        hideOnMonos.forEach((element)=>element.style.display = 'none');
+    }
+    changed=true;
+}
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //ABX TEST GUI Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
