@@ -498,6 +498,9 @@ function exportCombinedPatchToJSON(){
 function importCombinedPatchFromJSON(json){
     // Initialize with default values
     let patch = JSON.parse(json);
+    importCombinedPatchFromPatch(patch);
+}
+function importCombinedPatchFromPatch(patch){
 
     let patchC = {...getDefaultPatch()};
     let patchA = {...getDefaultAPatch()};
@@ -593,6 +596,58 @@ function n_loadFromClipboard(loadProc) {
     }, (err) => {
         console.error('Could not paste text: ', err);
     });
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Server preset Patch list
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+let serverPresetList = [];
+fetch('/presets/presetList.json')
+    .then(response => response.json())
+    .then(manifest => {
+        if (!Array.isArray(manifest)) throw new Error('Manifest is not an array');
+        manifest.forEach(file => {
+            if (file.name && file.path && file.path.endsWith('.json')) {
+                serverPresetList.push(file);
+            }
+    })})
+    .then(() => {
+        loadIntoDropdown('serverPresetList', serverPresetList);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+
+function loadIntoDropdown(id, list) {
+    let select = document.getElementById(id);
+    select.innerHTML = '';
+
+    let defOption = document.createElement('option');
+    defOption.textContent = "Server Presets";
+    defOption.value = "";
+    select.appendChild(defOption);
+
+    list.forEach(item => {
+        let option = document.createElement('option');
+        option.textContent = item.name;
+        option.value = item.path;
+        select.appendChild(option);
+    });
+
+
+    select.addEventListener('change', () => {
+        if (!select.value || select.value === "") return;
+        fetch(`/presets/${select.value}`)
+            .then(response => response.json())
+            .then(patch => {
+                importCombinedPatchFromPatch(patch)
+                console.log(patch);  
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    });
+
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

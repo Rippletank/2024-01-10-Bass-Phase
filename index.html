@@ -100,7 +100,7 @@
         </div>
     </div>
     <div class="bordered">
-        <h3>Background info - see <a href="#Notes1">notes</a></h3>
+        <h3>Background info - see <a href="#Notes1">notes</a> </h3>
         <div class ="previewButtons">
             <div class="previewButtons previewL">
                 <button name="sStereo" class = "previewButton">Stereo</button>
@@ -114,6 +114,16 @@
             <div class="previewButtons">
                 <button name="wShowF" class = "previewButton">Filter overlays</button>
                 <button name="wShowEG" class = "previewButton">Envelope overlays</button>
+            </div>
+        </div>
+        <div class ="previewButtons spaceTop">
+            <div class="previewButtons previewL">
+            </div>
+            <div class="previewButtons previewC">
+                <select id="serverPresetList" title="Server Presets"></select>
+            </div>
+            <div class="previewButtons">
+                <p>Background info - see <a href="#Notes1">notes</a> </p>
             </div>
         </div>
     </div>
@@ -306,7 +316,7 @@
         </div>
 
         <div class="slider-container">
-            <label for="distortion"><b>Master Level:</b></label>
+            <label for="distortion"><b>Distortion Level:</b></label>
             <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="distortion">0%</output>
             <span class="help-icon">?</span>

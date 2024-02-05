@@ -170,7 +170,14 @@ canvas {
     display: flex;
     justify-content:right;
 }
+.previewButtons p{
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
 
+.spaceTop{
+    margin-top: 1.5em;
+}
 .previewButtons .previewL{
     margin-right:auto;
     justify-content:left;
@@ -210,6 +217,11 @@ canvas {
     border-radius : 5px;
 }
 
+#serverPresetList{
+    padding-left: 2em;
+    padding-right: 2em;
+    padding-top: 0em;
+}
 
 #centerContainer {
     display: flex;
