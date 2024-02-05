@@ -177,7 +177,7 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     ctx.beginPath();
 
     let lastX = 0;
-    let startBin = Math.round((detailedMinF * Math.pow(2,octaveStep))  * freqStep );
+    let startBin = Math.round((detailedMinF )  * freqStep );
     for (let i = 0; i < fftW; i++) {
         let endOctave = (i+1) * octaveStep;
         let endBin = Math.round((detailedMinF * Math.pow(2,endOctave))  * freqStep );
@@ -187,7 +187,7 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
                 max = Math.max(max,fft.magnitude[j]);
             }
             let y = fftB - ( (Math.log10(max) -dbOffset) * hScale);// (20*Math.log10(max) -detailedMinDb)/(detailedMaxDb-detailedMinDb) * fftH;
-            if (!y || y>fftB) y=fftB-1;
+            if (!y || y>fftB) y=fftB-2;
             const x = fftL+i;
             const midX = (lastX+x)/2;
             ctx.moveTo(midX, fftB);
@@ -255,7 +255,7 @@ function calculateLogScalePositions(minF, maxF) {
     const fullRangeStep = largestPowerOfTenIncrement(minF, maxF);
 
     //2 Steps - octaves - exponential increase in frequency
-    const maxLevels =4;
+    const maxLevels =3;
     for (let i = 0; i <= numberOfFirstSteps; i++) {
         const flow = startF * Math.pow(10, i);
         const fhigh = startF * Math.pow(10, i + 1);
@@ -264,18 +264,18 @@ function calculateLogScalePositions(minF, maxF) {
     return positions;
 }
 function iteratedCalculatePositions(positions, flow, fhigh, minF, maxF, log2Max,maxLevels) {
-    if (maxLevels<=0) 
-    {
-        let x = relativePosOfF(flow, minF, log2Max);
-        positions.push({f: flow, x: x});
-        return;
-    }
+    // if (maxLevels<=0) 
+    // {
+    //     let x = relativePosOfF(flow, minF, log2Max);
+    //     positions.push({f: flow, x: x});
+    //     return;
+    // }
     if (flow<minF && fhigh<minF) return;
     if(fhigh>maxF && flow>maxF) return;
     let largestStep =largestPowerOfTenIncrement(flow,fhigh);
     
     let step = Math.pow(10,largestStep);
-    for(let j=0;j<10;j++){
+    for(let j=0;j<9;j++){
         let f1 = flow + j * step;
         let f2 = f1 + step;
         if (f1>maxF) break;

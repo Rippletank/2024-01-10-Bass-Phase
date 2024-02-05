@@ -350,8 +350,8 @@ document.querySelectorAll('canvas').forEach(canvas => {
     let update =(event)=>{
         // Calculate the frequency and amplitude based on the mouse position
         const rect = canvas.getBoundingClientRect();
-        const x = (event.offsetX - rect.left)/rect.width;
-        const y = (event.offsetY - rect.top)/rect.height;
+        const x = event.offsetX/canvas.clientWidth;
+        const y = event.offsetY/canvas.clientHeight;
 
         let def = canvasTooltips[canvas.id];
 
