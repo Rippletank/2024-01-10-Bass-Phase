@@ -234,6 +234,12 @@ function previewPatchName(){
     return cachedPatch;
 }
 
+let cachedPatchCmn = null;
+let cachedPatchA = null;
+let cachedPatchAR = null;
+let cachedPatchB = null;
+let cachedPatchBR = null;
+
 function getPreviewSubjectCachedPatch() {
     let cachedPatch;
     switch(previewSubject){

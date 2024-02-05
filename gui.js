@@ -182,6 +182,28 @@ previewButtons.forEach(function(button) {
             });
             button.isChecked =ch;
         break;
+        case 'x'://Harmonics preview view options
+            let xa = ()=>{};//function to call when clicked
+            let xc = ()=>false;//isChecked function
+            switch(button.name){
+                case 'xSave': 
+                    xa=()=>saveFullPatchToFile();
+                    break;
+                case 'xLoad': 
+                    xa=()=>loadFullPatchFromFile();
+                    break;
+                case 'xCopy': 
+                    xa=()=>saveFullPatchToClipboard();
+                    break;
+                case 'xPaste': 
+                    xa=()=>loadFullPatchFromClipboard();
+                    break;
+            }
+            button.addEventListener('click', function() {
+                xa();
+            });
+            button.isChecked =xc;
+        break;
         case 'D'://Harmonics preview view options
             let fd = ()=>{};//function to call when clicked
             let cd = ()=>false;//isChecked function
@@ -396,11 +418,7 @@ function loadPatchIntoContainer(id, patch) {
 
 
 
-let cachedPatchCmn = null;
-let cachedPatchA = null;
-let cachedPatchAR = null;
-let cachedPatchB = null;
-let cachedPatchBR = null;
+
 function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     let patch = {};
     commonSectionNames.forEach((sectionName)=>{
@@ -499,6 +517,83 @@ function importCombinedPatchFromJSON(json){
 }
 
 
+function saveFullPatchToFile(){
+    let json = exportCombinedPatchToJSON();
+    n_saveToFile(json)
+}
+function loadFullPatchFromFile(){
+    n_loadFromFile(json=>importCombinedPatchFromJSON(json));
+
+}
+function saveFullPatchToClipboard(){
+    let json = exportCombinedPatchToJSON();
+    n_saveToClipboard(json)
+}
+function loadFullPatchFromClipboard(){
+
+    n_loadFromClipboard(json=>importCombinedPatchFromJSON(json));
+}
+
+// Save to file
+function n_saveToFile(json) {
+    let blob = new Blob([json], {type: "application/json"});
+    let url = URL.createObjectURL(blob);
+
+    let link = document.createElement('a');
+    link.download = 'filename.json';
+    link.href = url;
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+// Load from file
+function n_loadFromFile(loadProc) {
+    return new Promise(() => {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+
+        input.onchange = (event) => {
+            let file = event.target.files[0];
+
+            let reader = new FileReader();
+            reader.onload = (event) => {
+                let contents = event.target.result;
+                console.log("File accessed ok");
+                console.log(contents) 
+                loadProc(contents)
+            };
+            reader.onerror = (error) => {
+                console.error("File could not be read! Code " + event.target.error.code);
+            };
+
+            reader.readAsText(file);
+        };
+
+        input.click();
+    });
+}
+
+// Save to clipboard
+function n_saveToClipboard(json) {
+    navigator.clipboard.writeText(json).then(() => {
+        console.log('Copying to clipboard was successful!');
+    }, (err) => {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+// Load from clipboard
+function n_loadFromClipboard(loadProc) {
+    return navigator.clipboard.readText().then((text) => {
+        console.log('Pasted content: ', text);
+        loadProc(text)
+        return text;
+    }, (err) => {
+        console.error('Could not paste text: ', err);
+    });
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setup which variables are going to be changeable individually for sounds
