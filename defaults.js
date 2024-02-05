@@ -193,10 +193,10 @@ let distortionPresets = [
         name:"Default",
         patch:{
             distortion:0,
-            oddDistortion:0,
             hyperbolicDistortion:0,
-            clipDistortion:0,
+            oddDistortion:0,
             tanhDistortion:0.4,
+            clipDistortion:0,
             jitter:0,
         }
     },
@@ -204,10 +204,10 @@ let distortionPresets = [
         name:"Light",
         patch:{
             distortion:0.2,
+            hyperbolicDistortion:0.1,
             oddDistortion:0,
-            hyperbolicDistortion:0,
+            tanhDistortion:0.06,
             clipDistortion:0,
-            tanhDistortion:0.4,
             jitter:0,
         }
     },
@@ -215,10 +215,10 @@ let distortionPresets = [
         name:"Heavy",
         patch:{
             distortion:0.5,
-            oddDistortion:0.5,
             hyperbolicDistortion:0.4,
-            clipDistortion:0,
+            oddDistortion:0.5,
             tanhDistortion:0.7,
+            clipDistortion:0,
             jitter:0,
         }
     },
@@ -226,10 +226,10 @@ let distortionPresets = [
         name:"Jitter",
         patch:{
             distortion:1,
+            hyperbolicDistortion:0,
             oddDistortion:0,
-            evenDistortion:0,
-            clipDistortion:0,
             tanhDistortion:0,
+            clipDistortion:0,
             jitter:0.8,
             oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
             oversampleStopDepth:0.5,//-70db to -110db - default = -90db
