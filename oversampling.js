@@ -40,9 +40,6 @@
 //https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
 //Which uses emiprical formula from  "Digital Filters" by James kaiser in "System Analysis by Digital Computer," edited by F.F. Kuo and J.F. Kaiser (1966)
 
-//Filter design (not used in the end, but great background referenece)
-//https://www.kvraudio.com/forum/viewtopic.php?t=350246 && https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf?sscid=11k8_zwuzf
-
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Window function
