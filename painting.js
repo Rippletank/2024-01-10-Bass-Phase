@@ -176,8 +176,11 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     ctx.fillStyle = "rgb(50, 0, 0)";
     ctx.beginPath();
 
-    let lastX = 0;
-    let startBin = Math.round((detailedMinF )  * freqStep );
+    const desiredStartF =detailedMinF* Math.pow(2,-octaveStep);
+    let startBin = Math.floor( desiredStartF * freqStep );
+    const actualStartF = startBin / freqStep;
+    let lastX = fftL + fftW * relativePosOfF(actualStartF, detailedMinF, maxLogF);
+    let isFirst = true;
     for (let i = 0; i < fftW; i++) {
         let endOctave = (i+1) * octaveStep;
         let endBin = Math.round((detailedMinF * Math.pow(2,endOctave))  * freqStep );
@@ -189,9 +192,21 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
             let y = fftB - ( (Math.log10(max) -dbOffset) * hScale);// (20*Math.log10(max) -detailedMinDb)/(detailedMaxDb-detailedMinDb) * fftH;
             if (!y || y>fftB) y=fftB-2;
             const x = fftL+i;
-            const midX = (lastX+x)/2;
-            ctx.moveTo(midX, fftB);
-            ctx.lineTo(midX, y);
+            let midX = x;
+            if (lastX<x-1){
+                //Bin spans multiple pixels
+                midX = fftL + fftW * relativePosOfF(startBin/ freqStep, detailedMinF, maxLogF)
+            }
+            if (isFirst) {
+                ctx.moveTo(midX, fftB);
+                isFirst = false;
+            }else{
+                ctx.lineTo(midX, y);
+            }
+            // if (y<fftB-2 && x>lastX+1){
+            //     ctx.moveTo(x, fftB+1);
+            //     ctx.lineTo(lastX, fftB+1);
+            // }
             startBin = endBin;
             lastX=x;
         }
@@ -263,31 +278,31 @@ function calculateLogScalePositions(minF, maxF) {
     }
     return positions;
 }
-function iteratedCalculatePositions(positions, flow, fhigh, minF, maxF, log2Max,maxLevels) {
-    // if (maxLevels<=0) 
-    // {
-    //     let x = relativePosOfF(flow, minF, log2Max);
-    //     positions.push({f: flow, x: x});
-    //     return;
-    // }
+function iteratedCalculatePositions(positions, flow, fhigh, minF, maxF, log2Max,maxLevels, pushAtMaxEnd) {
+     if (maxLevels<=0) 
+     {
+         let x = relativePosOfF(flow, minF, log2Max);
+         if (pushAtMaxEnd && flow>minF) positions.push({f: flow, x: x});
+         return;
+    }
     if (flow<minF && fhigh<minF) return;
     if(fhigh>maxF && flow>maxF) return;
     let largestStep =largestPowerOfTenIncrement(flow,fhigh);
     
     let step = Math.pow(10,largestStep);
-    for(let j=0;j<9;j++){
+    for(let j=0;j<10;j++){
         let f1 = flow + j * step;
+        if (f1>=fhigh) break;
         let f2 = f1 + step;
         if (f1>maxF) break;
         let x = relativePosOfF(f1, minF, log2Max);
         let x1 = relativePosOfF(f2, minF, log2Max);
         if (x1-x<minimumSpacing) 
         {
-            if (j==0)
-            {positions.push({f: f1, x: (x+x1)/2});}
+            if (j==0 && f1<fhigh) {positions.push({f: f1, x: (x+x1)/2});}
             continue;
         };
-        iteratedCalculatePositions(positions, f1, f2, minF, maxF, log2Max, maxLevels-1)
+        iteratedCalculatePositions(positions, f1, f2, minF, maxF, log2Max, maxLevels-1,j==0)
     }
 }
 
