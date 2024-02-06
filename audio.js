@@ -420,7 +420,7 @@ function buildFilter(
 
 //Generate the harmonic series
 function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
-    const nyquistW = 0.49 * 2 * Math.PI;//Nyquist limit in radians per sample
+    const nyquistW = (0.49 * 2 * Math.PI) * (1+patch.aliasing);//Nyquist limit in radians per sample
     const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / sampleRate;
     const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0

@@ -173,7 +173,17 @@ function setValueFromPatch(ve, patch){
                 ve.textContent = "high "+(-db).toFixed(db<3?2:1)+"db";                    
             }
             break;
-            
+        case "aliasing":
+            if (patch.aliasing==0) 
+            {
+                ve.textContent = "off";
+            }
+            else
+            {
+                ve.textContent = (1+patch.aliasing).toFixed(1) + "x Nyquist";
+            }
+            break;
+        break;
         case "attack": ve.textContent = patch.attack + "s";break;  
         case "decay": ve.textContent = patch.decay + "s";break;
         case "hold": ve.textContent = patch.hold + "s";break;

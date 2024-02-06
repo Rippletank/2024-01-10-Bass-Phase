@@ -363,6 +363,8 @@ function getDefaultPatch(){
         altW:0.5,//0..1 frequency of alternation - gives pulse width for pulse wave
         altOffset:0,//between 0 and 0.5 - phase offset for alternation between even and odd harmonics, needed to "sync" alternations for pulse wave
 
+        aliasing:0,//0..1 0 = no aliasing, 1 = allow frequencies up to samplerate.
+
         //Amplitude envelope
         attack: 0.005,//Linear time to get to max amplitude  in seconds
         hold: 0,// time in seconds to hold max amplitude

@@ -6,5 +6,9 @@
     {
         "name":"THD level",
         "path":"thdLevel.json"
+    },
+    {
+        "name":"Aliasing",
+        "path":"aliasing.json"
     }
 ]

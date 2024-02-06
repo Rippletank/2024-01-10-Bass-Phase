@@ -153,7 +153,7 @@
 
         
         <div class="presetHeader topSpaced">
-            <h4>Harmonic Series</h4>
+            <h4>Additive Synthesis</h4>
             <div id="wavePresetButtons" class="PresetButtons"></div>
         </div>
         <div class="slider-container">
@@ -216,6 +216,13 @@
             <output class="valueSpan longOut" name="altOffset">0</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Adjusts where the positive, negative and zero values of the alternations falls. When at zero, with Alternation Freq set to 2, the alternations fall on odd harmonics. Change to +/-1 to fall on even harmonics.</div>
+        </div>   
+        <div class="slider-container">
+            <label for="aliasing">Aliasing:</label>
+            <input type="range" id="aliasing" name="aliasing" min="0" max="1" step="0.1" value="0.0" class="longish-slider" list="ticksPlus1Zero">
+            <output class="valueSpan longOut" name="aliasing">0</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Continue to add harmonics past the Nyquest limit to create deliberate aliasing. The level of the harmonic takes into account the filter section. It's as if the ADC is after the filter</div>
         </div>      
         <div class="canvasBox">
             <canvas id="wavePreview"  width ="2000" height="500"></canvas>
@@ -420,7 +427,7 @@
 
     <div class="bordered" id="FilterSetup">
         <div class="presetHeader">
-            <h3>Filter Settings</h3>
+            <h3>Additive Filter</h3>
             <div id="filterPresetButtons" class="PresetButtons"></div>
         </div>
 
