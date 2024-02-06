@@ -78,6 +78,7 @@ previewButtons.forEach(function(button) {
             if (button.name=='apiFFT') {
                 button.addEventListener('click', function() {
                     useFFT = !useFFT;
+                    if (!useFFT) fftFill("fftCanvas");
                     updatePreviewButtonState();
                 });
                 button.isChecked =()=> useFFT;
@@ -270,15 +271,19 @@ function updatePreviewButtonState(){
 
 
 //Canvas resize handler
+let canvases = document.querySelectorAll('canvas');
 window.addEventListener('resize', updateCanvas);
 function updateCanvas() {
-    document.querySelectorAll('canvas').forEach((canvas)=>{
+    canvases.forEach((canvas)=>{
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
     });
     updateDisplay();
 }
 updateCanvas();
+
+
+fftFill("fftCanvas");
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Generally methods for sliders and preset buttons

@@ -32,6 +32,14 @@ function fftFade(canvasId){
 }
 
 
+function fftFill(canvasId){
+    let canvas = document.getElementById(canvasId);
+    let ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.fillStyle = "rgba(240, 240, 240, 1)";
+    ctx.fillRect(0,0,w,h);  
+}
 
 
 let fftFrameCall = null;

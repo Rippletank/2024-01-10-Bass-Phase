@@ -67,7 +67,7 @@ function playAudio(index, patchA, patchB, patchAR, patchBR) {
                 if (newSourceNode==sourceNode) {
                     stop();
                 }
-            }, 100); 
+            }, 500); 
             
         }   
     }
