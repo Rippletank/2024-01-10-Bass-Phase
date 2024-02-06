@@ -323,6 +323,7 @@ function initSliders(){
                 if (autoUpdateDetailedFFT) updateDetailedFFT();
             }
             else if (previewSubjectChanged && autoUpdateDetailedFFT){
+                previewSubjectChanged=false;
                 updateDetailedFFT();//Respond to changes of previewSubject (and isStereo)
             }
         }
