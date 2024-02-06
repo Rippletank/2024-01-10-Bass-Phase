@@ -10,5 +10,9 @@
     {
         "name":"Aliasing",
         "path":"aliasing.json"
+    },
+    {
+        "name":"Ultrasonic IMD",
+        "path":"UltrasonicIMD.json"
     }
 ]

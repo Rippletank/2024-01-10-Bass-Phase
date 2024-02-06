@@ -83,7 +83,7 @@ function stop() {
         sourceNode = null;
         cancelAnimationFrame(fftFrameCall);
         fftFrameCall = null;
-        fftClear('fftCanvas');
+        fftFade('fftCanvas');
     }
 }
 
@@ -117,7 +117,7 @@ function updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR) {
     
         updateBuffers(patchA, patchB, patchAR, patchBR);
         updateDisplay();
-        fftClear('fftCanvas');
+        fftFade('fftCanvas');
     
         let t1 = performance.now();
         console.log("Execution time: " + (t1 - t0) + " milliseconds.");
@@ -211,6 +211,7 @@ let previewResult = null;
 let filterPreviewSubject =0;
 let previewSubject =0;
 let previewSubjectChannel =0;
+let previewSubjectChanged=false;
 let previewTHDReport = 0;
 function updatePreview(){
     const previewPatch = getPreviewSubjectCachedPatch();

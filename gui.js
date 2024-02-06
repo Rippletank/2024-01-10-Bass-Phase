@@ -60,6 +60,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 isStereo = !isStereo;
                 updatePreviewButtonState();
+                previewSubjectChanged = true;
                 setUpStereo(isStereo);
             });
             button.isChecked =()=> isStereo;
@@ -77,6 +78,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 previewSubject = sub;
                 previewSubjectChannel = chan;
+                previewSubjectChanged = true;
                 DoFullPreviewUpdate();
             });
             button.isChecked =()=> previewSubject == sub && (!isStereo || previewSubjectChannel==chan);
@@ -95,7 +97,16 @@ previewButtons.forEach(function(button) {
             let checked = null;
             if (button.name=='qDo') {
                 action = ()=>updateDetailedFFT();
-                checked =()=> false;
+                checked =()=> !autoUpdateDetailedFFT;
+            }
+            else if (button.name=='qAuto') {
+                action = ()=>
+                        {
+                            autoUpdateDetailedFFT = !autoUpdateDetailedFFT;
+                            if (autoUpdateDetailedFFT) updateDetailedFFT();
+                            updatePreviewButtonState();
+                        }
+                checked =()=> autoUpdateDetailedFFT;
             }
             else if (button.name[1]=='f') {
                 switch(button.name[2]){
@@ -306,10 +317,20 @@ function initSliders(){
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
     setInterval(function() {
-        if (!isMouseDown && changed && Date.now() - lastUpdate > 300) {
-            updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
+        if (!isMouseDown && Date.now() - lastUpdate > 300) {
+            if (changed){
+                updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
+                if (autoUpdateDetailedFFT) updateDetailedFFT();
+            }
+            else if (previewSubjectChanged && autoUpdateDetailedFFT){
+                updateDetailedFFT();//Respond to changes of previewSubject (and isStereo)
+            }
         }
     }, 300); 
+
+    setTimeout(function() {
+        if (autoUpdateDetailedFFT) updateDetailedFFT();
+    },2000);
 }
 
 
@@ -481,14 +502,17 @@ function updateLabelsFor(containerId, patch) {
 
 function exportCombinedPatchToJSON(){
     updateAllLabelsAndCachePatches();
-
+    const notesEdit = document.getElementById('notesEdit');
     let patch = { 
         patchC: {...cachedPatchCmn}, 
         patchA: {...cachedPatchA},
         patchAR: {...cachedPatchAR},
         patchB: {...cachedPatchB},
         patchBR: {...cachedPatchBR},
-        testSubjects: getTestSubjectList()
+        testSubjects: getTestSubjectList(),
+        isStereo: isStereo,
+        notes: notesEdit? notesEdit.value : ""
+
     };
     return JSON.stringify(patch);
 }
@@ -514,8 +538,13 @@ function importCombinedPatchFromPatch(patch){
     Object.assign(patchB, patch.patchB);
     Object.assign(patchAR, patch.patchAR);
     Object.assign(patchBR, patch.patchBR);
+    
+    // Load the patches and settings
+    isStereo = patch.isStereo ?? false;
 
-    // Load the patches
+    const notesEdit = document.getElementById('notesEdit');
+    notesEdit.value = patch.notes ?? "";
+
     loadPatches(patchC, patchA, patchB, patchAR, patchBR, patch.testSubjects ?? defaultTestSubjectList);
 }
 
@@ -623,7 +652,7 @@ function loadIntoDropdown(id, list) {
     select.innerHTML = '';
 
     let defOption = document.createElement('option');
-    defOption.textContent = "Server Presets";
+    defOption.textContent = "Select Preset (from Server)";
     defOption.value = "";
     select.appendChild(defOption);
 

@@ -36,7 +36,8 @@ const disableGroups =[
             "jitter",
             "oversampleTimes",
             "oversampleStopDepth",
-            "oversampleTransition"
+            "oversampleTransition",
+            "ultrasonicFrequency"
         ]
     },
     {
@@ -267,6 +268,13 @@ function setValueFromPatch(ve, patch){
                 toInharmonicString(
                     patch.inharmonicCLevel, 
                     patch.inharmonicCSemitones.toFixed(0)+' semitones');
+            break;
+            break;
+        case "ultrasonic":
+            ve.innerHTML =patch.oversampleTimes==0?"<b>off</b>":
+                toInharmonicString(
+                    patch.ultrasonicLevel, 
+                    (0.49*trueSampleRate*( 1 + (oversampling-1) * patch.ultrasonicFrequency)).toFixed(0)+' Hz');
             break;
     }
 }

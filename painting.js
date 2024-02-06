@@ -22,7 +22,7 @@
 
 let useFFT = true;
 
-function fftClear(canvasId){
+function fftFade(canvasId){
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
     const w = canvas.width;
@@ -40,7 +40,7 @@ const fftEndF = 20000;
 function startFFT(context, analyser, canvasId){
     if (fftFrameCall) return;
     if (!useFFT) {
-        fftClear();
+        fftFade();
         return;
     }
     let canvas = document.getElementById(canvasId);
@@ -131,6 +131,7 @@ function startFFT(context, analyser, canvasId){
 
 
 
+let autoUpdateDetailedFFT = true;
 let detailedMinDb =-120;
 let detailedMaxDb =0;
 let detailedMinF =20;

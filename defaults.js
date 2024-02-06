@@ -390,6 +390,8 @@ function getDefaultPatch(){
         oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
         oversampleStopDepth:0.5,//-70db to -110db - default = -90db
         oversampleTransition:0.7,//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
+        ultrasonicFrequency:0.5,//range linearly between normal Nyquist and oversampled Nyquist
+        ultrasonicLevel:-91,//-91..0, in db -91 is off
 
         inharmonicALevel:-91,//-91..0, in db -91 is off
         inharmonicBLevel:-91,//-91..0, in db -91 is off

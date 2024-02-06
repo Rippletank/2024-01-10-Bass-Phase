@@ -49,7 +49,7 @@ function buildOSFilters(patch){
 
 
 //Perform distortion on buffer in place
-function distort(buffer, patch, sampleRate, isCyclic){
+function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics){
     if (!isCyclic && trueSampleRate != sampleRate){
         trueSampleRate = sampleRate;//capture true samplerate as early as possible - use for report even if in cycle mode
     } 
@@ -65,6 +65,13 @@ function distort(buffer, patch, sampleRate, isCyclic){
 
     let ob =oversampling==1 ? buffer :  upsample(buffer, filter, polyphaseKernels, isCyclic);
 
+    if (includeInharmonics && patch.ultrasonicLevel>-91 && oversampling>1)
+    {
+        const A = patch.ultrasonicFrequency;//0-1
+        let w =  Math.PI * ((1-A)/oversampling + A); //A scales between sample nyquist (pi/oversampling) and oversampled nyquist (pi)
+        //let w =  0.125*Math.PI * ((1-A)/oversampling + A);//Test in audible range
+        addUltrasonic(ob, w, Math.pow(10, patch.ultrasonicLevel/20), isCyclic);
+    }
 
     if (Math.abs(patch.hyperbolicDistortion)>0)hyperbolicAsymmetry(ob, patch.hyperbolicDistortion * patch.distortion);
     if (Math.abs(patch.oddDistortion)>0) cheb_3(ob, patch.distortion * patch.oddDistortion);
@@ -214,6 +221,58 @@ function cheb_2_3(buffer, even, odd){
 }
 
 
+function addUltrasonic(ob, w,  level, isCyclic)
+{
+    if (isCyclic) 
+    {
+        addUltrasonicCyclic(ob, w, level)
+    }
+    else
+    {
+        addUltrasonicOneshot(ob, w, level)
+    }
+}
+function addUltrasonicCyclic(ob, w, level)
+{
+    //create a blackman-harris window as the envelope of the ultrasonic tone
+        //https://en.wikipedia.org/wiki/Window_function
+    let length = ob.length;
+    let a0 = 0.35875 * level;
+    let a1 = 0.48829 * level;
+    let a2 = 0.14128 * level;
+    let a3 = 0.01168 * level;
+    //Blackman-harris window (bufferSize-1) to ensure 1 at end
+    let piScale =2 * Math.PI / (length - 1)
+    for(let i=0;i<length;i++){
+        let a = a0 - a1 * Math.cos(piScale * i ) 
+                   + a2 * Math.cos(2 * piScale * i ) 
+                   - a3 * Math.cos(3 * piScale * i );
+        ob[i] +=  a * Math.sin(w*i);
+    }
+}
+
+const ultrasonicSmoothing = 8;//Number of cycles to attack and decay (x2)
+function addUltrasonicOneshot(ob, w, level)
+{
+    //Simple linear attack and decay envelope for the ultrasonic tone
+    //Reduce clicks or any other artifacts
+    //ultrasonicSmoothing
+    let length = ob.length;
+    const attack = Math.round(2*Math.PI/w*ultrasonicSmoothing); //ultrasonicSmoothing full cycles
+    const decay = attack *2; //ultrasonicSmoothing x2 full cycles for decay
+    const decayStart = length - decay;
+    const attackScale = level/attack;
+    const decayScale = level/decay;
+    for(let i=0;i<attack;i++){
+        ob[i] += i* attackScale * Math.sin(w*i);
+    }
+    for(let i=attack;i<decayStart;i++){
+        ob[i] += level * Math.sin(w*i);
+    }
+    for(let i=decayStart;i<length;i++){
+        ob[i] += (length - i)*decayScale * Math.sin(w*i);
+    }
+}
 
 
 

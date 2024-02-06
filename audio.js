@@ -89,7 +89,7 @@ function getAudioBuffer(
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
-            distort(b, patch, sampleRate, false);
+            distort(b, patch, sampleRate, false, true);
             envelopeBuffers.push(envelopeBuffer);
             filters.push(filter);
         }
@@ -134,6 +134,7 @@ function getPreview(referencePatch, filterPreviewSubject){
 }
 
 
+let blackmanHarrisWindow65K = buildBlackmanHarrisWindow(65536);
 function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false){
     let envelopeBuffer =[];
     let b = [];
@@ -185,25 +186,14 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     
 
     if (includeInharmonics){
-        let window =[];
-        let a0 = 0.35875;
-        let a1 = 0.48829;
-        let a2 = 0.14128;
-        let a3 = 0.01168;
-        for (let i = 0; i < bufferSize; i++) {
-            //Blackman-harris window (bufferSize-1) to ensure 1 at end
-            //https://en.wikipedia.org/wiki/Window_function
-            window.push( 
-                a0 - a1 * Math.cos(2 * Math.PI * i / (bufferSize - 1)) 
-                    + a2 * Math.cos(4 * Math.PI * i / (bufferSize - 1)) 
-                    - a3 * Math.cos(6 * Math.PI * i / (bufferSize - 1))
-            );
-        }    
-        AddInharmonics(patch, sampleRate, b, window, 0);
+        //Add inharmonics but process with Blackman-Harris window to keep FFT shape as clean as possible
+        //This if for preview and use in detailed FFT so sounds is unimportant
+        const window =bufferSize==65536? blackmanHarrisWindow65K : buildBlackmanHarrisWindow(bufferSize)
+        AddInharmonics(patch, sampleRate, b, window  , 0);
     } 
 
     let distorted =[...b];
-    distort(distorted, patch, sampleRate, true);
+    distort(distorted, patch, sampleRate, true, includeInharmonics);
 
     return {
         samples:b,
@@ -254,7 +244,7 @@ function measureTHDPercent(referencePatch){
 
     buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, 0);
     
-    distort(b, patch, sampleRate, true);
+    distort(b, patch, sampleRate, true, false);
 
     let fft = getFFT1024(b);
 
@@ -335,6 +325,26 @@ function buildEnvelopeBuffer(
             envValues.push(y);
         }
         return envValues;
+}
+
+
+function buildBlackmanHarrisWindow(bufferSize){
+    //https://en.wikipedia.org/wiki/Window_function
+    let window =[];
+    let a0 = 0.35875;
+    let a1 = 0.48829;
+    let a2 = 0.14128;
+    let a3 = 0.01168;
+    //Blackman-harris window (bufferSize-1) to ensure 1 at end
+    let piScale =2 * Math.PI / (bufferSize - 1)
+    for (let i = 0; i < bufferSize; i++) {
+        window.push( 
+            a0 - a1 * Math.cos(piScale * i ) 
+                + a2 * Math.cos(2 * piScale * i ) 
+                - a3 * Math.cos(3 * piScale * i )
+        );
+    }    
+    return window;
 }
 
 
