@@ -20,7 +20,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-let harmonics = 1000;//Allows 20Hz to have harmonics up to 20KHz??
+let harmonics = 2000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
 let generatedSampleRate = 0;//Sample rate used to generate current buffers
 // Update method to create a buffer
@@ -85,7 +85,7 @@ function getAudioBuffer(
             {
                 filter = buildFilter(sampleRate, maxBufferSize, patch);
             }
-            buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0);
+            buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0, null, 1);
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
@@ -120,22 +120,42 @@ function preMaxCalcStartDelay(patches, sampleRate){
 // samples - the audio samples for one complete cycle
 // magnitude - the magnitude of each harmonic
 // phase - the phase of each harmonic
-function getPreview(referencePatch, filterPreviewSubject){
+function getPreview(referencePatch, filterPreviewSubject, sampleRate){
     let defaultPatch = getDefaultPatch();
     let patch = {
         ...defaultPatch,
         ...referencePatch
     };
     let bufferSize = 1024; //Number of samples
+    let virtualSampleRate = bufferSize * (patch.frequency+patch.frequencyFine);//Ensure is one complete per cycle
     return _buildPreview(patch, filterPreviewSubject,
-        bufferSize * (patch.frequency+patch.frequencyFine), //Ensure is one complete per cycle
+        virtualSampleRate, 
         bufferSize,
-        false);
+        false,
+        sampleRate/virtualSampleRate);
 }
 
+function getBufferForLongFFT(samplerate, referencePatch){
+    let defaultPatch = getDefaultPatch();
+    let patch = {
+        ...defaultPatch,
+        ...referencePatch
+    };
+    const bufferSize = 65536;
+    let f = (patch.frequency+patch.frequencyFine);
+    let numberOfWavesInBuffer = f * bufferSize/samplerate;
+    const adjustedSampleRate = f * bufferSize / Math.round(numberOfWavesInBuffer);//Tweak samplerate to give whole number of cycles in buffer - better FFT
+
+    return _buildPreview(patch, filterPreviewSubject,
+        adjustedSampleRate, //Ensure is one complete per cycle
+        bufferSize,
+        true,
+        samplerate/adjustedSampleRate);
+}
 
 let blackmanHarrisWindow65K = buildBlackmanHarrisWindow(65536);
-function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false){
+//relativeSampleRates = is the ratio of the actual sample rate to the virtual sample rate - how much lower the real one is - don't include harmonics above the real Nyquist limit
+function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false, relativeSampleRates=1){
     let envelopeBuffer =[];
     let b = [];
     for (let i = 0; i < bufferSize; i++) {
@@ -182,7 +202,7 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
         magnitude.push(l);
         phase.push(phaseShift);
     }
-    buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor);
+    buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor, Math.min(relativeSampleRates,1));
     
 
     if (includeInharmonics){
@@ -260,22 +280,6 @@ function measureTHDPercent(referencePatch){
 }
 
 
-function getBufferForLongFFT(samplerate, referencePatch){
-    let defaultPatch = getDefaultPatch();
-    let patch = {
-        ...defaultPatch,
-        ...referencePatch
-    };
-    const bufferSize = 65536;
-    let f = (patch.frequency+patch.frequencyFine);
-    let numberOfWavesInBuffer = f * bufferSize/samplerate;
-    const adjustedSampleRate = f * bufferSize / Math.round(numberOfWavesInBuffer);//Tweak samplerate to give whole number of cycles in buffer - better FFT
-
-    return _buildPreview(patch, filterPreviewSubject,
-        adjustedSampleRate, //Ensure is one complete per cycle
-        bufferSize,
-        true);
-}
 
 
 //Generate a single envelope, shared by all harmonics
@@ -429,8 +433,8 @@ function buildFilter(
 
 
 //Generate the harmonic series
-function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor) {
-    const nyquistW = (0.49 * 2 * Math.PI) * (1+patch.aliasing);//Nyquist limit in radians per sample
+function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor, relativeSampleRates) {
+    const nyquistW = relativeSampleRates * (0.49 * 2 * Math.PI) * (1+patch.aliasing);//Nyquist limit in radians per sample
     const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / sampleRate;
     const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0

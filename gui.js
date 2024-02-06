@@ -405,20 +405,26 @@ function insertPresetButtons(id, presetList){
 
 
 function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
-    commonSectionNames.forEach((sectionName)=>{
-        loadPatchIntoContainer(sectionName, patch);
-    });
-    if(testSubjectList)
-    {
-        loadTestSubjectList(testSubjectList);
+    try{
+        suspendPreviewUpdates = true;
+        commonSectionNames.forEach((sectionName)=>{
+            loadPatchIntoContainer(sectionName, patch);
+        });
+        if(testSubjectList)
+        {
+            loadTestSubjectList(testSubjectList);
+        }
+        loadPatchIntoContainer('SoundASetup', patchA ?? patch);
+        loadPatchIntoContainer('SoundBSetup', patchB ??patch);
+        loadPatchIntoContainer('SoundARSetup', (patchAR ?? patchA) ?? patch);
+        loadPatchIntoContainer('SoundBRSetup', (patchBR ?? patchB) ??patch);
     }
-    loadPatchIntoContainer('SoundASetup', patchA ?? patch);
-    loadPatchIntoContainer('SoundBSetup', patchB ??patch);
-    loadPatchIntoContainer('SoundARSetup', (patchAR ?? patchA) ?? patch);
-    loadPatchIntoContainer('SoundBRSetup', (patchBR ?? patchB) ??patch);
-    updateAllLabelsAndCachePatches();
-    updatePreview();
-    updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
+    finally{
+        suspendPreviewUpdates = false;
+        updateAllLabelsAndCachePatches();
+        updatePreview();
+        updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
+    }
 }
 
 

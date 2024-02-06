@@ -213,9 +213,12 @@ let previewSubject =0;
 let previewSubjectChannel =0;
 let previewSubjectChanged=false;
 let previewTHDReport = 0;
+let suspendPreviewUpdates = true;
 function updatePreview(){
+    if (suspendPreviewUpdates) return;
+    ensureAudioContext();
     const previewPatch = getPreviewSubjectCachedPatch();
-    previewResult = getPreview(previewPatch, filterPreviewSubject);
+    previewResult = getPreview(previewPatch, filterPreviewSubject, audioContext.sampleRate);
     previewResult.fft = getFFT1024(previewResult.distortedSamples);
     
     previewTHDReport =previewPatch.distortion>0 ? "THD: " + measureTHDPercent(previewPatch).toFixed(3)+"% ["+previewPatchName()+"]" : "Distortion off";
