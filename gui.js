@@ -28,24 +28,15 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //Play buttons
-document.getElementById('playSoundA').addEventListener('click', function() {
+document.querySelectorAll('.PlayA').forEach(el=>el.addEventListener('click', function() {
     play(0);
-});
-document.getElementById('playSoundB').addEventListener('click', function() {
+}));
+document.querySelectorAll('.PlayB').forEach(el=>el.addEventListener('click', function() {
     play(1);
-});
-document.getElementById('playSoundNull').addEventListener('click', function() {
+}));
+document.querySelectorAll('.PlayN').forEach(el=>el.addEventListener('click', function() {
     play(2);
-});
-document.getElementById('fftPlayA').addEventListener('click', function() {
-    play(0);
-});
-document.getElementById('fftPlayB').addEventListener('click', function() {
-    play(1);
-});
-document.getElementById('fftPlayN').addEventListener('click', function() {
-    play(2);
-});
+}));
 
 
 function play(index){

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LF Phase-shift Test</title>
+    <title>Sound Quality Tests</title>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-    <h1>Low Frequency Phase-shift Test</h1>
+    <h1>Sound Quality Tests</h1>
 
 
     <datalist id="ticksPlus1ZeroMinus1">
@@ -62,7 +62,7 @@
         <div class="testSoundControls hideForMono" id="SoundARSetup">
             <h3 class="stereoLabel hideForMono">Right:</h3>
         </div>
-        <button id="playSoundA">Play A</button>
+        <button class="playSoundA PlayA">Play A</button>
     </div>
 
 
@@ -78,7 +78,7 @@
         <div class="testSoundControls hideForMono" id="SoundBRSetup">
             <h3 class="stereoLabel hideForMono">Right:</h3>
         </div>
-        <button id="playSoundB">Play B</button>
+        <button class="playSoundB PlayB">Play B</button>
     </div>
 
     <br>
@@ -104,7 +104,11 @@
             <h3>Setup </h3>
             <div class="PresetButtons"></div>
             <span class="help-icon">?</span>
-            <div class="help-popup">Turn on Stereo to investigate how differences between the sounds reaching each ear are perceived. You can also load and save set ups (patches) to share or repeat later. There are a few example patches to fetch and try out.</div>
+            <div class="help-popup">
+                Turn on Stereo to investigate how differences between the sounds reaching each ear are perceived. You can also load and save set ups (patches) to share or repeat later. There are a few example patches to fetch and try out.
+                
+                <p><a href="#Notes1">Background info and explanations</a> </p>
+            </div>
         </div>
         <div class ="previewButtons">
             <div class="previewButtons previewL">
@@ -128,7 +132,6 @@
                 <select id="serverPresetList" title="Select Preset (Server)"></select>
             </div>
             <div class="previewButtons">
-                <p>Background info - see <a href="#Notes1">notes</a> </p>
             </div>
         </div>
     </div>
@@ -306,6 +309,120 @@
         </div>
     </div>
 
+    <div class="bordered">
+        <div class="fftPlayButtons topSpacedImportant">
+            <button class="fftPlayButton PlayA ">Play A</button>
+            <button class="fftPlayButton PlayB">Play B</button>
+            <button class="fftPlayButton PlayN">Play Null</button>
+        </div>
+    </div>
+
+    <div class="bordered" id="FilterSetup">
+        <div class="presetHeader">
+            <h3>Additive Filter</h3>
+            <div id="filterPresetButtons" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">This is an additive simulation of a filter using, is it actually just controlling the levels of the sine-waves being added together. There is no phase change introduced, it is intended to help control the frequency content of the sample and vary it over time using the envelope.</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterSlope">Filter Slope</label>
+            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12" list="ticksZero">
+            <output class="valueSpan" name="filterSlope">12db/octave</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Slope of filter after cut-off</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterF1">Frequency f1:</label>
+            <input type="range" id="filterF1" name="filterF1" min="0" max="10" step="0.01" value="10">
+            <output class="valueSpan" name="filterF1">20000Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Start frequency of filter</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterF2">Frequency f2:</label>
+            <input type="range" id="filterF2" name="filterF2" min="0" max="10" step="0.01" value="10">
+            <output class="valueSpan" name="filterF2">20000Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Hold (or end of attack) frequency of filter</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="filterF3">Frequency f3:</label>
+            <input type="range" id="filterF3" name="filterF3" min="0" max="10" step="0.01" value="10">
+            <output class="valueSpan" name="filterF3">20000Hz</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">End frequency of filter</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="attackF">Attack (f1→f2):</label>
+            <input type="range" id="attackF" name="attackF" min="0.001" max="0.2" step="0.001" value="0.005">
+            <output class="valueSpan" name="attackF">0.005s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the linear (in frequency) attack of filter envelope</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="holdF">Hold (f2):</label>
+            <input type="range" id="holdF" name="holdF" min="0.00" max="1" step="0.01" value="0.0">
+            <output class="valueSpan" name="holdF">0s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time filter held at maximum between attack and decay</div>
+        </div>
+
+        <div class="slider-container">
+            <label for="decayF">Decay (f2→f3):</label>
+            <input type="range" id="decayF" name="decayF" min="0.01" max="2" step="0.01" value="0.4">
+            <output class="valueSpan" name="decayF">0.4s</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls the time for the linear (in frequency) decay of filter envelope</div>
+        </div>
+
+    </div>
+
+
+
+    <div class="bordered" id="TestSetup">
+        <div class="presetHeader">
+            <h3>Additive Phase shifts </h3>
+            <div class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how and by how much the phase of the first harmonic is shifted and also if harmonics are shifted, too.</div>
+        </div>
+        <h4>Root Phase shift</h4>
+        <div class="slider-container">
+            <label for="rootPhaseDelay">Root Phase Shift:</label>
+            <input type="range" id="rootPhaseDelay" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0" list="ticksPlus2ZeroMinus2">
+            <output class="valueSpan" name="rootPhaseDelay">0π (0ms)</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
+        </div>
+
+        <h4>Envelope Mode</h4>
+        <div class="slider-container">
+            <label for="envMode"   class="modeLabel modeLabelLeft">Delay envelope with phase-shift</label>
+            <input type="range" id="envMode" name="envMode" min="1" max="2" step="1" value="1" class="short-slider">
+            <span   class="modeLabel modeLabelRight">Fixed envelope for all harmonics</span>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls whether the envelope of a each harmonic is shifted so the it starts with phase=0 of the harmonic or if all harmonics start at the same time but with shifted phases</div>
+        </div>
+
+        <h4>Higher harmonic shift</h4>
+        <div class="slider-container">
+            <label for="second">Relative Phase delay:</label>
+            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="higherHarmonicRelativeShift">0</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
+        </div>
+
+    </div>
+
+ 
+ 
 
     <div class="bordered" id="DistortionSetup">
         <div class="presetHeader">
@@ -459,124 +576,8 @@
         </div>
     </div>
 
-    <div class="bordered" id="FilterSetup">
-        <div class="presetHeader">
-            <h3>Additive Filter</h3>
-            <div id="filterPresetButtons" class="PresetButtons"></div>
-            <span class="help-icon">?</span>
-            <div class="help-popup">This is an additive simulation of a filter using, is it actually just controlling the levels of the sine-waves being added together. There is no phase change introduced, it is intended to help control the frequency content of the sample and vary it over time using the envelope.</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="filterSlope">Filter Slope</label>
-            <input type="range" id="filterSlope" name="filterSlope" min="0" max="96" step="1" value="12" list="ticksZero">
-            <output class="valueSpan" name="filterSlope">12db/octave</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Slope of filter after cut-off</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="filterF1">Frequency f1:</label>
-            <input type="range" id="filterF1" name="filterF1" min="0" max="10" step="0.01" value="10">
-            <output class="valueSpan" name="filterF1">20000Hz</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Start frequency of filter</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="filterF2">Frequency f2:</label>
-            <input type="range" id="filterF2" name="filterF2" min="0" max="10" step="0.01" value="10">
-            <output class="valueSpan" name="filterF2">20000Hz</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Hold (or end of attack) frequency of filter</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="filterF3">Frequency f3:</label>
-            <input type="range" id="filterF3" name="filterF3" min="0" max="10" step="0.01" value="10">
-            <output class="valueSpan" name="filterF3">20000Hz</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">End frequency of filter</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="attackF">Attack (f1→f2):</label>
-            <input type="range" id="attackF" name="attackF" min="0.001" max="0.2" step="0.001" value="0.005">
-            <output class="valueSpan" name="attackF">0.005s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time for the linear (in frequency) attack of filter envelope</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="holdF">Hold (f2):</label>
-            <input type="range" id="holdF" name="holdF" min="0.00" max="1" step="0.01" value="0.0">
-            <output class="valueSpan" name="holdF">0s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time filter held at maximum between attack and decay</div>
-        </div>
-
-        <div class="slider-container">
-            <label for="decayF">Decay (f2→f3):</label>
-            <input type="range" id="decayF" name="decayF" min="0.01" max="2" step="0.01" value="0.4">
-            <output class="valueSpan" name="decayF">0.4s</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls the time for the linear (in frequency) decay of filter envelope</div>
-        </div>
-
-    </div>
-
-
-
-    <div class="bordered" id="TestSetup">
-        <div class="presetHeader">
-            <h3>Additive Phase shifts </h3>
-            <div class="PresetButtons"></div>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls how and by how much the phase of the first harmonic is shifted and also if harmonics are shifted, too.</div>
-        </div>
-        <h4>Root Phase shift</h4>
-        <div class="slider-container">
-            <label for="rootPhaseDelay">Root Phase Shift:</label>
-            <input type="range" id="rootPhaseDelay" name="rootPhaseDelay" min="-2" max="2" step="0.05" value="0" list="ticksPlus2ZeroMinus2">
-            <output class="valueSpan" name="rootPhaseDelay">0π (0ms)</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Phase delay of first harmonic for Sound A. Affects 2nd harmonic according to settings in common section.</div>
-        </div>
-
-        <h4>Envelope Mode</h4>
-        <div class="slider-container">
-            <label for="envMode"   class="modeLabel modeLabelLeft">Delay envelope with phase-shift</label>
-            <input type="range" id="envMode" name="envMode" min="1" max="2" step="1" value="1" class="short-slider">
-            <span   class="modeLabel modeLabelRight">Fixed envelope for all harmonics</span>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls whether the envelope of a each harmonic is shifted so the it starts with phase=0 of the harmonic or if all harmonics start at the same time but with shifted phases</div>
-        </div>
-
-        <h4>Higher harmonic shift</h4>
-        <div class="slider-container">
-            <label for="second">Relative Phase delay:</label>
-            <input type="range" id="second" name="higherHarmonicRelativeShift" min="0" max="1" step="0.1" value="0"  list="ticksPlus1Zero">
-            <output class="valueSpan" name="higherHarmonicRelativeShift">0</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
-        </div>
-
-    </div>
     
-    <div class="bordered">
-        <div class="presetHeader">
-            <h3>Null test </h3>
-            <h3 class="center"><span id="nullTestdb"></span></h3>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Sound B is inverted and added to Sound B. The level is then measured and result is normalised (assuming it is not completely null). Identifies the differences between the sounds.</div>
-        </div>
-                
-        <div class="canvasBox">
-            <canvas id="waveformNull"  class="fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <button id="playSoundNull">Play</button>
-        <p>See <a href="#Notes1">explanation of Null Test</a></p>
-    </div>
+
     <div class="bordered">
         <div class="presetHeader">
             <h3>Playback FFT</h3>
@@ -585,9 +586,9 @@
             <div class="help-popup">FFT as provided by the Web Audio API, including built in smoothing and windowing functions.</div>
         </div>
         <div class="fftPlayButtons">
-            <button id="fftPlayA" class="fftPlayButton">Play A</button>
-            <button id="fftPlayB" class="fftPlayButton">Play B</button>
-            <button id="fftPlayN" class="fftPlayButton">Play Null</button>
+            <button class="fftPlayButton PlayA">Play A</button>
+            <button class="fftPlayButton PlayB">Play B</button>
+            <button class="fftPlayButton PlayN">Play Null</button>
         </div>
         <div class="canvasBox">
             <canvas id="fftCanvas"></canvas>
@@ -602,8 +603,8 @@
                 <button name="apiFFT" class = "previewButton">On</button>
             </div>
         </div>
-        <p>From playback.</p>
     </div>
+
     <div class="bordered">
         <div class="presetHeader">
             <h3>Static Detailed FFT </h3>
@@ -648,6 +649,22 @@
     </div>
 
 
+    <div class="bordered">
+        <div class="presetHeader">
+            <h3>Null test </h3>
+            <h3 class="center"><span id="nullTestdb"></span></h3>
+            <span class="help-icon">?</span>
+            <div class="help-popup">
+                Sound B is inverted and added to Sound B. The level is then measured and result is normalised (assuming it is not completely null). Identifies the differences between the sounds.
+                <p>See <a href="#Notes1">explanation of Null Test</a></p>
+            </div>
+        </div>
+                
+        <div class="canvasBox">
+            <canvas id="waveformNull"  class="fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <button id="playSoundNull">Play</button>
+    </div>
 
 
 
