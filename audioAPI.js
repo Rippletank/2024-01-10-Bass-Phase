@@ -203,7 +203,7 @@ function updateDisplay(){
     }
     paintPreview()
     let nullTest = document.getElementById('nullTestdb');
-    nullTest.textContent = " - Peak:" +nullTestMax.toFixed(1) + "dB";
+    nullTest.textContent = "Peak Level: " +nullTestMax.toFixed(1) + "dB";
 }
 
 

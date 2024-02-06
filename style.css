@@ -83,8 +83,21 @@ canvas {
     margin-left: 2em;
 }
 
+
+.presetHeader .help-icon {
+    margin-left:6em;
+    flex-basis: 20px;
+}
+.presetHeader output {
+    flex-basis: 6em;
+    text-align: center;
+    margin-left: 6px;
+}
 .slider-container .help-icon {
     flex-basis: 20px;
+}
+
+.help-icon {
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
@@ -99,11 +112,11 @@ canvas {
     font-family: sans-serif;
 }
 
-.slider-container .help-popup {
+.help-popup {
     display: none;
     position: absolute;
     right: 3em;
-    width: 15em;
+    width: 20em;
     padding: 10px;
     background-color: #f9f9f9;
     border: 1px solid #ccc;
@@ -136,8 +149,13 @@ canvas {
 .presetHeader h3{
     flex-basis: 20%;
 }
+
+.presetHeader .center{
+    flex-basis: 70%;
+    text-align: center;
+}
 .PresetButtons {
-    flex-basis: 50%;
+    flex-basis: 70%;
     display: flex;
     justify-content: left;
     margin-left: 5%;

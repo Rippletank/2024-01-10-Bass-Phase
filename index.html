@@ -100,7 +100,12 @@
         </div>
     </div>
     <div class="bordered">
-        <h3>Setup </h3>
+        <div class="presetHeader">
+            <h3>Setup </h3>
+            <div class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Turn on Stereo to investigate how differences between the sounds reaching each ear are perceived. You can also load and save set ups (patches) to share or repeat later. There are a few example patches to fetch and try out.</div>
+        </div>
         <div class ="previewButtons">
             <div class="previewButtons previewL">
                 <button name="sStereo" class = "previewButton">Stereo</button>
@@ -163,6 +168,9 @@
         <div class="presetHeader topSpaced">
             <h4>Additive Synthesis</h4>
             <div id="wavePresetButtons" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Additive synthesis of the basic tone, so basically, building it from sine-waves. The preview shows a single cycle of the wave, the harmonics and phases used are shown in the graph (this is not an FFT).
+            </div>
         </div>
         <div class="slider-container">
             <label for="balance">Balance (1st↔higher):</label>
@@ -262,6 +270,8 @@
         <div class="presetHeader topSpaced">
             <h4>Envelope</h4>
             <div id="envelopPresetButtons" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">The envelope applied to the sound. The whole envelope is smoothed by a low pass filter.</div>
         </div>
         <div class="slider-container">
             <label for="attack">Attack:</label>
@@ -301,6 +311,9 @@
         <div class="presetHeader">
             <h3>Distortion Settings</h3>
             <div id="distortionPresets" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">A range of non-linear processes which can be applied to the sound, controls for the quality of oversampling and some inharmonic tones to investigate Intermodulation. The preview is of a single cycle of the distorted waveform and the FFT of this cycle (excluding inharmonic tones).
+        </div>
         </div>
      
         <div class="canvasBox">
@@ -377,6 +390,8 @@
         <div class="presetHeader">
             <h3>Over-sampling</h3>
             <div id="oversamplingPresets" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls for oversampling. Only applied when the Distortion Level is on and only affects the distortion processing</div>
         </div>
         <div class="slider-container">
             <label for="oversampleTimes">Over Factor:</label>
@@ -412,6 +427,8 @@
         <div class="presetHeader">
             <h3>Inharmonics</h3>
             <div id="inharmonicPresets" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls to add audio range sine-wave tones which can be added to investigate intermodulation distortion. The frequency can be unrelated to the main tone or a ratio defined by the difference scales.</div>
         </div>
         <div class="slider-container">
             <label for="inharmonicAFrequency">A (Frequency):</label>
@@ -446,6 +463,8 @@
         <div class="presetHeader">
             <h3>Additive Filter</h3>
             <div id="filterPresetButtons" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">This is an additive simulation of a filter using, is it actually just controlling the levels of the sine-waves being added together. There is no phase change introduced, it is intended to help control the frequency content of the sample and vary it over time using the envelope.</div>
         </div>
 
         <div class="slider-container">
@@ -509,7 +528,12 @@
 
 
     <div class="bordered" id="TestSetup">
-        <h3>Phase shift settings</h3>
+        <div class="presetHeader">
+            <h3>Additive Phase shifts </h3>
+            <div class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Controls how and by how much the phase of the first harmonic is shifted and also if harmonics are shifted, too.</div>
+        </div>
         <h4>Root Phase shift</h4>
         <div class="slider-container">
             <label for="rootPhaseDelay">Root Phase Shift:</label>
@@ -540,7 +564,13 @@
     </div>
     
     <div class="bordered">
-        <h3>Null test <span id="nullTestdb"></span></h3>        
+        <div class="presetHeader">
+            <h3>Null test </h3>
+            <h3 class="center"><span id="nullTestdb"></span></h3>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Sound B is inverted and added to Sound B. The level is then measured and result is normalised (assuming it is not completely null). Identifies the differences between the sounds.</div>
+        </div>
+                
         <div class="canvasBox">
             <canvas id="waveformNull"  class="fullwave" width ="2000" height="500"></canvas>
         </div>
@@ -548,7 +578,12 @@
         <p>See <a href="#Notes1">explanation of Null Test</a></p>
     </div>
     <div class="bordered">
-        <h3>Playback FFT</h3>
+        <div class="presetHeader">
+            <h3>Playback FFT</h3>
+            <div class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">FFT as provided by the Web Audio API, including built in smoothing and windowing functions.</div>
+        </div>
         <div class="fftPlayButtons">
             <button id="fftPlayA" class="fftPlayButton">Play A</button>
             <button id="fftPlayB" class="fftPlayButton">Play B</button>
@@ -570,7 +605,14 @@
         <p>From playback.</p>
     </div>
     <div class="bordered">
-        <h3>Static Detailed FFT </h3>
+        <div class="presetHeader">
+            <h3>Static Detailed FFT </h3>
+            <div class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Static FFT, updated automatically when waveforms are updated or when update is tapped. 
+                The FFT is of a specially built preview which uses the same sound settings as above but is tuned to give a whole number of cycles within the 64k sample frame, hence the spectrum is particularly sharp. 
+            Inharmonic tones are added using a windowing function to keep the spectrum as clean as possible.</div>
+        </div>
         <div class="canvasBox">
             <canvas id="staticFFTCanvas" width ="2000" height="500"></canvas>
         </div>
