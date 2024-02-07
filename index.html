@@ -501,7 +501,14 @@
             <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="jitter">0%</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Random temporal misplacement of sample in normal distribution up to +/-0.5*time-period (1/fs)</div>
+            <div class="help-popup">Simple algorithm using quadartic interpolation (low cpu) +/-0.5*time-period (1/fs)</div>
+        </div>
+        <div class="slider-container">
+            <label for="HQJitter">Jitter (HQ):</label>
+            <input type="range" id="HQJitter" name="HQJitter" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="HQJitter">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">High CPU sinc reconsctruction used to recreated the jittered waveform, displacement is normally distributed, +/-0.5*time-period (1/fs)</div>
         </div>
         
         <div class="presetHeader">
@@ -663,7 +670,7 @@
         <div class="canvasBox">
             <canvas id="waveformNull"  class="fullwave" width ="2000" height="500"></canvas>
         </div>
-        <button id="playSoundNull">Play</button>
+        <button class="PlayN">Play</button>
     </div>
 
 

@@ -386,6 +386,8 @@ function getDefaultPatch(){
         hyperbolicDistortion:0,//+/-1 Hyperbolic distortion - mild asymmetry
         tanhDistortion:0.4,//0= off
         clipDistortion:0,//0..1 0 = off, 1 = max distortion
+        jitter:0,//0..1 0 = off, 1 = max jitter - low cost algorithm - approximation of jitter
+        HQJitter:0,//0..1 0 = off, 1 = max jitter  - high quality algorithm - using sinc reconstruction
 
         oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
         oversampleStopDepth:0.5,//-70db to -110db - default = -90db

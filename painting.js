@@ -535,18 +535,19 @@ function doPreviewPaint(
 
     //Waveform Preview - left side square
     let wpCorner= h/16;
-    let wpSize = wpCorner*14;
+    let wpWidth = wpCorner*20;
+    let wpHeight = wpCorner*14;
     ctx.fillStyle = "rgb(240, 240, 240)";
-    ctx.fillRect(0, 0, wpSize+wpCorner*2, wpSize+wpCorner*2);  
+    ctx.fillRect(0, 0, wpWidth+wpCorner*2, wpHeight+wpCorner*2);  
     ctx.beginPath();    
     let waveScale = 1/Math.max(Math.abs(min),Math.abs(max));
     //waveForm axis lines
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(150, 150, 150)";
-    ctx.moveTo(wpCorner, wpCorner + 0.5 * wpSize);
-    ctx.lineTo(wpCorner + wpSize, wpCorner + 0.5 * wpSize); 
-    ctx.moveTo(wpCorner+ 0.5 * wpSize, wpCorner );
-    ctx.lineTo(wpCorner + 0.5 * wpSize, wpCorner + wpSize); 
+    ctx.moveTo(wpCorner, wpCorner + 0.5 * wpHeight);
+    ctx.lineTo(wpCorner + wpWidth, wpCorner + 0.5 * wpHeight); 
+    ctx.moveTo(wpCorner+ 0.5 * wpWidth, wpCorner );
+    ctx.lineTo(wpCorner + 0.5 * wpWidth, wpCorner + wpHeight); 
     ctx.stroke();
   
     //Waveform preview
@@ -554,8 +555,8 @@ function doPreviewPaint(
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(0, 0, 0)";
     for(let i=0;i<samples.length;i++){
-        let x =wpCorner + i * wpSize / samples.length;
-        let y =wpCorner + (0.5-0.5 * waveScale * samples[i]) * wpSize;
+        let x =wpCorner + i * wpWidth / samples.length;
+        let y =wpCorner + (0.5-0.5 * waveScale * samples[i]) * wpHeight;
         if (i === 0) {
             ctx.moveTo(x, y);
         } else {
@@ -568,7 +569,7 @@ function doPreviewPaint(
     //Spectrum Amplitude preview - right side rectangle
     let minDB = -100/20;//db/20 - optimise out the *20 from the db calculation
     //Spectrum Amplitude preview - right side rectangle
-    let spL= wpCorner*3+wpSize;
+    let spL= wpCorner*3+wpWidth;
     let spW = w - spL;
     let spT = 0;
     let spB = h*( showPhase ? 0.75: 1);

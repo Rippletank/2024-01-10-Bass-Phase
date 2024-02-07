@@ -75,6 +75,7 @@ function getAudioBuffer(
       let envelopeBuffers =[];
       let filters =[];
 
+      let randSeed = Math.random();
       for(let i=0;i<channels.length;i++){
             let c = channels[i];
             let patch = c.patch;
@@ -89,7 +90,7 @@ function getAudioBuffer(
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
-            distort(b, patch, sampleRate, false, true);
+            distort(b, patch, sampleRate, false, true, randSeed);
             envelopeBuffers.push(envelopeBuffer);
             filters.push(filter);
         }
@@ -153,7 +154,7 @@ function getBufferForLongFFT(samplerate, referencePatch){
         samplerate/adjustedSampleRate);
 }
 
-let blackmanHarrisWindow65K = buildBlackmanHarrisWindow(65536);
+let window65k =buildBlackmanHarrisWindow(65536); //or kaiserWindow(65536, alpha) low alpha looks bad (side lobes show), high alpha is not as narrow as Blackman-Harris
 //relativeSampleRates = is the ratio of the actual sample rate to the virtual sample rate - how much lower the real one is - don't include harmonics above the real Nyquist limit
 function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false, relativeSampleRates=1){
     let envelopeBuffer =[];
@@ -208,12 +209,12 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     if (includeInharmonics){
         //Add inharmonics but process with Blackman-Harris window to keep FFT shape as clean as possible
         //This if for preview and use in detailed FFT so sounds is unimportant
-        const window =bufferSize==65536? blackmanHarrisWindow65K : buildBlackmanHarrisWindow(bufferSize)
+        const window =bufferSize==65536? window65k : buildBlackmanHarrisWindow(bufferSize)
         AddInharmonics(patch, sampleRate, b, window  , 0);
     } 
 
     let distorted =[...b];
-    distort(distorted, patch, sampleRate, true, includeInharmonics);
+    distort(distorted, patch, sampleRate, true, includeInharmonics, Math.random());
 
     return {
         samples:b,
@@ -264,7 +265,7 @@ function measureTHDPercent(referencePatch){
 
     buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, 0);
     
-    distort(b, patch, sampleRate, true, false);
+    distort(b, patch, sampleRate, true, false, Math.random());
 
     let fft = getFFT1024(b);
 

@@ -776,7 +776,7 @@ document.querySelectorAll('.slider-container').forEach((div) => {
         });
 });
 
-function setupSliderCopy(name, div, container, label) {
+function setupSliderCopy(name, div, container, ext) {
     let existing = container.querySelector('[data-name="'+name+'"]');
     if (existing)
     {   //Already exists 
@@ -787,11 +787,11 @@ function setupSliderCopy(name, div, container, label) {
     setupNewSliderContainer(copy);
     // Change the ID of labels and ranges and reset if source is disabled
     copy.querySelectorAll('label').forEach((label) => {
-        label.htmlFor += label;
+        label.htmlFor += ext;
         label.style.opacity = '1';
     });
     copy.querySelectorAll('input[type=range]').forEach((input)=>{
-        input.id += label;
+        input.id += ext;
         input.style.pointerEvents = 'auto';
         input.style.opacity = '1';
     });
@@ -800,6 +800,9 @@ function setupSliderCopy(name, div, container, label) {
     });
     copy.querySelectorAll('input[type=checkbox]').forEach((input)=>{
         input.classList.add('hiddenCheckbox');
+    });
+    copy.querySelectorAll('.help-icon').forEach((helpIcon)=>{
+        helpIcon.addEventListener('click', helpClickHandler);//make help popups work
     });
     container.appendChild(copy);
 }
@@ -1025,13 +1028,15 @@ function checkChoice(choice) {
 let helpIcons = document.querySelectorAll('.help-icon');
 
 helpIcons.forEach(function(helpIcon) {
-    helpIcon.addEventListener('click', function(event) {
-        event.stopPropagation();
-        clearHelp();
-        let helpPopup = this.nextElementSibling;
-        helpPopup.style.display = 'block';
-    });
+    helpIcon.addEventListener('click', helpClickHandler);
 });
+
+function helpClickHandler(event) {
+    event.stopPropagation();
+    clearHelp();
+    let helpPopup = this.nextElementSibling;
+    helpPopup.style.display = 'block';
+}
 
 document.addEventListener('click', function() {
     clearHelp();
