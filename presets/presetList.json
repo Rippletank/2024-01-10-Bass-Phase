@@ -14,5 +14,9 @@
     {
         "name":"Ultrasonic IMD",
         "path":"UltrasonicIMD.json"
+    },
+    {
+        "name":"Jitter",
+        "path":"jitter.json"
     }
 ]

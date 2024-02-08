@@ -197,7 +197,9 @@ let distortionPresets = [
             oddDistortion:0,
             tanhDistortion:0.4,
             clipDistortion:0,
-            jitter:0,
+            jitterADC:0,
+            jitterDAC:0,
+            jitterPeriodic:0,
         }
     },
     {
@@ -208,7 +210,9 @@ let distortionPresets = [
             oddDistortion:0,
             tanhDistortion:0.06,
             clipDistortion:0,
-            jitter:0,
+            jitterADC:0,
+            jitterDAC:0,
+            jitterPeriodic:0,
         }
     },
     {
@@ -219,7 +223,9 @@ let distortionPresets = [
             oddDistortion:0.5,
             tanhDistortion:0.7,
             clipDistortion:0,
-            jitter:0,
+            jitterADC:0,
+            jitterDAC:0,
+            jitterPeriodic:0,
         }
     },
     {
@@ -230,7 +236,9 @@ let distortionPresets = [
             oddDistortion:0,
             tanhDistortion:0,
             clipDistortion:0,
-            jitter:0.8,
+            jitterADC:0.5,
+            jitterDAC:0.5,
+            jitterPeriodic:0.5,
             oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
             oversampleStopDepth:0.5,//-70db to -110db - default = -90db
             oversampleTransition:0.5
@@ -386,8 +394,9 @@ function getDefaultPatch(){
         hyperbolicDistortion:0,//+/-1 Hyperbolic distortion - mild asymmetry
         tanhDistortion:0.4,//0= off
         clipDistortion:0,//0..1 0 = off, 1 = max distortion
-        jitter:0,//0..1 0 = off, 1 = max jitter - low cost algorithm - approximation of jitter
-        HQJitter:0,//0..1 0 = off, 1 = max jitter  - high quality algorithm - using sinc reconstruction
+        jitterADC:0,//0..1 0 = off, 1 = max jitter applied as if ADC was jittering
+        jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering
+        jitterPeriodic:0,//0..1 0 = off, 1 = max jitter applied at fixed frequency to ADC
 
         oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
         oversampleStopDepth:0.5,//-70db to -110db - default = -90db

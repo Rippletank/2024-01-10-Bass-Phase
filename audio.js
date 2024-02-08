@@ -90,7 +90,8 @@ function getAudioBuffer(
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
-            distort(b, patch, sampleRate, false, true, randSeed);
+            distort(b, patch, sampleRate, false, true);
+            jitter(b, sampleRate, patch, false, randSeed);
             envelopeBuffers.push(envelopeBuffer);
             filters.push(filter);
         }
@@ -214,7 +215,8 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     } 
 
     let distorted =[...b];
-    distort(distorted, patch, sampleRate, true, includeInharmonics, Math.random());
+    distort(distorted, patch, sampleRate, true, includeInharmonics);
+    jitter(distorted, sampleRate, patch, true, Math.random());
 
     return {
         samples:b,
@@ -265,7 +267,8 @@ function measureTHDPercent(referencePatch){
 
     buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, 0);
     
-    distort(b, patch, sampleRate, true, false, Math.random());
+    distort(b, patch, sampleRate, true, false);
+    //No jitter - don't include in THD calculation
 
     let fft = getFFT1024(b);
 
@@ -333,24 +336,7 @@ function buildEnvelopeBuffer(
 }
 
 
-function buildBlackmanHarrisWindow(bufferSize){
-    //https://en.wikipedia.org/wiki/Window_function
-    let window =[];
-    let a0 = 0.35875;
-    let a1 = 0.48829;
-    let a2 = 0.14128;
-    let a3 = 0.01168;
-    //Blackman-harris window (bufferSize-1) to ensure 1 at end
-    let piScale =2 * Math.PI / (bufferSize - 1)
-    for (let i = 0; i < bufferSize; i++) {
-        window.push( 
-            a0 - a1 * Math.cos(piScale * i ) 
-                + a2 * Math.cos(2 * piScale * i ) 
-                - a3 * Math.cos(3 * piScale * i )
-        );
-    }    
-    return window;
-}
+
 
 
 //Generate envelope of filter with cutoff frequency in radians per sample, w

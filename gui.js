@@ -423,7 +423,7 @@ function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
         suspendPreviewUpdates = false;
         updateAllLabelsAndCachePatches();
         updatePreview();
-        updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
+        changed = true;
     }
 }
 

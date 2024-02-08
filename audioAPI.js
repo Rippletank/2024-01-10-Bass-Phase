@@ -212,7 +212,8 @@ let filterPreviewSubject =0;
 let previewSubject =0;
 let previewSubjectChannel =0;
 let previewSubjectChanged=false;
-let previewTHDReport = 0;
+let previewTHDReport = 'Distortion is off';
+let jitterReport = 'Jitter is off';
 let suspendPreviewUpdates = true;
 function updatePreview(){
     if (suspendPreviewUpdates) return;
@@ -221,8 +222,16 @@ function updatePreview(){
     previewResult = getPreview(previewPatch, filterPreviewSubject, audioContext.sampleRate);
     previewResult.fft = getFFT1024(previewResult.distortedSamples);
     
-    previewTHDReport =previewPatch.distortion>0 ? "THD: " + measureTHDPercent(previewPatch).toFixed(3)+"% ["+previewPatchName()+"]" : "Distortion off";
+    previewTHDReport = previewPatch.distortion>0 ? "THD: " + measureTHDPercent(previewPatch).toFixed(3)+"% ["+previewPatchName()+"]" : "Distortion is off";
+    jitterReport = 
+    previewPatch.jitterADC==0 && previewPatch.jitterDAC==0  && previewPatch.jitterPeriodic==0 ? "Jitter is off" :
+    ("Jitter (rms): " +
+        "ADC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterADC) + ', ' +
+        "Periodic : " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterPeriodic) + ', ' +
+        "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC) +
+        ", Sample period: " + (1000000/audioContext.sampleRate).toFixed(2) + "µs")
 }
+
 function previewPatchName(){
     switch(previewSubject){
         case 0: 
@@ -301,8 +310,10 @@ function paintPreview(){
 
 let THDReportElement = document.querySelectorAll('.THDReport');
 let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
+let jitterReportElements = document.querySelectorAll('.jitterReport');
 function putOversamplingReport(){
     oversamplingReportElements.forEach((element) =>element.textContent = oversamplingReport);
     THDReportElement.forEach((element) =>element.textContent = previewTHDReport);
+    jitterReportElements.forEach((element) =>element.textContent = jitterReport);
 }
 

@@ -13,8 +13,6 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Kippel loudspeaker models - for reference on distortion in speakers
 
 let distOversampling =0;
 let oversampling = 0;
@@ -47,9 +45,8 @@ function buildOSFilters(patch){
 }
 
 
-
 //Perform distortion on buffer in place
-function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics, randomSeed){
+function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics){
     if (!isCyclic && trueSampleRate != sampleRate){
         trueSampleRate = sampleRate;//capture true samplerate as early as possible - use for report even if in cycle mode
     } 
@@ -63,7 +60,7 @@ function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics, random
             buildOSFilters(patch) 
         }    
 
-    let ob =patch.HQJitter>0? jitter_sinc(buffer, oversampling, patch.HQJitter, randomSeed, isCyclic) : (  oversampling==1 ? buffer :  upsample(buffer, filter, polyphaseKernels, isCyclic));
+    let ob =oversampling==1 ? buffer :  upsample(buffer, filter, polyphaseKernels, isCyclic);
 
     if (includeInharmonics && patch.ultrasonicLevel>-91 && oversampling>1)
     {
@@ -82,126 +79,13 @@ function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics, random
     {
         const d=1.5-1.5 * (patch.distortion * patch.clipDistortion-0.01)/0.99;
         clip(ob, d, -d);
-    }
-    if (patch.jitter>0) 
-    {
-        jitter_ADC(ob, patch.jitter, randomSeed, isCyclic);
-    }
-
-    
+    }    
 
     if (oversampling>1) 
     {
         downsample(ob, buffer, filter, oversampling, isCyclic);
     }
-    else if (patch.HQJitter>0)
-    {
-        for(let i=0;i<buffer.length;i++)
-        {
-            buffer[i] = ob[i];
-        }
-    }
 }
-
-function jitter_ADC(buffer, amount, seed, isCyclic){
-    let rand =new  SeededSplitMix32Random(seed)
-    let length = buffer.length;
-    for(let i=0;i<length;i++){
-        let y1 = buffer[i];
-        let y0, y2;
-        // let x0=-1;
-        // let x1=0;
-        // let x2=1;
-
-        if (isCyclic) {
-            // Wrap edge values
-            y0 = buffer[(i - 1 + length) % length];
-            y2 = buffer[(i + 1) % length];
-        } else {
-            // Set edge values to zero
-            y0 = i - 1 >= 0 ? buffer[i - 1] : 0;
-            y2 = i + 1 < length ? buffer[i + 1] : 0;
-        }
-
-        // Quadratic interpolation
-        let x =  (boxMullerRandom(rand)*0.5) * amount;//-1<->+1 +-amount/2 - max of half sample period either side
-
-        // let y = ((t - x1) * (t - x2) / ((x0 - x1) * (x0 - x2))) * y0
-        //        + ((t - x0) * (t - x2) / ((x1 - x0) * (x1 - x2))) * y1
-        //        + ((t - x0) * (t - x1) / ((x2 - x0) * (x2 - x1))) * y2;
-
-        buffer[i] = (x  * (x - 1) / 2) * y0
-        - (x + 1) * (x - 1) * y1
-        + ((x + 1) * x / 2) * y2;
-
-    }
-}
-
-
-//outBuffer length assumed to be inBuffer.length * some constant
-const jitterWindowSize=200
-function jitter_sinc(inBuffer, oversampling, amount, seed, isCyclic){
-    let rand = new SeededSplitMix32Random(seed)//ensure jitter is the same on both channels in stereo so reuse same seed
-    const length = inBuffer.length;
-    const os = oversampling;
-    const outLength = length * os;
-    const outBuffer = new Float32Array(outLength);
-    const range = jitterWindowSize * os/2;
-    const outLength2 = outLength*Math.ceil(range/ outLength);//make sure wrapping will work if cyclic increase size of Outlength2 if range is bigger than outlength
-
-    let a0 = 0.35875 ;
-    let a1 = 0.48829 ;
-    let a2 = 0.14128;
-    let a3 = 0.01168;
-    //Blackman-harris window (windowsSize-1) to ensure 1 at end
-    let windowScale =2 * Math.PI /((jitterWindowSize*os - 1));
-    let sincScale =Math.PI / os; //pi*2*fNyquist/oversampling    fNyquist = 1/2 , os term to reduce due to higher sample rate when overclocked
-
-    //let shiftW = 0.5*Math.PI/os
-
-    for(let i=0;i<length;i++){
-        //if (i!=200)continue;
-        let v = inBuffer[i];
-        let outI=i*os;
-
-        //const shift =os * (Math.random() - 0.5) * amount;//0-1=> +-os*amount/2 - max of half input sample period either way
-        const shift =os * (boxMullerRandom(rand)*0.3) * amount;//-1<->+1=> +-os*amount/2 - max of half input sample period either way
-        //const shift = os * Math.sin(shiftW*i) * amount;//0-1=> +-os*amount/2 - max of half input sample period either way
-        const windowStart = shift-range;
-        const startJ =Math.ceil(windowStart); //points below this will be zero
-        const endJ =Math.floor(shift+range);//inclusive - points above this will be zero
-
-        //write this sample to the outBuffer using sinc interpolation
-        for(let j=startJ;j<=endJ;j++){
-            //Check out bounds are in range before calc
-            let outJ =outI+j;
-            if (outJ<0 || outJ>=outLength)
-            {
-                if (isCyclic){
-                    outJ = (outLength2 +outJ) % outLength;//wrap - range checked above
-                }
-                else{
-                    continue;//skip for non-cyclic
-                } 
-            }
-
-            //calc windowed sinc value at this point
-            let a=v;
-            let t=sincScale * (j-shift);//Position in sinc function
-            if (t!=0)  //window and sinc are 1 at t=zero
-            {
-                let w =windowScale * (j-windowStart); //position in window 0-1
-                //Blackman-harris window
-                a*=a0 - a1 * Math.cos( w )+ a2 * Math.cos(2 *  w )- a3 * Math.cos(3 *  w );
-                //Sinc function
-                a*=Math.sin(t)/(t);
-            }
-            outBuffer[outJ]+=a;
-        }
-    }
-    return outBuffer;
-}
-
 
 
 function clip(buffer,  thresholdHigh, thresholdLow){
@@ -342,41 +226,3 @@ function addUltrasonicOneshot(ob, w, level)
 
 
 
-
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Seeded random number generator giving normal distribution of values
-//Directly from Github Copilot \/(^_^)\/
-//SplitMix32 ->from refrenced stackoverflow posts
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-// Seeded random number generator
-function SeededSplitMix32Random(seed) {
-    this.m = 0x80000000-1; // 2**31;
-    this.state =Math.floor( (seed ? seed : Math.random()) *this.m);
-}
-
-//SplitMix32
-//https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
-//https://stackoverflow.com/questions/17035441/looking-for-decent-quality-prng-with-only-32-bits-of-state
-SeededSplitMix32Random.prototype.nextInt = function() {
-    let z = (this.state += 0x9E3779B9) | 0; //Ensure z is a 32bit integer
-    z ^= z >> 16; 
-    z *= 0x21f0aaad;
-    z ^= z >> 15;
-    z *= 0x735a2d97;
-    z ^= z >> 15;
-    return z;
-}
-SeededSplitMix32Random.prototype.nextFloat = function() {
-    // returns in range [0,1]
-    return this.nextInt() / this.m ;
-}
-
-// Box-Muller transform
-function boxMullerRandom(seededRandom) {
-    let u = 0, v = 0;
-    while(u === 0) u = seededRandom.nextFloat(); //exclude zero
-    while(v === 0) v = seededRandom.nextFloat(); //exclude zero
-    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-}

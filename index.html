@@ -430,7 +430,7 @@
             <div id="distortionPresets" class="PresetButtons"></div>
             <span class="help-icon">?</span>
             <div class="help-popup">A range of non-linear processes which can be applied to the sound, controls for the quality of oversampling and some inharmonic tones to investigate Intermodulation. The preview is of a single cycle of the distorted waveform and the FFT of this cycle (excluding inharmonic tones).
-        </div>
+            </div>
         </div>
      
         <div class="canvasBox">
@@ -465,7 +465,10 @@
             <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="distortion">0%</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Turns distortion on and off and controls the overall amount</div>
+            <div class="help-popup">
+                <p>Turns distortion on and off and controls the overall amount</p>
+                <p>Total Harmonic Distortion is measured (using 10 harmonics) for the distortion applied (not including jitter or inharmonics).</p>
+            </div>
         </div>
         <p class="THDReport paragraphReport"></p>
         <div class="slider-container">
@@ -495,27 +498,16 @@
             <output class="valueSpan" name="clipDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Plain old full hard clipping</div>
-        </div>
-        <div class="slider-container">
-            <label for="jitter">Jitter:</label>
-            <input type="range" id="jitter" name="jitter" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
-            <output class="valueSpan" name="jitter">0%</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Simple algorithm using quadartic interpolation (low cpu) +/-0.5*time-period (1/fs)</div>
-        </div>
-        <div class="slider-container">
-            <label for="HQJitter">Jitter (HQ):</label>
-            <input type="range" id="HQJitter" name="HQJitter" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
-            <output class="valueSpan" name="HQJitter">0%</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">High CPU sinc reconsctruction used to recreated the jittered waveform, displacement is normally distributed, +/-0.5*time-period (1/fs)</div>
-        </div>
+        </div>    
         
+
+
         <div class="presetHeader">
-            <h3>Over-sampling</h3>
+            <h3>Oversampling</h3>
             <div id="oversamplingPresets" class="PresetButtons"></div>
             <span class="help-icon">?</span>
-            <div class="help-popup">Controls for oversampling. Only applied when the Distortion Level is on and only affects the distortion processing</div>
+            <div class="help-popup"><p>Controls for oversampling. Only applied when the Distortion Level is on and only affects the distortion processing.</p>
+                <p>Oversampling is only carried out once, not individually for each non-linearity as it is applied so aliasing is still possible.</p> </div>
         </div>
         <div class="slider-container">
             <label for="oversampleTimes">Over Factor:</label>
@@ -548,6 +540,48 @@
             <div class="help-popup">Level and frequency of an ultrasonic tone added after upsampling but before distortion to test audibility of intermodulation artifacts. The tones is between sample nyqest and overdsampled nyquest so depends on both samplerate and oversampling factor. </div>
         </div>
         <p class="oversamplingReport paragraphReport">Distortion processing off</p>
+
+    
+        
+        
+        <div class="presetHeader">
+            <h3>Jitter</h3>
+            <div class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">
+                <p>Simulation of jitter in ADC and/or DAC. Uses 3x oversampling and Lagrange interpolation to get the sample points. </p>
+                <p> Difference between ADC and DAC is how the Lagrange interpolation is done:</p> 
+                <p> ADC keeps the time values fixed and 'jitters' where the sample is taken.</p> 
+                <p> DAC 'jitters' the time of the samples, but resamples at fixed time points.</p> 
+                <p> Is there a difference?</p>
+                <p>The jitter is normally distributed white noise.</p>
+            </div>
+        </div>
+        <div class="slider-container">
+            <label for="jitterADC">Jitter ADC:</label>
+            <input type="range" id="jitterADC" name="jitterADC" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="jitterADC">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Simulation of jitter on the ADC, where waveform is undistorted but point where sample is taken moves randomly (normal distribution) around the correct position.</div>
+        </div>
+        <div class="slider-container">
+            <label for="jitterDAC">Jitter DAC:</label>
+            <input type="range" id="jitterDAC" name="jitterDAC" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="jitterDAC">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Simulation of jitter on the DAC, where waveform is distorted as each sample point is shifted randomly (normal distribution) around the correct position.</div>
+        </div>
+        <div class="slider-container">
+            <label for="jitterPeriodic">Jitter periodic:</label>
+            <input type="range" id="jitterPeriodic" name="jitterPeriodic" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="jitterPeriodic">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Applies a fixed frequency (37Hz prime) jitter to ADC calculations.</div>
+        </div>
+        <p class="jitterReport paragraphReport">Jitter is off</p>
+
+
+
         <div class="presetHeader">
             <h3>Inharmonics</h3>
             <div id="inharmonicPresets" class="PresetButtons"></div>
@@ -702,6 +736,7 @@
     <script src="basicFFT.js"></script>
     <script src="oversampling.js"></script>
     <script src="distortion.js"></script>
+    <script src="jitter.js"></script>
     <script src="audio.js"></script>
     <script src="painting.js"></script>
     <script src="audioAPI.js"></script>

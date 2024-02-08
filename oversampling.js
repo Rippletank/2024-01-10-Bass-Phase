@@ -86,7 +86,24 @@ function kaiserWindow(N, alpha) {
     return window;
 }
 
-
+function buildBlackmanHarrisWindow(bufferSize){
+    //https://en.wikipedia.org/wiki/Window_function
+    let window =new Float32Array(bufferSize);
+    let a0 = 0.35875;
+    let a1 = 0.48829;
+    let a2 = 0.14128;
+    let a3 = 0.01168;
+    //Blackman-harris window (bufferSize-1) to ensure 1 at end
+    let piScale =2 * Math.PI / (bufferSize - 1)
+    for (let i = 0; i < bufferSize; i++) {
+        window[i]= 
+            a0 - a1 * Math.cos(piScale * i ) 
+                + a2 * Math.cos(2 * piScale * i ) 
+                - a3 * Math.cos(3 * piScale * i )
+        ;
+    }    
+    return window;
+}
 
 //fn = normalizedFrequency, 1 = fs, fc/fs
 //N = number of samples requested for the window
@@ -140,6 +157,22 @@ function generateKaiserSincKernel_fromParams(fn, stop_db, transition_width) {
     const beta = 0.1102 * (stop_db - 8.7);
     let N = Math.ceil((stop_db - 8) / (2.285 * 2 * Math.PI * transition_width))+1;  //transition width in normalised, tw/fs
     return generateKasierFilterKernel_betaN(fn, N, beta);
+}
+
+//f is the normalized frequency, 1 = fs, fc/fs so max is 0.5
+//N should be odd (will be made odd if even)
+function generateBlackmanHarrisFilterKernel(fn,N){
+    if (N % 2 === 0) N++; // Odd number of samples - gives centre exactly on a sample point
+    let buffer = buildBlackmanHarrisWindow(N)
+    const fn2= fn*2;//2*normalized frequency
+    const fn2Pi= fn2*Math.PI;//2*normalized frequency
+    const mid = (N - 1) / 2;//mid point of odd number of points, centre of filter
+
+    for (let i = 0; i < N; i++) {
+        const x = (i - mid)* fn2Pi; // Center the sinc function
+        buffer[i] *= fn2 *((x === 0) ? 1 : Math.sin(x) / x);
+    }
+    return buffer;
 }
 
 
@@ -363,18 +396,18 @@ function upsampleNonCyclic(buffer, polyphaseKernels, filterLength){
 }
 
 //This should work for cyclic and non-cyclic buffers since the upsampling should have included the necessary padding either side of the main part
-function downsample(inBuffer, outBuffer, filterKernel, upsampleFactor, isCyclic)
+function downsample(inBuffer, outBuffer, filterKernel, upsampleFactor, isCyclic, alignmentOffset=0)
 {
-    return isCyclic? downsampleCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor) : downsampleNonCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor);
+    return isCyclic? downsampleCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor, alignmentOffset) : downsampleNonCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor, alignmentOffset);
 }
 
-function downsampleCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor)
+function downsampleCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor, alignmentOffset)
 {
     const filterLength = filterKernel.length;
     const inLength = inBuffer.length;
     const outLength = outBuffer.length;
     const filterOffset = (filterLength-1)/2;
-    let inPos = -filterOffset;//dont need samples until filter centre lines up 
+    let inPos = -filterOffset+alignmentOffset;//dont need samples until filter centre lines up 
 
     for(let i=0;i<outLength;i++){
         outBuffer[i]=0;
@@ -385,13 +418,13 @@ function downsampleCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor)
     }
 }
 
-function downsampleNonCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor)
+function downsampleNonCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor, alignmentOffset)
 {
     const filterLength = filterKernel.length;
     const inLength = inBuffer.length;
     const outLength = outBuffer.length;
     const filterOffset = (filterLength-1)/2;
-    let inPos = -filterOffset;//dont need samples until filter centre lines up with first sample of inbuffer
+    let inPos = -filterOffset+alignmentOffset;//dont need samples until filter centre lines up with first sample of inbuffer
 
     for(let i=0;i<outLength;i++){
         outBuffer[i]=0;

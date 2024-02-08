@@ -33,8 +33,6 @@ const disableGroups =[
             "tanhDistortion",
             "hyperbolicDistortion",
             "clipDistortion",
-            "jitter",
-            "HQJitter",
             "oversampleTimes",
             "oversampleStopDepth",
             "oversampleTransition",
@@ -241,10 +239,12 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.hyperbolicDistortion);break;
         case "tanhDistortion":
             ve.textContent =toPercent(patch.tanhDistortion);break;
-        case "jitter": 
-            ve.textContent =toPercent(patch.jitter);break;
-        case "HQJitter": 
-            ve.textContent =toPercent(patch.HQJitter);break;
+        case "jitterADC": 
+            ve.textContent =toPercent(patch.jitterADC);break;
+        case "jitterDAC": 
+            ve.textContent =toPercent(patch.jitterDAC);break;
+        case "jitterPeriodic": 
+            ve.textContent =toPercent(patch.jitterPeriodic);break;
 
             
         case "oversampleTimes":
