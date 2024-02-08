@@ -81,6 +81,9 @@ function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics){
         clip(ob, d, -d);
     }    
 
+    if (patch.speakerAmount>0) doSpeakerSim(ob, sampleRate * oversampling, patch, isCyclic);
+
+
     if (oversampling>1) 
     {
         downsample(ob, buffer, filter, oversampling, isCyclic);

@@ -498,6 +498,13 @@
             <output class="valueSpan" name="clipDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Plain old full hard clipping</div>
+        </div> 
+        <div class="slider-container">
+            <label for="speakerAmount">Speaker Sim:</label>
+            <input type="range" id="speakerAmount" name="speakerAmount" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="speakerAmount">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Experimental Speaker sim</div>
         </div>    
         
 
@@ -735,6 +742,7 @@
     <script src="defaults.js"></script>
     <script src="basicFFT.js"></script>
     <script src="oversampling.js"></script>
+    <script src="speaker.js"></script>
     <script src="distortion.js"></script>
     <script src="jitter.js"></script>
     <script src="audio.js"></script>

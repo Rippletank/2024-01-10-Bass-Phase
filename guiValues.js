@@ -36,7 +36,8 @@ const disableGroups =[
             "oversampleTimes",
             "oversampleStopDepth",
             "oversampleTransition",
-            "ultrasonicFrequency"
+            "ultrasonicFrequency",
+            "speakerAmount"
         ]
     },
     {
@@ -239,6 +240,10 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.hyperbolicDistortion);break;
         case "tanhDistortion":
             ve.textContent =toPercent(patch.tanhDistortion);break;
+        case "speakerAmount":
+            ve.textContent =toPercent(patch.speakerAmount);break;
+
+
         case "jitterADC": 
             ve.textContent =toPercent(patch.jitterADC);break;
         case "jitterDAC": 

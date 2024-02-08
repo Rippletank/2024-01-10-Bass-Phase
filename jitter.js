@@ -12,6 +12,23 @@
 //Quick IIF refresher and general approach for suitable smoothing values https://zipcpu.com/dsp/2017/08/19/simple-filter.html
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Code to simulate ADC and DAC jitter, including periodic jitter for ADC (because it was easiest to implement)
+//
+//Uses filter kernel code (blackman-harris) from oversampling.js and values in patch from defaults.js
+//
+//Wikipedia for Lagrange interpolation, and Blackman-Harris window for the sinc filter (see oversampling.js for further references)
+//
+//Validation for using Lagrange interpolation instead of sinc (which didn't work anyway)
+//https://www.rle.mit.edu/dspg/documents/ThesisJeremy.pdf
+// via https://www.reddit.com/r/DSP/comments/thlum/whittakershannon_interpolation_for_unevenly/
+//
+//Interesting article on general idea, but method (oversampling 100x) not implemented here
+//https://www.sereneaudio.com/blog/what-does-jitter-sound-like
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 function getJitterTimeReport(sampleRate, amount){
     return (DACJitterFactor * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
 }

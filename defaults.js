@@ -394,15 +394,18 @@ function getDefaultPatch(){
         hyperbolicDistortion:0,//+/-1 Hyperbolic distortion - mild asymmetry
         tanhDistortion:0.4,//0= off
         clipDistortion:0,//0..1 0 = off, 1 = max distortion
-        jitterADC:0,//0..1 0 = off, 1 = max jitter applied as if ADC was jittering
-        jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering
-        jitterPeriodic:0,//0..1 0 = off, 1 = max jitter applied at fixed frequency to ADC
+        
+        speakerAmount:0,//0 off, 1 on 
 
         oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
         oversampleStopDepth:0.5,//-70db to -110db - default = -90db
         oversampleTransition:0.7,//0.005 + 0.025 *patch.oversampleTransition * samplerate so between 0.475 and 0.500 of samplerate
         ultrasonicFrequency:0.5,//range linearly between normal Nyquist and oversampled Nyquist
         ultrasonicLevel:-91,//-91..0, in db -91 is off
+
+        jitterADC:0,//0..1 0 = off, 1 = max jitter applied as if ADC was jittering
+        jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering
+        jitterPeriodic:0,//0..1 0 = off, 1 = max jitter applied at fixed frequency to ADC
 
         inharmonicALevel:-91,//-91..0, in db -91 is off
         inharmonicBLevel:-91,//-91..0, in db -91 is off
