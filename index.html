@@ -241,7 +241,7 @@
             <input type="range" id="aliasing" name="aliasing" min="0" max="2" step="0.1" value="0.0" class="longish-slider" list="ticksPlus1Zero">
             <output class="valueSpan longOut" name="aliasing">0</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Continue to add harmonics past the Nyquest limit to create deliberate aliasing. The level of the harmonic takes into account the filter section. It's as if the ADC is after the filter</div>
+            <div class="help-popup">Continue to add harmonics past the Nyquist limit to create deliberate aliasing. The level of the harmonic takes into account the filter section. It's as if the ADC is after the filter</div>
         </div>      
         <div class="canvasBox">
             <canvas id="wavePreview"  width ="2000" height="500"></canvas>
@@ -305,7 +305,7 @@
             <input type="range" id="envelopeFilter" name="envelopeFilter" min="0" max="1000" step="10" value="150">
             <output class="valueSpan" name="envelopeFilter">150</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cutoff frequency</div>
+            <div class="help-popup">Controls the cut-off of the low pass filter which smooths the envelope. 0=off, 1000 = very very low cut-off frequency</div>
         </div>
     </div>
 
@@ -476,7 +476,7 @@
             <input type="range" id="hyperbolicDistortion" name="hyperbolicDistortion" min="-1" max="1" step="0.01" value="0"  list="ticksPlus1ZeroMinus1">
             <output class="valueSpan" name="hyperbolicDistortion">0%</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Asymmetric harbolic function for even harmonics</div>
+            <div class="help-popup">Asymmetric hyperbolic function for even harmonics</div>
         </div>
         <div class="slider-container">
             <label for="oddDistortion">Odd harmonic:</label>
@@ -544,7 +544,7 @@
             <input type="range" id="ultrasonicLevel" name="ultrasonicLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
             <output class="valueSpan" name="ultrasonic">-1</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Level and frequency of an ultrasonic tone added after upsampling but before distortion to test audibility of intermodulation artifacts. The tones is between sample nyqest and overdsampled nyquest so depends on both samplerate and oversampling factor. </div>
+            <div class="help-popup">Level and frequency of an ultrasonic tone added after upsampling but before distortion to test audibility of intermodulation artifacts. The tones is between sample nyquist and oversampled nyquist so depends on both sample rate and oversampling factor. </div>
         </div>
         <p class="oversamplingReport paragraphReport">Distortion processing off</p>
 

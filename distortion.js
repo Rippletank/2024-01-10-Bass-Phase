@@ -19,7 +19,7 @@ let oversampling = 0;
 let distStopBand = 0;
 let distTransitionBand = 0;
 let filter = null;//generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.025/oversampling);
-let polyphaseKernels = null;//generateUpsamplingPolyphasekernals(filter, oversampling);
+let polyphaseKernels = null;
 let oversamplingReport ="No oversampling filter generated yet.";
 let trueSampleRate = 0;
 
@@ -34,12 +34,12 @@ function buildOSFilters(patch){
         (0.5-transition)/oversampling,
         stop,
         transition/oversampling);
-    polyphaseKernels = generateUpsamplingPolyphasekernals(filter, oversampling);
+    polyphaseKernels = generateUpsamplingPolyphaseKernels(filter, oversampling);
     
     if (trueSampleRate!=0) 
     { 
-        //DONT use samplerate from cyclic - it is adjusted for the cycle so not true
-        oversamplingReport = "Samplerate "+trueSampleRate+"Hz Transition "+((0.5-transition)*trueSampleRate).toFixed(0)+"Hz to "+((0.5)*trueSampleRate).toFixed(0)+"Hz   FIR size:"+filter.length;
+        //DON'T use sampleRate from cyclic - it is adjusted for the cycle so not true
+        oversamplingReport = "SampleRate "+trueSampleRate+"Hz Transition "+((0.5-transition)*trueSampleRate).toFixed(0)+"Hz to "+((0.5)*trueSampleRate).toFixed(0)+"Hz   FIR size:"+filter.length;
     }  
     //console.log("Oversampling: x"+oversampling+" stop:-"+stop+"db "+oversamplingReport);
 }
@@ -48,7 +48,7 @@ function buildOSFilters(patch){
 //Perform distortion on buffer in place
 function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics){
     if (!isCyclic && trueSampleRate != sampleRate){
-        trueSampleRate = sampleRate;//capture true samplerate as early as possible - use for report even if in cycle mode
+        trueSampleRate = sampleRate;//capture true SampleRate as early as possible - use for report even if in cycle mode
     } 
     if (patch.distortion==0) return;
     if (distOversampling != patch.oversampleTimes 
@@ -152,7 +152,7 @@ function cheb_2(buffer,  amount){
         //A fixed amount of dc correction causes big DC offsets in high amplitude signals
         //If not corrected, causes clicking at start and end
         //If corrected, causes uselessly asymmetric waveforms
-        //Dymanically adjusting DC introduces an unecessary variable to testing
+        //Dynamically adjusting DC introduces an unnecessary variable to testing
         buffer[i] += amount*(2* v * v  -1);
     }
 }
@@ -182,7 +182,7 @@ function addUltrasonic(ob, w,  level, isCyclic)
     }
     else
     {
-        addUltrasonicOneshot(ob, w, level)
+        addUltrasonicOneShot(ob, w, level)
     }
 }
 function addUltrasonicCyclic(ob, w, level)
@@ -205,7 +205,7 @@ function addUltrasonicCyclic(ob, w, level)
 }
 
 const ultrasonicSmoothing = 8;//Number of cycles to attack and decay (x2)
-function addUltrasonicOneshot(ob, w, level)
+function addUltrasonicOneShot(ob, w, level)
 {
     //Simple linear attack and decay envelope for the ultrasonic tone
     //Reduce clicks or any other artifacts

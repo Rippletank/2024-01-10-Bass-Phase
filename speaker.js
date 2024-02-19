@@ -59,10 +59,10 @@ function doSpeakerSim(buffer, sampleRate, patch, isCyclic){
     // const k = 0.0005;//N/m
     // const q2 = 333000;
     const m = 1;//g
-    const r = 0;//N.s/m
-    const k = 0;//N/m
-    const q2 = 0;
-    //Resomant frequency = 1/2pi sqrt(k/m - r^2/4m^2)
+    const r = 0.1;//N.s/m
+    const k = 1;//N/m
+    const q2 = 1;
+    //Resonant frequency = 1/2pi sqrt(k/m - r^2/4m^2)
 
     const invM = 1/m;
     const h = 0.001//sampleRate;

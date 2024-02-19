@@ -20,16 +20,16 @@
 //References:
 
 //General overview: https://www.nickwritesablog.com/introduction-to-oversampling-for-alias-reduction/
-//Specific approaches (including window function choice and sinc filter kernal size):
+//Specific approaches (including window function choice and sinc filter kernel size):
 //https://www.kvraudio.com/forum/viewtopic.php?t=556692
 //Specifically, the top post here is very helpful on Polyphase upsampling:
 //https://www.kvraudio.com/forum/viewtopic.php?t=556692&start=45
-//Although correctly aligning polyphase kernals was a pain, it is basically the appoach outlined in that post
+//Although correctly aligning polyphase kernels was a pain, it is basically the approach outlined in that post
 
 //Kaiser window: https://en.wikipedia.org/wiki/Kaiser_window
 //Solution for I0(x) first order modified bessel function:
 //https://www.foo.be/docs-free/Numerical_Recipe_In_C/c6-6.pdf  practical calculation
-//Cross-referenced source of expansion and coefficents of above:
+//Cross-referenced source of expansion and coefficients of above:
 //Handbook of mathematical functions, Abramowitz and Stegun, Version 1.1, 1972
 //P378 - polynomial approximations for In(x)
 //https://www.cs.bham.ac.uk/~aps/research/projects/as/resources/AandS-a4-v1-2.pdf 
@@ -38,7 +38,7 @@
 
 //transition-band/Stop-band parameter for choosing beta and N for Kaiser window:
 //https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
-//Which uses emiprical formula from  "Digital Filters" by James kaiser in "System Analysis by Digital Computer," edited by F.F. Kuo and J.F. Kaiser (1966)
+//Which uses empirical formula from  "Digital Filters" by James kaiser in "System Analysis by Digital Computer," edited by F.F. Kuo and J.F. Kaiser (1966)
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -107,7 +107,7 @@ function buildBlackmanHarrisWindow(bufferSize){
 
 //fn = normalizedFrequency, 1 = fs, fc/fs
 //N = number of samples requested for the window
-//beta = shape parameter, adjust based on desired sidelobe level and transition width
+//beta = shape parameter, adjust based on desired side-lobe level and transition width
 function generateKasierFilterKernel_betaN(fn, N, beta) {
     if (N % 2 === 0) N++; // Odd number of samples - gives centre exactly on a sample point
     const filterKernel = new Array(N);
@@ -144,13 +144,13 @@ function generateKasierFilterKernel_betaN(fn, N, beta) {
 
 //fn = normalizedFrequency, 1 = fs, fc/fs
 //N = number of samples requested for the window
-//alpha = shape parameter, adjust based on desired sidelobe level and transition width
+//alpha = shape parameter, adjust based on desired side-lobe level and transition width
 function generateKaiserSincKernel_alphaN(fn, N, alpha) {
     return generateKasierFilterKernel_betaN(fn, N, Math.PI * alpha)
 }
 
 //fn = fc/fs normalized frequency, 1 = fs, fc/fs
-//stop_db = desired stopband attenuation in db (assumed always >50db)
+//stop_db = desired stop-band attenuation in db (assumed always >50db)
 //transition_width = in normalised frequency, 1 = fs, tw/fs
 //See reference above for source
 function generateKaiserSincKernel_fromParams(fn, stop_db, transition_width) {
@@ -176,24 +176,24 @@ function generateBlackmanHarrisFilterKernel(fn,N){
 }
 
 
-function generateUpsamplingPolyphasekernals(filter, upsampleFactor){
-    const polyphaseKernals = new Array(upsampleFactor);
-    const polyphaseLength = Math.ceil(filter.length/upsampleFactor);//Ceiling, incase filter length is not a multiple of upsampleFactor, some will have zero length
+function generateUpsamplingPolyphaseKernels(filter, upsampleFactor){
+    const polyphaseKernels = new Array(upsampleFactor);
+    const polyphaseLength = Math.ceil(filter.length/upsampleFactor);//Ceiling, in case filter length is not a multiple of upsampleFactor, some will have zero length
     for(let i=0;i<upsampleFactor;i++){
-        polyphaseKernals[i] = new Array(polyphaseLength);
+        polyphaseKernels[i] = new Array(polyphaseLength);
     }
 
     //Account for filter length not being a multiple of upsampleFactor
-    //Pad the first few polyphaseKernals with zeros
-    let ppk =polyphaseLength * upsampleFactor-filter.length;//pad zeros at start of first few polyphaseKernals
+    //Pad the first few polyphaseKernels with zeros
+    let ppk =polyphaseLength * upsampleFactor-filter.length;//pad zeros at start of first few polyphaseKernels
     for(let i=0;i<ppk;i++){
-        polyphaseKernals[i][0] = 0;
+        polyphaseKernels[i][0] = 0;
     }
 
-    //Fill the rest of the polyphaseKernals
+    //Fill the rest of the polyphaseKernels
     let x = 0;
     for(let i = 0; i < filter.length; i++){
-        polyphaseKernals[ppk][x] = filter[i]* upsampleFactor;
+        polyphaseKernels[ppk][x] = filter[i]* upsampleFactor;
         ppk++;
         if (ppk>=upsampleFactor){
             ppk=0;
@@ -202,47 +202,47 @@ function generateUpsamplingPolyphasekernals(filter, upsampleFactor){
     }
 
     //Confirm integrity
-    //confirmPolyphaseKernals(filter, upsampleFactor, polyphaseLength, polyphaseKernals);
+    //confirmPolyphaseKernels(filter, upsampleFactor, polyphaseLength, polyphaseKernels);
 
-    return polyphaseKernals;
+    return polyphaseKernels;
 }
 
 
 
 
-function confirmPolyphaseKernals(filter, upsampleFactor, polyphaseLength, polyphaseKernals) {
+function confirmPolyphaseKernels(filter, upsampleFactor, polyphaseLength, polyphaseKernels) {
     report = [];
     for (let i = 0; i < filter.length; i++) {
         //Flip to start at the end
         let f = upsampleFactor * filter[i];
 
         //Find polyphase position
-        let startAdjust = (polyphaseLength * upsampleFactor - filter.length); //adjust for zero padding at start of polyphaseKernals
+        let startAdjust = (polyphaseLength * upsampleFactor - filter.length); //adjust for zero padding at start of polyphaseKernels
         let fractionalPos = (startAdjust + i) / upsampleFactor;
         let polyphasePos = Math.floor(fractionalPos);
         let polyphase = (fractionalPos % 1) * upsampleFactor;
 
-        let p = polyphaseKernals[polyphase][polyphasePos];
+        let p = polyphaseKernels[polyphase][polyphasePos];
         if (p != f) {
-            let p0 = polyphaseKernals[0][polyphasePos];
-            let p1 = polyphaseKernals[1][polyphasePos];
-            let p2 = polyphaseKernals[2][polyphasePos];
-            let p3 = polyphaseKernals[3][polyphasePos];
+            let p0 = polyphaseKernels[0][polyphasePos];
+            let p1 = polyphaseKernels[1][polyphasePos];
+            let p2 = polyphaseKernels[2][polyphasePos];
+            let p3 = polyphaseKernels[3][polyphasePos];
             report.push({ x: i, f, p, fractionalPos, polyphasePos, p0, p1, p2, p3 });
         }
     }
     if (report.length > 0) {
-        console.log('Error in polyphaseKernals');
-        console.log('KernalSize ' + filter.length);
+        console.log('Error in polyphaseKernels');
+        console.log('KernelSize ' + filter.length);
         console.log(report);
     }
     else {
-        console.log('polyphaseKernals OK');
+        console.log('polyphaseKernels OK');
     }
 }
 
 function upsample(buffer, filter, polyphaseKernels, isCyclic){
-    // //Timimg tests
+    // //Timing tests
     // examples slow vs fast: 1024 samples, 915 filter length, 4x upsample 49ms vs 4.2ms
     // examples slow vs fast: 29280 samples, 915 filter length, 4x upsample 109ms vs 1527ms
     // console.log('upsample test - buffer length: ' + buffer.length + ' filter length: ' + filter.length + ' upsampleFactor: ' + polyphaseKernels.length);
@@ -330,7 +330,7 @@ function upsampleCyclic(inBuffer, polyphaseKernels, filterLength, debug){
     const inPosAdjust = (filterOffsetIn%1)*upsampleFactor;//
 
     //polySettings    
-    const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
+    const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernels
     const startFractionalPos = (inPosAdjust + startAdjust ) / upsampleFactor;
     inPos -= Math.floor(startFractionalPos);
     const startPolyphase = Math.round((startFractionalPos % 1) * upsampleFactor);//Round for unusual  upsampleFactors, eg 7
@@ -367,7 +367,7 @@ function upsampleNonCyclic(buffer, polyphaseKernels, filterLength){
     const inPosAdjust = (filterOffsetIn%1)*upsampleFactor;//
 
     //polySettings    
-    const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernals
+    const startAdjust = (polyphaseLength * upsampleFactor - filterLength); //adjust for zero padding at start of polyphaseKernels
     const startFractionalPos = (inPosAdjust + startAdjust ) / upsampleFactor;
     inPos -= Math.floor(startFractionalPos);
     const startPolyphase = Math.round((startFractionalPos % 1) * upsampleFactor);//Round for unusual  upsampleFactors, eg 7
@@ -377,9 +377,9 @@ function upsampleNonCyclic(buffer, polyphaseKernels, filterLength){
     for(let i=0;i<outLength;i++){
         result[i] =0;
         let filterPos =ppk - startAdjust;
-        const polyEnd = Math.min(polyphaseLength, inLength-inPos);//truncate last polyphaseKernal if it extends past end of in buffer
+        const polyEnd = Math.min(polyphaseLength, inLength-inPos);//truncate last polyphaseKernel if it extends past end of in buffer
         for(let j=Math.max(filterPos<0?1:0,-inPos);//skip negative values of inStart
-                j<polyEnd;//skip past end of in buffer if polyphaseKernal is longer than remaining buffer
+                j<polyEnd;//skip past end of in buffer if polyphaseKernel is longer than remaining buffer
                 j++){
                     const x =(inLength + inPos + j)%inLength;
                     result[i] += buffer[x] * polyphaseKernels[ppk][j];
@@ -407,7 +407,7 @@ function downsampleCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor, ali
     const inLength = inBuffer.length;
     const outLength = outBuffer.length;
     const filterOffset = (filterLength-1)/2;
-    let inPos = -filterOffset+alignmentOffset;//dont need samples until filter centre lines up 
+    let inPos = -filterOffset+alignmentOffset;//don't need samples until filter centre lines up 
 
     for(let i=0;i<outLength;i++){
         outBuffer[i]=0;
@@ -424,7 +424,7 @@ function downsampleNonCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor, 
     const inLength = inBuffer.length;
     const outLength = outBuffer.length;
     const filterOffset = (filterLength-1)/2;
-    let inPos = -filterOffset+alignmentOffset;//dont need samples until filter centre lines up with first sample of inbuffer
+    let inPos = -filterOffset+alignmentOffset;//don't need samples until filter centre lines up with first sample of inBuffer
 
     for(let i=0;i<outLength;i++){
         outBuffer[i]=0;
@@ -438,7 +438,7 @@ function downsampleNonCyclic(inBuffer, outBuffer, filterKernel, upsampleFactor, 
     }
 }
 
-//just plain filterting to test filter kernel
+//just plain filtering to test filter kernel
 function filterOnly(inBuffer, outBuffer, filterKernel)
 {
     const filterLength = filterKernel.length;
