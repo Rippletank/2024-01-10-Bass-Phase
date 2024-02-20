@@ -21,10 +21,14 @@
 //One key Kippel sources:
 //https://www.klippel.de/fileadmin/_migrated/content_uploads/Loudspeaker_Nonlinearities%E2%80%93Causes_Parameters_Symptoms_01.pdf
 //
+//Diffferential Equations solutions:
+//https://www.math.clemson.edu/~macaule/classes/m17_math2080/ - great series of lectures
+//
 //Discretising differential equations:
 //https://en.wikipedia.org/wiki/Euler_method used particularly higher order method example
 //https://en.wikipedia.org/wiki/Newton%27s_method used particularly higher order method example
 //https://people.sc.fsu.edu/~jpeterson/IVP.pdf for background
+//https://hplgit.github.io/num-methods-for-PDEs/doc/pub/nonlin/pdf/nonlin-4screen.pdf - non-linear ODEs and discretisation, particularly Crank-Nicolson and newtons method
 //
 //Also, Art of Filter Design - integration, discretisation and Newtons method:
 //https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf?sscid=11k8_zwuzf
