@@ -242,6 +242,14 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.tanhDistortion);break;
         case "speakerAmount":
             ve.textContent =toPercent(patch.speakerAmount);break;
+        case "speakerMass":
+            ve.textContent =toPercent(patch.speakerMass);break;
+        case "speakerDamping":
+            ve.textContent =toPercent(patch.speakerDamping);break;
+        case "speakerStiffness":
+            ve.textContent =toPercent(patch.speakerStiffness);break;
+        case "speakerNonLinearity":
+            ve.textContent =toPercent(patch.speakerNonLinearity);break;
 
 
         case "jitterADC": 

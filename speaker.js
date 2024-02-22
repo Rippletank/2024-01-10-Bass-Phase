@@ -53,6 +53,66 @@
 
 
 function doSpeakerSim(buffer, sampleRate, patch, isCyclic){
+    //doSpeakerSimEulerAndDuffing(buffer, sampleRate, patch, isCyclic);
+    const m = 0.01 + 50 * patch.speakerMass; // Mass
+    const r = 0.05 + 1 * patch.speakerDamping ; // Damping coefficient
+    const k = 0.5 + 4* patch.speakerStiffness; // Linear stiffness
+    const q = 0 + 10* patch.speakerNonLinearity; // Non-linearity coefficient here used 
+    //Resonant frequency = 1/2pi sqrt(k/m - r^2/4m^2) from paper BUT this may only be an approximation
+    //const resF = 1/(2*Math.PI) * Math.sqrt(k/m - r*r/(4*m*m));//for debug  -- not used in this code
+    //console.log("Resonant Frequency: "+resF);
+    if (!isCyclic)console.log("m: "+ m + " r: "+ r + " k: "+ k + " q: "+ q);
+    const dt = 100000/sampleRate; // Time step
+
+    duffingOscillator_CrankNicolson_Newton(buffer, m, r, k, q, dt, patch.speakerAmount, isCyclic)
+}
+
+function duffingOscillator_CrankNicolson_Newton(inputBuffer, m, r, k, q, dt, mix, isCyclic) {
+    const n = inputBuffer.length;    
+    
+    const iterMax = 10; // Maximum number of iterations
+    const tol = 1e-5; // Tolerance for convergence
+    const mixComplement = 1 - mix;
+
+    // Initial conditions 
+    let y_2 = isCyclic ? inputBuffer[n-2] : 0;
+    let y_1 = isCyclic ? inputBuffer[n-1] : 0; 
+
+    for (let i = 0; i < n; i++) {
+        // Newton-Raphson method to solve for x[i] (x_{n+1})
+        let y_0 = y_1; // Initial guess for x[i]
+        let v = inputBuffer[i];
+
+        for (let iter = 0; iter < iterMax; iter++) {
+            // Compute F(y_0)   F(y_0)
+            let F = (m * (y_0 - 2 * y_1 + y_2) / (dt * dt)) +    //d2y/dt2 => (y_0 - 2y_1 + y_2) / dt^2 via Crank-Nicolson
+                    (r * (y_0 - y_2) / (2 * dt)) +               //dy/dt => (y_0 - y_2) / (2 * dt) via Crank-Nicolson
+                    y_1 * (k + q * y_1 * y_1) - v;    // Non-linear term q*y^3, changed from Pascal Brunet paper above (where it is ky(1 + qy^2) ) matches wikipedia entry
+
+            // Compute the derivative of F, the Jacobian J
+            let J = (m / (dt * dt)) + (r / (2 * dt));   //differential of F (above) wrt y_0
+
+            // Newton-Raphson update
+            let deltaY = -F / J;            // J*deltaY = -F
+
+            y_0 += deltaY;
+
+            // Check for convergence
+            if (Math.abs(deltaY) < tol) {
+                break;
+            }
+        }
+
+        inputBuffer[i] = y_0 * mix + v * mixComplement;
+        y_2 = y_1;
+        y_1 = y_0;
+    }
+}
+
+
+
+
+function doSpeakerSimEulerAndDuffing(buffer, sampleRate, patch, isCyclic){
     let length = buffer.length;
 
 

@@ -51,7 +51,7 @@
     <!--*****************  Start ABX Setup and Test  *************************-->
     <!--**********************************************************************-->
 
-    <div class="bordered">
+    <!-- <div class="bordered">
         <h3>Sound A</h3>
         <div class="canvasBox">
             <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
@@ -79,7 +79,7 @@
             <h3 class="stereoLabel hideForMono">Right:</h3>
         </div>
         <button class="playSoundB PlayB">Play B</button>
-    </div>
+    </div> -->
 
     <br>
 
@@ -498,11 +498,47 @@
             <output class="valueSpan" name="clipDistortion">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Plain old full hard clipping</div>
-        </div> 
+        </div>    
+        
+        <div class="presetHeader">
+            <h3>Speaker</h3>
+            <div id="oversamplingPresets" class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup"><p>Controls for oversampling. Only applied when the Distortion Level is on and only affects the distortion processing.</p>
+                <p>Oversampling is only carried out once, not individually for each non-linearity as it is applied so aliasing is still possible.</p> </div>
+        </div>
         <div class="slider-container">
-            <label for="speakerAmount">Speaker Sim:</label>
+            <label for="speakerAmount">Speaker Amount:</label>
             <input type="range" id="speakerAmount" name="speakerAmount" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
             <output class="valueSpan" name="speakerAmount">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Experimental Speaker sim</div>
+        </div>    
+        <div class="slider-container">
+            <label for="speakerMass">Speaker Mass:</label>
+            <input type="range" id="speakerMass" name="speakerMass" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="speakerMass">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Experimental Speaker sim</div>
+        </div>    
+        <div class="slider-container">
+            <label for="speakerDamping">Speaker Damping:</label>
+            <input type="range" id="speakerDamping" name="speakerDamping" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="speakerDamping">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Experimental Speaker sim</div>
+        </div>    
+        <div class="slider-container">
+            <label for="speakerStiffness">Speaker Stiffness:</label>
+            <input type="range" id="speakerStiffness" name="speakerStiffness" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="speakerStiffness">0%</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Experimental Speaker sim</div>
+        </div>    
+        <div class="slider-container">
+            <label for="speakerNonLinearity">Speaker Non-linearity:</label>
+            <input type="range" id="speakerNonLinearity" name="speakerNonLinearity" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+            <output class="valueSpan" name="speakerNonLinearity">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">Experimental Speaker sim</div>
         </div>    
@@ -695,6 +731,38 @@
             </div>
         </div>
     </div>
+
+
+    <div class="bordered">
+        <h3>Sound A</h3>
+        <div class="canvasBox">
+            <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <div class="testSoundControls" id="SoundASetup">
+            <h3 class="stereoLabel hideForMono">Left:</h3>
+        </div>
+        <div class="testSoundControls hideForMono" id="SoundARSetup">
+            <h3 class="stereoLabel hideForMono">Right:</h3>
+        </div>
+        <button class="playSoundA PlayA">Play A</button>
+    </div>
+
+
+
+    <div class="bordered">
+        <h3>Sound B</h3>
+        <div class="canvasBox">
+            <canvas id="waveformB"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
+        </div>
+        <div class="testSoundControls" id="SoundBSetup">
+            <h3 class="stereoLabel hideForMono">Left:</h3>
+        </div>
+        <div class="testSoundControls hideForMono" id="SoundBRSetup">
+            <h3 class="stereoLabel hideForMono">Right:</h3>
+        </div>
+        <button class="playSoundB PlayB">Play B</button>
+    </div>
+
 
 
     <div class="bordered">

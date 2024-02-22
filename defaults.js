@@ -25,11 +25,6 @@ const zeroLevel=Math.pow(10,smallestLevel/20);//-100db global minimum level for 
 
 const allowedOversampleTimes = [1,2,3,4,6,8,12,16];
 
-const defaultTestSubjectList = 
-[
-    "rootPhaseDelay"
-];
-
 
 let wavePresets = [
     {
@@ -352,7 +347,7 @@ let filterPresets = [
 
 ]
 
-function getDefaultPatch(){
+function getTrueDefaultPatch(){
     return {
         frequency: 50,//Hz
         frequencyFine: 0,//Hz
@@ -396,6 +391,10 @@ function getDefaultPatch(){
         clipDistortion:0,//0..1 0 = off, 1 = max distortion
         
         speakerAmount:0,//0 off, 1 on 
+        speakerMass:0.5,//0..1 0 = min, 1 = max mass
+        speakerDamping:0.5,
+        speakerStiffness:0.5,
+        speakerNonLinearity:0.5,
 
         oversampleTimes:1,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
         oversampleStopDepth:0.5,//-70db to -110db - default = -90db
@@ -417,14 +416,57 @@ function getDefaultPatch(){
     }
 }
 
+// const defaultTestSubjectList = 
+// [
+//     "rootPhaseDelay"
+// ];
+// function getDefaultPatch(){
+//     return getTrueDefaultPatch();
+// }
+
+
+// function getDefaultAPatch(){
+//     let patch = getDefaultPatch();
+//     patch.rootPhaseDelay=0;
+//     return patch;
+// }
+// function getDefaultBPatch(){
+//     let patch = getDefaultPatch();
+//     patch.rootPhaseDelay=0.25;
+//     return patch;
+// }
+
+
+const defaultTestSubjectList = 
+[
+    "speakerAmount",
+    "speakerMass",
+    "speakerDamping",
+    "speakerStiffness",
+    "speakerNonLinearity",
+    "frequency"
+];
+
+function getDefaultPatch(){
+    let patch =
+    { 
+        ...getTrueDefaultPatch(),
+        ...wavePresets[6].patch//sine
+    }
+    patch.distortion=1;
+    patch.tanhDistortion=0;
+    return patch;
+}
 
 function getDefaultAPatch(){
     let patch = getDefaultPatch();
-    patch.rootPhaseDelay=0;
+    patch.speakerAmount=0;
+    patch.frequency=400;
     return patch;
 }
 function getDefaultBPatch(){
     let patch = getDefaultPatch();
-    patch.rootPhaseDelay=0.25;
+    patch.speakerAmount=1;
+    patch.frequency=400;
     return patch;
 }
