@@ -180,9 +180,13 @@ function updateBuffers(patchA, patchB, patchAR, patchBR) {
     if (nullTestMax>-100){//avoid scaling if null test is close to silent (>-100db)
         scaleBuffer(nullTestBuffer, 0.99 / nullMax);
     }
+    updateTHDGraph();
 }
 
-
+let THDGraphData = null;
+function updateTHDGraph(){
+    THDGraphData = calculateTHDGraph(getPreviewSubjectCachedPatch());
+}
 
 
 let showBufferEnvelopeOverlay=false;
@@ -204,6 +208,9 @@ function updateDisplay(){
     paintPreview()
     let nullTest = document.getElementById('nullTestdb');
     nullTest.textContent = "Peak Level: " +nullTestMax.toFixed(1) + "dB";
+
+    
+    paintTHDGraph(THDGraphData, 'THDGraphCanvas');
 }
 
 

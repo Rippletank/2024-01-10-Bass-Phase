@@ -29,12 +29,30 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //FFT Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
 let getFFT1024 = initFFT(1024);
 let getFFT64k = initFFT(65536);
+
+let fftFunctions=[]
+function getFFTFunction(bufferSize){
+    switch(bufferSize){
+        case 1024: return getFFT1024(buffer);   
+        case 2048: return fftFunctions[0] ??  (fftFunctions[0] = initFFT(bufferSize));    
+        case 4096: return fftFunctions[1] ??  (fftFunctions[1] = initFFT(bufferSize));    
+        case 8192: return fftFunctions[2] ??  (fftFunctions[2] = initFFT(bufferSize));    
+        case 16384: return fftFunctions[3] ??  (fftFunctions[3] = initFFT(bufferSize));    
+        case 32768  : return fftFunctions[4] ??  (fftFunctions[4] = initFFT(bufferSize));    
+        case 65536: return getFFT64k(buffer); 
+        default: return null;
+    }
+}
+
+
 function initFFT(N)
 {
-    //FFT always of length 1024 - so bit reversals and sin lUT can be precalculated
-    //const N = 1024;
+    //FFT will always be of length N so bit reversals and sin lUT can be precalculated
     const N_1 =N-1;
     const N_2 =N/2;
     const N_4 =N/4;

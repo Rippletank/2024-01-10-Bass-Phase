@@ -284,6 +284,64 @@ function measureTHDPercent(referencePatch){
 }
 
 
+let THDStepsPerOctave = 4;
+let THDEfficiencyFactor = 2; //must be power of 2 Adjust the resolution and FFT Size to be more efficient with calculation times
+let THDfftResolution = 2.5;//Hz Nominal resolution - will be adjusted by Efficiency factor
+let THDfftSize = 16384; //will be adjusted by Efficiency factor
+function calculateTHDGraph(referencePatch){
+    if (referencePatch.distortion==0) return [0,0];
+
+    let patch = {
+        ...THDDefaultPatch,//all values covered
+        ...referencePatch,//distortion and oversampling parameters copied
+       ...THDSinePatch //Harmonic series set to sine wave
+    };
+    patch.frequencyFine=0;
+
+    //calculate equally distributed frequencies on a log2 scale, from 20Hz to 20KHz with half octave steps
+    let freqStepSize = THDfftResolution*THDEfficiencyFactor;//Hz for the eventual FFT and therefore use for the test sine waves ()
+    let bufferSize = THDfftSize/THDEfficiencyFactor; //Number of samples
+    let fftFunc = getFFTFunction(bufferSize);
+    let sampleRate = bufferSize * freqStepSize;
+    let frequencies = [];
+    let f = 20;
+    let factor = Math.pow(2,1/THDStepsPerOctave);//Geometric increase to cover given number of steps per octave
+    while (f<=20000 && f<=sampleRate/2){
+        frequencies.push(Math.round(f/freqStepSize)*freqStepSize);//To nearest frequency step
+        f*=factor;
+    }
+    let envelopeBuffer =[];
+    for (let i = 0; i < bufferSize; i++) {
+        envelopeBuffer.push(1);
+    }
+
+    let harmonicsToInclude = 10;
+    let maxBin = bufferSize/2-1;
+    let THD = [];
+    for(let i=0;i<frequencies.length;i++){
+        patch.frequency=frequencies[i];
+        let b = new Float32Array(bufferSize);
+        buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, 0);
+        distort(b, patch, sampleRate, true, false);
+        let fft = fftFunc(b);
+        let total = 0;
+        let fundamentalBin = Math.round(patch.frequency/freqStepSize)
+        if (fundamentalBin>maxBin) break;
+        let lastBin = Math.min(Math.round((harmonicsToInclude+1)*fundamentalBin),maxBin);
+        for (let i = fundamentalBin*2; i <= lastBin; i+=fundamentalBin) {
+            let vn = fft.magnitude[i];
+            total += vn * vn;
+        }
+        THD.push(
+            {
+               frequency:patch.frequency,
+               thd:  Math.sqrt(total) / fft.magnitude[fundamentalBin] *100
+            });
+    }
+
+    return THD;
+}
+
 
 
 //Generate a single envelope, shared by all harmonics

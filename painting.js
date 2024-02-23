@@ -738,3 +738,91 @@ function adjustForPhase(magnitudes,phases, showPolarity){
 
    }
 }
+
+
+
+
+
+function paintTHDGraph(data, canvasId){
+    if (!data) return;
+
+
+    let canvas = document.getElementById(canvasId);
+    let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+
+    let tW = canvas.width*0.06;
+    let l=tW;
+    let r = canvas.width-tW*0.5;
+    let t = 4;
+    let tH = canvas.height*0.15;
+    let b = canvas.height-tH;
+    let w=r-l;
+    let h=b-t;
+    let yScale = h / 5;
+    let xScale = w / Math.log2(20000/20); //range 20-20000
+
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    //THD axis lines
+    ctx.beginPath();    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(100, 100, 100)";
+    ctx.moveTo(l, t);
+    ctx.lineTo(l, b);
+    ctx.lineTo(r, b);
+    ctx.stroke();
+
+
+    const freqs = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+    //THD freq grid lines
+    ctx.beginPath();    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(210, 210, 210)";
+    ctx.fillStyle = "rgb(0, 0, 0)"; // color of the text
+    ctx.font = "12px Arial"; // font of the text
+    ctx.textAlign = "center"; // horizontal alignment
+    freqs.forEach(f=>{
+        let x =l+ Math.log2(f/20) * xScale;
+        ctx.moveTo(x, t);
+        ctx.lineTo(x, b);
+        ctx.fillText(f.toString(), x, b + tH); // draw the frequency label 15 pixels below the line
+    });
+    ctx.stroke();
+
+    const percents = [0.001,0.01,0.1,1,10,100];
+    //THD freq grid lines
+    ctx.beginPath();    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(210, 210, 210)";
+    ctx.fillStyle = "rgb(0, 0, 0)"; // color of the text
+    ctx.font = "12px Arial"; // font of the text
+    ctx.textAlign = "right"; // horizontal alignment
+    percents.forEach(p=>{
+        let y = b - Math.log10(p/0.001) * yScale;
+        ctx.moveTo(l, y);
+        ctx.lineTo(r, y);
+        ctx.fillText(p.toString(), l-tW*0.1, y+6); // draw the frequency label 15 pixels below the line
+    });
+    ctx.stroke();
+
+
+    ctx.beginPath();    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgb(0, 0, 0)";
+    for (let i = 0; i < data.length; i++) {
+        let d = data[i];
+        let y = b - Math.log10(d.thd/0.001) * yScale;
+        if (y>b) y=b;
+        let x = l + Math.log2(d.frequency/20) * xScale;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+}

@@ -439,12 +439,7 @@ function getTrueDefaultPatch(){
 
 const defaultTestSubjectList = 
 [
-    "speakerAmount",
-    "speakerMass",
-    "speakerDamping",
-    "speakerStiffness",
-    "speakerNonLinearity",
-    "frequency"
+    "speakerAmount"
 ];
 
 function getDefaultPatch(){
@@ -453,8 +448,14 @@ function getDefaultPatch(){
         ...getTrueDefaultPatch(),
         ...wavePresets[6].patch//sine
     }
+    patch.frequency=400;
     patch.distortion=1;
     patch.tanhDistortion=0;
+    patch.speakerAmount=1;
+    patch.speakerMass=0.14;
+    patch.speakerDamping=0.82;
+    patch.speakerStiffness=0.24;
+    patch.speakerNonLinearity=0.5;
     return patch;
 }
 
