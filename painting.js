@@ -20,6 +20,31 @@
 
 
 
+
+let isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+function toLightMode(body, toLightMode){
+    body = body ?? document.body;
+    if (toLightMode) {
+        isDarkMode = false;
+        body.setAttribute('data-theme', 'light');
+    } else {
+        isDarkMode = true;
+        body.setAttribute('data-theme', 'dark');
+    }
+    localStorage.setItem('isDarkMode', isDarkMode);
+    fftFill('fftCanvas');;
+    return isDarkMode;
+}
+    
+toLightMode(null, !isDarkMode)
+
+function getColor(r,g,b){
+    return isDarkMode ?`rgb(${255-r},${255-g},${255-b})` : `rgb(${r},${g},${b})`;
+}
+function getGreyColorA(shade, alpha){
+    return isDarkMode ? `rgb(${255-shade},${255-shade},${255-shade},${alpha})` : `rgb(${shade},${shade},${shade},${alpha})`;
+}
+
 let useFFT = true;
 
 function fftFade(canvasId){
@@ -27,7 +52,7 @@ function fftFade(canvasId){
     let ctx = canvas.getContext("2d");
     const w = canvas.width;
     const h = canvas.height;
-    ctx.fillStyle = "rgba(240, 240, 240, 0.05)";
+    ctx.fillStyle = getGreyColorA(240, 0.05);
     ctx.fillRect(0,0,w,h);  
 }
 
@@ -37,7 +62,7 @@ function fftFill(canvasId){
     let ctx = canvas.getContext("2d");
     const w = canvas.width;
     const h = canvas.height;
-    ctx.fillStyle = "rgba(240, 240, 240, 1)";
+    ctx.fillStyle = getGreyColorA(240, 1);
     ctx.fillRect(0,0,w,h);  
 }
 
@@ -85,10 +110,10 @@ function startFFT(context, analyser, canvasId){
 
         //Draw the FFT
         analyser.getByteFrequencyData(fft);  
-        ctx.fillStyle = "rgba(240, 240, 240, 0.05)";
+        ctx.fillStyle =getGreyColorA(240, 0.05);
         ctx.fillRect(0,0,w,h);        
         ctx.lineWidth = 1;
-        ctx.strokeStyle = "rgb(0, 50, 0)";
+        ctx.strokeStyle = getColor(0, 50, 0);
         ctx.beginPath();
 
         let startBin = 0;
@@ -172,7 +197,7 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     const dbOffset = detailedMinDb / 20;
     const hScale = fftH/dbScale;
  
-    ctx.fillStyle = "rgb(245, 245, 245)";
+    ctx.fillStyle = getColor(245, 245, 245);
     ctx.fillRect(0,0,w,h);  
     
     
@@ -181,8 +206,8 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     
 
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(50, 0, 0)";
-    ctx.fillStyle = "rgb(50, 0, 0)";
+    ctx.strokeStyle = getColor(50, 0, 0);
+    ctx.fillStyle = getColor(50, 0, 0);
     ctx.beginPath();
 
     const desiredStartF =detailedMinF* Math.pow(2,-octaveStep);
@@ -353,8 +378,8 @@ function drawLogScale(ctx, positions, fftL, fftW, fftT, fftB) {
     const maxF = positions[positions.length-1].f;
     const powerOfTen = largestPowerOfTenIncrement(positions[0].f, positions[positions.length-1].f);
     const decimalsToUse = powerOfTen > 2 ? 0 : 1;
-    ctx.strokeStyle = "rgb(160, 210,  160)";
-    ctx.fillStyle = "rgb(50, 0, 0)";
+    ctx.strokeStyle = getColor(160, 210,  160);
+    ctx.fillStyle = getColor(50, 0, 0);
     ctx.font = (scaleGap*0.37).toFixed(0)+"px Arial";
     ctx.textAlign = "center";
     ctx.setLineDash([5, 15]);
@@ -388,7 +413,7 @@ function paintBuffer(buffer, maxLength, canvasId){
         const step = canvas.width / maxLength;
         //Centre line
         ctx.lineWidth = 0.5;
-        ctx.strokeStyle = "rgb(50, 50, 50)";
+        ctx.strokeStyle = getColor(50, 50, 50);
         ctx.beginPath();
         ctx.moveTo(0, zeroY);
         ctx.lineTo(canvas.width, zeroY);
@@ -397,7 +422,7 @@ function paintBuffer(buffer, maxLength, canvasId){
         //Waveform
         ctx.beginPath();
         ctx.lineWidth = 1;
-        ctx.strokeStyle = "rgb(0, 0, 0)";
+        ctx.strokeStyle = getColor(0, 0, 0);
         let x = 0;
 
         for (let i = 0; i < maxLength; i++) {
@@ -426,7 +451,7 @@ function paintEnvelope(envelopes, maxLength, canvasId){
         const bufferSize = b.length;
 
         ctx.beginPath();
-        ctx.strokeStyle = "rgb(0, 128, 0)";
+        ctx.strokeStyle = getColor(0, 128, 0);
         const h = canvas.height/(2*envelopes.length);
         const zeroY = h + chan * 2 * h;
         const step = canvas.width / maxLength;
@@ -468,7 +493,7 @@ function paintFilterEnvelope(filters, maxLength, canvasId){
         const bufferSize = b.length;
 
         ctx.beginPath();
-        ctx.strokeStyle = "rgb(0, 0, 128)";
+        ctx.strokeStyle = getColor(0, 0, 128);
         let x = 0;
         const h = canvas.height/filters.length;
         const zeroY = h + chan * h;
@@ -537,13 +562,13 @@ function doPreviewPaint(
     let wpCorner= h/16;
     let wpWidth = wpCorner*20;
     let wpHeight = wpCorner*14;
-    ctx.fillStyle = "rgb(240, 240, 240)";
+    ctx.fillStyle = getColor(240, 240, 240);
     ctx.fillRect(0, 0, wpWidth+wpCorner*2, wpHeight+wpCorner*2);  
     ctx.beginPath();    
     let waveScale = 1/Math.max(Math.abs(min),Math.abs(max));
     //waveForm axis lines
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(150, 150, 150)";
+    ctx.strokeStyle = getColor(150, 150, 150);
     ctx.moveTo(wpCorner, wpCorner + 0.5 * wpHeight);
     ctx.lineTo(wpCorner + wpWidth, wpCorner + 0.5 * wpHeight); 
     ctx.moveTo(wpCorner+ 0.5 * wpWidth, wpCorner );
@@ -553,7 +578,7 @@ function doPreviewPaint(
     //Waveform preview
     ctx.beginPath();    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = getColor(0, 0, 0);
     for(let i=0;i<samples.length;i++){
         let x =wpCorner + i * wpWidth / samples.length;
         let y =wpCorner + (0.5-0.5 * waveScale * samples[i]) * wpHeight;
@@ -581,7 +606,7 @@ function doPreviewPaint(
     //Spectrum Amplitude axis lines
     ctx.beginPath(); 
     ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgb(150, 150, 150)";
+    ctx.strokeStyle = getColor(150, 150, 150);
     ctx.moveTo(spL, sp0);
     ctx.lineTo(spL + spW, sp0); 
     ctx.moveTo(spL, spT );
@@ -591,7 +616,7 @@ function doPreviewPaint(
     adjustForPhase(magnitude,phases,showPolarity)
     ctx.beginPath();    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(0, 0, 200)";
+    ctx.strokeStyle = getColor(0, 0, 200);
     for (let i = 0; i < count; i++) {
         let x =spL + i * spW / count;
         let mag = magnitude[i];
@@ -606,7 +631,7 @@ function doPreviewPaint(
     if (!showFullSpectrum)
     {
         //Draw dots to show harmonics on zoomed in view        
-        ctx.fillStyle = "rgb(0, 0, 100)";
+        ctx.fillStyle = getColor(0, 0, 100);
         for (let i = 0; i < count; i++) {
             let x =spL + i * spW / count;
             ctx.fillRect(x-0.5, sp0-0.5, 1, 1); 
@@ -618,7 +643,7 @@ function doPreviewPaint(
         //Overlay the filter frequency response
         ctx.beginPath();    
         ctx.lineWidth = 1;
-        ctx.strokeStyle = "rgb(0, 140, 0)";
+        ctx.strokeStyle = getColor(0, 140, 0);
         const invW0 = filter.invW0[filter.invW0.length*0.5]
         const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / filter.sampleRate;
         for (let i = 1; i < count; i++) {
@@ -663,7 +688,7 @@ function doPreviewPaint(
     //Spectrum Phase axis lines
     ctx.beginPath(); 
     ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgb(150, 150, 150)";
+    ctx.strokeStyle = getColor(150, 150, 150);
     ctx.moveTo(pL, p0);
     ctx.lineTo(pL + pW, p0); 
     ctx.moveTo(pL, pT );
@@ -673,7 +698,7 @@ function doPreviewPaint(
 
     ctx.beginPath();    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(100, 0, 0)";
+    ctx.strokeStyle = getColor(100, 0, 0);
     //Spectrum preview - right side rectangle
     for (let i = 0; i < count; i++) {
         let x =pL + i * pW / count;
@@ -695,7 +720,7 @@ function doPreviewPaint(
     if (!showFullSpectrum)
     {
         //Draw dots to show harmonics on zoomed in view        
-        ctx.fillStyle = "rgb(50, 0, 0)";
+        ctx.fillStyle = getColor(50, 0, 0);
         for (let i = 0; i < count; i++) {
             let x =pL + i * pW / count;
             ctx.fillRect(x-0.5, p0-0.5, 1, 1); 
@@ -765,12 +790,13 @@ function paintTHDGraph(data, canvasId){
     let xScale = w / Math.log2(20000/20); //range 20-20000
 
 
+    ctx.fillStyle = getColor(255,255,255); //Color to clear to
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     //THD axis lines
     ctx.beginPath();    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(100, 100, 100)";
+    ctx.strokeStyle = getColor(100, 100, 100);
     ctx.moveTo(l, t);
     ctx.lineTo(l, b);
     ctx.lineTo(r, b);
@@ -781,8 +807,8 @@ function paintTHDGraph(data, canvasId){
     //THD freq grid lines
     ctx.beginPath();    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(210, 210, 210)";
-    ctx.fillStyle = "rgb(0, 0, 0)"; // color of the text
+    ctx.strokeStyle = getColor(210, 210, 210);
+    ctx.fillStyle = getColor(0, 0, 0); // color of the text
     ctx.font = "12px Arial"; // font of the text
     ctx.textAlign = "center"; // horizontal alignment
     freqs.forEach(f=>{
@@ -797,8 +823,8 @@ function paintTHDGraph(data, canvasId){
     //THD freq grid lines
     ctx.beginPath();    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(210, 210, 210)";
-    ctx.fillStyle = "rgb(0, 0, 0)"; // color of the text
+    ctx.strokeStyle = getColor(210, 210, 210);
+    ctx.fillStyle = getColor(0, 0, 0); // color of the text
     ctx.font = "12px Arial"; // font of the text
     ctx.textAlign = "right"; // horizontal alignment
     percents.forEach(p=>{
@@ -812,7 +838,7 @@ function paintTHDGraph(data, canvasId){
 
     ctx.beginPath();    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = getColor(0, 0, 0);
     for (let i = 0; i < data.length; i++) {
         let d = data[i];
         let y = b - Math.log10(d.thd/0.001) * yScale;

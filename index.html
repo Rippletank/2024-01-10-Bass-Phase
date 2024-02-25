@@ -7,8 +7,14 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+    <script>
+        //Pre load dark mode to avoid white flash
+        (function() {
+          let isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+          document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+        })();
+      </script>
     <h1>Sound Defects ABX Tests</h1>
-
 
     <datalist id="ticksPlus1ZeroMinus1">
         <option value="-1">
@@ -84,19 +90,21 @@
     <br>
 
 
-    <div id="centerContainer">
-        <div id="abxTestContainer">
-            <h3>ABX test</h3>
-            <ol id="results"></ol>
-            <button id="abxTest" class="testCenter">Test</button>
-            <div id="abxButtons"  style="display: none;">
-                <button id="buttonA">X is A</button>
-                <button id="play">Play X</button>
-                <button id="buttonB">X is B</button>
+    <div class="bordered">
+        <div id="centerContainer">
+            <div id="abxTestContainer">
+                <h3>ABX test</h3>
+                <ol id="results"></ol>
+                <button id="abxTest" class="testCenter">Test</button>
+                <div id="abxButtons"  style="display: none;">
+                    <button id="buttonA">X is A</button>
+                    <button id="play">Play X</button>
+                    <button id="buttonB">X is B</button>
+                </div>
+                <p id="stats" class="testCenter"></p>
+                <br>
+                <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
             </div>
-            <p id="stats" class="testCenter"></p>
-            <br>
-            <button id="resetTest"  class="testCenter" style="display: none;">Reset Test</button>
         </div>
     </div>
     <div class="bordered">
@@ -125,7 +133,7 @@
                 <button name="wShowEG" class = "previewButton">Envelope overlays</button>
             </div>
         </div>
-        <div class ="previewButtons">
+        <div class ="previewButtons spaceTop">
             <div class="previewButtons previewL">
                 <p>Normalise:</p>
                 <button name="NormLoudest" class = "previewButton">Together</button>
@@ -134,6 +142,7 @@
             <div class="previewButtons previewC">
             </div>
             <div class="previewButtons">
+                <button id="theme-switch" name="theme" class = "previewButton">Dark Mode</button>
             </div>
         </div>
         <div class ="previewButtons spaceTop">

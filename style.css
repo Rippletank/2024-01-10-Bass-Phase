@@ -1,4 +1,27 @@
-body {
+:root {
+    --text-color: black;
+    --background-color: white;
+    --border-color:gray;
+    --shadow: rgba(0, 0, 0, 0.1);
+  }
+  
+  [data-theme="dark"] {
+    --text-color: white;
+    --background-color: black;
+    --border-color:gray;
+    --shadow: rgba(255, 255, 255, 0.1);
+  }
+  
+  [data-theme="light"] {
+    --text-color: black;
+    --background-color: white;
+    --border-color:gray;
+    --shadow: rgba(0, 0, 0, 0.1);
+  }
+  
+  body {
+    color: var(--text-color);
+    background-color: var(--background-color);
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -110,7 +133,8 @@ canvas {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.233);
+    padding:2px;
+    background-color: rgba(125, 125, 125, 0.5);
     color: white;
     font-family: sans-serif;
 }
@@ -121,7 +145,7 @@ canvas {
     right: 3em;
     width: 20em;
     padding: 10px;
-    background-color: #f9f9f9;
+    background-color: var(--background-color);
     border: 1px solid #ccc;
     border-radius: 5px;
     z-index: 1000;
@@ -199,10 +223,7 @@ canvas {
     margin-bottom: 0.5em;
 }
 
-.previewButtons .showDown:active{
-    background-color: #833;
-    color:white;
-}
+
 .spaceTop{
     margin-top: 1.5em;
 }
@@ -235,16 +256,18 @@ canvas {
 }
 
 .button-selected {
-    background-color: #007B00; /* Change to the color you want */
-    color: white; /* Change to the color you want */
+    background-color: #007B00; 
+    color: white; 
     border-radius: 5px;
 }
 
 .button-unselected {
-    background-color: white; /* Change to the color you want */
-    color: #000000; /* Change to the color you want */
+    border-color: var(--border-color);
+    background-color: var(--background-color);
+    color: var(--text-color);
     border-radius: 5px;
 }
+
 
 .tooltip{
     padding : 10px;
@@ -266,11 +289,8 @@ canvas {
 }
 
 #abxTestContainer {
-    margin: 2em;
-    padding: 2em;
     width: 25em;
-    background-color: #fff;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    background-color: var(--background-color);
 }
 
 #abxTestContainer .testCenter {
@@ -301,7 +321,8 @@ canvas {
     margin-bottom: 0em !important;
 }
 .bordered {
-    border: 1px solid #000;
+    border: 1px solid;
+    border-color: var(--border-color);
     border-radius: 10px;
     margin: 10px;
     padding: 10px;
@@ -326,6 +347,11 @@ canvas {
     margin-right: auto;
     margin-top: 2em;
     margin-bottom: 1em;
+}
+.bordered button:not(.previewButton){
+    border-color: var(--border-color);
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
 
 .waveformCanvas {

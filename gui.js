@@ -261,6 +261,17 @@ previewButtons.forEach(function(button) {
             });
             button.isChecked =cw;
         break;
+        case 't':
+            button.addEventListener('click', function() {
+                let body = document.body;
+                let isDarMode = toLightMode(body, body.getAttribute('data-theme') === 'dark');
+                setModeText(this, isDarMode);
+                updateDisplay();
+                repaintDetailedFFT();
+            });
+            button.isChecked =()=>false;
+            break;
+
     }
 });
 
@@ -269,6 +280,8 @@ function DoFullPreviewUpdate(){
     updatePreview();
     paintPreview();
 }
+
+
 
 
 function updatePreviewButtonState(){
@@ -292,6 +305,12 @@ function updateCanvas() {
 }
 updateCanvas();
 
+
+  function setModeText(button, isDarMode){
+    button.textContent = isDarMode? 'Light Mode' :'Dark Mode';
+  }
+
+setModeText(document.getElementById('theme-switch'), document.body.getAttribute('data-theme') === 'dark');
 
 fftFill("fftCanvas");
 
