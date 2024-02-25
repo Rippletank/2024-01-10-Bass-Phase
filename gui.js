@@ -47,6 +47,16 @@ function play(index){
 let previewButtons = document.querySelectorAll('.previewButton');
 previewButtons.forEach(function(button) {
     switch(button.name[0]){    
+        case 'N'://Stereo 
+            let state = button.name=='NormLoudest'
+            button.addEventListener('click', function() {
+                isNormToLoudest = state;
+                updatePreviewButtonState();
+                previewSubjectChanged = true;
+                setUpStereo(isStereo);
+            });
+            button.isChecked =()=> isNormToLoudest == state;
+            break;  
         case 's'://Stereo 
             button.addEventListener('click', function() {
                 isStereo = !isStereo;

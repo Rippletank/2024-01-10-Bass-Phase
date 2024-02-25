@@ -102,7 +102,7 @@ function repaintDetailedFFT(){
     paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
 }
 
-
+let isNormToLoudest = true;
 let isStereo = false;
 let changed = true;
 // Main update method - orchestrates the creation of the buffers and their display
@@ -168,11 +168,13 @@ function updateBuffers(patchA, patchB, patchAR, patchBR) {
     nullTestBuffer = buildNullTest(audioBufferA.buffer, audioBufferB.buffer);
 
 
+    let scaleA =0.99 /Math.max(getBufferMax(audioBufferA.buffer), 0.000001);
+    let scaleB =0.99 /Math.max(getBufferMax(audioBufferB.buffer), 0.000001);
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
-    let scale = 0.99 / Math.max(getBufferMax(audioBufferA.buffer), getBufferMax(audioBufferB.buffer));
+    let scale = Math.min(scaleA, scaleB);
 
-    scaleBuffer(audioBufferA.buffer, scale);
-    scaleBuffer(audioBufferB.buffer, scale);
+    scaleBuffer(audioBufferA.buffer, isNormToLoudest? scale: scaleA);
+    scaleBuffer(audioBufferB.buffer, isNormToLoudest? scale: scaleB);
 
     //normalise null test buffer if above threshold
     let nullMax = getBufferMax(nullTestBuffer);
