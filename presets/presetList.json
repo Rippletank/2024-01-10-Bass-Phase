@@ -18,5 +18,10 @@
     {
         "name":"Jitter",
         "path":"jitter.json"
+    },
+    
+    {
+        "name":"Speaker distortion",
+        "path":"speaker.json"
     }
 ]

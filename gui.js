@@ -556,11 +556,13 @@ function importCombinedPatchFromPatch(patch){
     
     // Load the patches and settings
     isStereo = patch.isStereo ?? false;
+    isNormToLoudest = patch.isNormToLoudest ?? true;
 
     const notesEdit = document.getElementById('notesEdit');
     notesEdit.value = patch.notes ?? "";
 
     loadPatches(patchC, patchA, patchB, patchAR, patchBR, patch.testSubjects ?? defaultTestSubjectList);
+    updatePreviewButtonState();
 }
 
 
