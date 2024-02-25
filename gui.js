@@ -386,8 +386,10 @@ function loadSliderValuesFromContainer(id, patch) {
 function setupPresetButtons(){    
     insertPresetButtons('wavePresetButtons', wavePresets);
     insertPresetButtons('envelopPresetButtons', envelopePresets);
+    insertPresetButtons('speakerPresets', speakerPresets);
     insertPresetButtons('filterPresetButtons', filterPresets);
     insertPresetButtons('distortionPresets', distortionPresets);
+    insertPresetButtons('oversamplingPresets', oversamplingPresets);
     insertPresetButtons('oversamplingPresets', oversamplingPresets);
 }
 

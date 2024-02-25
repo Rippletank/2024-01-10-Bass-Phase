@@ -241,6 +241,50 @@ let distortionPresets = [
     },
 ];
 
+let speakerPresets = [
+    {
+
+        name:"Default",
+        patch:{
+            speakerAmount:0,
+            speakerMass:0.5,
+            speakerDamping:0.5,
+            speakerStiffness:0.5,
+            speakerNonLinearity:0.5,
+        }
+    },
+    {
+        name:"Nice",
+        patch:{
+            speakerAmount:0.43,
+            speakerMass:0.05,
+            speakerDamping:0.96,
+            speakerStiffness:0.96,
+            speakerNonLinearity:0.1,
+        }
+    },  
+    {
+        name:"Tubby",
+        patch:{
+            speakerAmount:0.79,
+            speakerMass:0.89,
+            speakerDamping:0.98,
+            speakerStiffness:0.98,
+            speakerNonLinearity:0.97,
+        }
+    }, 
+    {
+        name:"Ugly",
+        patch:{
+            speakerAmount:0.16,
+            speakerMass:0.93,
+            speakerDamping:0.78,
+            speakerStiffness:0.02,
+            speakerNonLinearity:0.55,
+        }
+    },
+]
+
 
 let oversamplingPresets = [
     {
