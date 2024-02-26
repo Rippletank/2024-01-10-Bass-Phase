@@ -25,7 +25,7 @@ import { repaintDetailedFFT, getTrueSampleRate } from './audioAPI.js';
 
 const disableGroups =[
     {
-        masters:[
+        mains:[
             {
                 name:"distortion",
                 value:0,
@@ -44,7 +44,7 @@ const disableGroups =[
         ]
     },
     {
-        masters:[
+        mains:[
             {
                 name:"filterSlope",
                 value:0,
@@ -60,14 +60,16 @@ const disableGroups =[
         ]
     },
     {
-        masters:[
+        mains:[
             {
                 name:"evenAlt",
                 value:0,
+                matchAny:false
             },
             {
                 name:"oddAlt",
                 value:0,
+                matchAny:false
             }
         ],
         dependents:[
@@ -76,7 +78,27 @@ const disableGroups =[
         ]
     },
     {
-        masters:[
+        mains:[
+            {
+                name:"distortion",
+                value:0,
+                matchAny:true
+            },
+            {
+                name:"speakerAmount",
+                value:0,
+                matchAny:true
+            }
+        ],
+        dependents:[
+            "speakerMass",
+            "speakerDamping",
+            "speakerStiffness",
+            "speakerNonLinearity"
+        ]
+    },
+    {
+        mains:[
             {
                 name:"oddLevel",
                 value:0,
@@ -88,7 +110,7 @@ const disableGroups =[
         ]
     },
     {
-        masters:[
+        mains:[
             {
                 name:"evenLevel",
                 value:0,

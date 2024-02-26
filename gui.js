@@ -910,13 +910,19 @@ function handleDisableGroups(id, patch){
     disableGroups.forEach((group)=>{
         
         let allNamesValid = true;
-        const hasKeys = group.masters.length>0;
-        let allMatch = true;
-        for (let key of group.masters) {
+        const hasKeys = group.mains.length>0;
+        let matchAnys = false;
+        let matchAlls = true;
+        for (let key of group.mains) {
             allNamesValid &=  !testSubjects.includes(key.name) 
-            allMatch &=  patch[key.name] == key.value 
+            matchAlls &=  patch[key.name] == key.value //normally disable when all the keys match
+            if (key.matchAny)
+            {
+                //Allow to disable groups when any of the keys match
+                matchAnys |=  patch[key.name] == key.value 
+            }
         }
-        const action =  allNamesValid && allMatch && hasKeys ?
+        const action =  allNamesValid && (matchAlls || matchAnys) && hasKeys ?
             (slider)=>slider.classList.add("blurredDisabled")
             : (slider)=>slider.classList.remove("blurredDisabled");
         const testSliders =SoundSetups.reduce((setup,prev) => 
