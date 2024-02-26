@@ -3,18 +3,8 @@
     --background-color: white;
     --border-color:gray;
     --shadow: rgba(0, 0, 0, 0.1);
-    --tracks-color:#012074;
-    --thumb-color: #135280;
-    --thumb-focus-color: #135280;
-  }
-  
-  [data-theme="dark"] {
-    --text-color: rgb(189, 189, 189);
-    --background-color: rgb(26, 25, 25);
-    --border-color:gray;
-    --shadow: rgba(255, 255, 255, 0.1);
-    --tracks-color:#012074;
-    --thumb-color: #135280;
+    --tracks-color:#cfcfcf;
+    --thumb-color: #1b6da8;
     --thumb-focus-color: #135280;
   }
   
@@ -23,10 +13,21 @@
     --background-color: white;
     --border-color:gray;
     --shadow: rgba(0, 0, 0, 0.1);
-    --tracks-color:#c0c0c0;
-    --thumb-color: #387099;
-    --thumb-focus-color: #387099;
+    --tracks-color:#cfcfcf;
+    --thumb-color: #1b6da8;
+    --thumb-focus-color: #135280;
   }
+  
+  [data-theme="dark"] {
+    --text-color: rgb(189, 189, 189);
+    --background-color: rgb(26, 25, 25);
+    --border-color:gray;
+    --shadow: rgba(255, 255, 255, 0.1);
+    --tracks-color:#4d4d4d;
+    --thumb-color: #658297;
+    --thumb-focus-color: #658297;
+  }
+  
   
   body {
     color: var(--text-color);
