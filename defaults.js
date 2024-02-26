@@ -25,7 +25,7 @@ const zeroLevel=Math.pow(10,smallestLevel/20);//-100db global minimum level for 
 
 const allowedOversampleTimes = [1,2,3,4,6,8,12,16];
 
-let sinePatch={
+const sinePatch={
     balance:-1,
     oddLevel:1,
     oddFalloff:2,
@@ -38,7 +38,7 @@ let sinePatch={
     altOffset:0,
 }
 
-let wavePresets = [
+const wavePresets = [
     {
         name:"Default", 
         patch:{
@@ -135,7 +135,7 @@ let wavePresets = [
     }
 ];
 
-let envelopePresets = [
+const envelopePresets = [
     {
         name:"Default",
         patch:{
@@ -184,7 +184,7 @@ let envelopePresets = [
 
 ];
 
-let distortionPresets = [
+const distortionPresets = [
     {
         name:"Default",
         patch:{
@@ -280,7 +280,7 @@ let distortionPresets = [
     },
 ];
 
-let speakerPresets = [
+const speakerPresets = [
     {
 
         name:"Default",
@@ -325,7 +325,7 @@ let speakerPresets = [
 ]
 
 
-let oversamplingPresets = [
+const oversamplingPresets = [
     {
         name:"Default",
         patch:{
@@ -360,7 +360,7 @@ let oversamplingPresets = [
     },
 ];
 
-let filterPresets = [
+const filterPresets = [
     {   
         name:"Default",
         patch:{
@@ -556,7 +556,7 @@ function getDefaultBPatch(){
 // }
 
 
-let miniPresets ={
+const miniPresets ={
     wavePresets:wavePresets, 
     envelopePresets:envelopePresets, 
     distortionPresets:distortionPresets, 

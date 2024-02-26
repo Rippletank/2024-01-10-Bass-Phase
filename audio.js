@@ -80,6 +80,7 @@ function getAudioBuffer(
      
       let envelopeBuffers =[];
       let filters =[];
+      let oversamplingReports =[];
 
       let randSeed = Math.random();
       for(let i=0;i<channels.length;i++){
@@ -96,7 +97,8 @@ function getAudioBuffer(
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
-            distort(b, patch, sampleRate, false, true);
+            let oversamplingReport = distort(b, patch, sampleRate, false, true);
+            oversamplingReports.push(oversamplingReport);
             jitter(b, sampleRate, patch, false, randSeed);
             envelopeBuffers.push(envelopeBuffer);
             filters.push(filter);
@@ -104,24 +106,13 @@ function getAudioBuffer(
       return {
             buffer:audioBuffer,
             envelopes:envelopeBuffers,
-            filters:filters
+            filters:filters,
+            oversamplingReports:oversamplingReports
       }
 
 }
 
-//takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
-function preMaxCalcStartDelay(patches, sampleRate){
-    let maxDelay = 0;
-    for (let i = 0; i < patches.length; i++) {
-        let patch = patches[i];
-        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
-        if(!patch || patch.rootPhaseDelay>=0) continue;
-        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine);
-        if (delay>maxDelay) maxDelay = delay;
-    }
-    return maxDelay;
 
-}
 
 
 //Return object with 3 float arrays,
@@ -136,14 +127,16 @@ function getPreview(referencePatch, filterPreviewSubject, sampleRate){
     };
     let bufferSize = 1024; //Number of samples
     let virtualSampleRate = bufferSize * (patch.frequency+patch.frequencyFine);//Ensure is one complete per cycle
-    return _buildPreview(patch, filterPreviewSubject,
+    let result = _buildPreview(patch, filterPreviewSubject,
         virtualSampleRate, 
         bufferSize,
         false,
         sampleRate/virtualSampleRate);
+        result.fft = getFFT1024(result.distortedSamples);
+    return result;
 }
 
-function getBufferForLongFFT(samplerate, referencePatch, filterPreviewSubject){
+function getDetailedFFT(samplerate, referencePatch, filterPreviewSubject){
     let defaultPatch = getDefaultPatch();
     let patch = {
         ...defaultPatch,
@@ -295,7 +288,7 @@ let THDEfficiencyFactor = 2; //must be power of 2 Adjust the resolution and FFT 
 let THDfftResolution = 2.5;//Hz Nominal resolution - will be adjusted by Efficiency factor
 let THDfftSize = 16384; //will be adjusted by Efficiency factor
 function calculateTHDGraph(referencePatch){
-    if (referencePatch.distortion==0) return [0,0];
+    if (referencePatch.distortion==0) return [];
 
     let patch = {
         ...THDDefaultPatch,//all values covered
@@ -583,66 +576,20 @@ function mixInSine(
     }
 }
 
-function getBufferMax(buffer){
-    let max = 0;
-    for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.getChannelData(chan);
-        let bufferSize = buffer.length;
-        for (let i = 0; i < bufferSize; i++) {
-            let val = Math.abs( b[i]);
-            if (val>max) max = val;
-        }
-    }
-    return max;
-}
 
-function scaleBuffer(buffer, scale){
-    let max = 0;
-    for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.getChannelData(chan);
-        let bufferSize = buffer.length;
-        for (let i = 0; i < bufferSize; i++) {
-            b[i]*=scale;
-        }
-    }
-    return max;
-}
-
-function buildNullTest(bufferA, bufferB){
-    let length = Math.min(bufferA.length, bufferB.length);
-    let nullTest = new AudioBuffer({
-        length: length,
-        sampleRate: bufferA.sampleRate,
-        numberOfChannels: bufferA.numberOfChannels
-      });
-    for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
-        var A = bufferA.getChannelData(channel);
-        var B = bufferB.getChannelData(channel);
-        let b = nullTest.getChannelData(channel);
-        for (let i = 0; i < length; i++) {
-        b[i] = A[i] - B[i];
-        }
-    }
-    return nullTest;
-}
 
 
 export { 
-    //Build the actual audio buffer for playback
-    preMaxCalcStartDelay, 
-    getAudioBuffer, 
-
-    //Process buffers
-    getBufferMax, 
-    scaleBuffer, 
-    buildNullTest, 
+    //Get the actual audio buffers for playback
+    getAudioBuffer, //Two references, one for each sound A & B in  audioAPI.js updateBuffers
 
     //Quick preview
-    getPreview,
+    getPreview,  //One reference in audioAPI.js updatePreview
 
     //More detailed analysis
-    getBufferForLongFFT, 
-    measureTHDPercent, 
-    calculateTHDGraph };
+    getDetailedFFT, //one reference in audioAPI.js updateDetailedFFT
+    measureTHDPercent, //one reference in audioAPI.js updateTHDPercent
+    calculateTHDGraph  //one reference in audioAPI.js updateTHDGraph
+};
 
 

@@ -23,19 +23,13 @@
 
 import { 
     //Build the actual audio buffer for playback
-    preMaxCalcStartDelay,
     getAudioBuffer,     
 
-    //Process buffers
-    getBufferMax, 
-    scaleBuffer, 
-    buildNullTest, 
-    
     //Quick preview
     getPreview,
 
     //More detailed analysis
-    getBufferForLongFFT,
+    getDetailedFFT,
     measureTHDPercent, 
     calculateTHDGraph
  } from './audio.js';
@@ -60,8 +54,6 @@ import {
 } from './painting.js';
 
 import { getJitterTimeReport } from './jitter.js';
-import { getFFT1024 } from './basicFFT.js';
-import { getOversamplingReport } from './distortion.js';
 
 
 
@@ -172,7 +164,7 @@ let flags = {
 
 let longPreview = null;
 function updateDetailedFFT(){  
-    longPreview = getBufferForLongFFT(audioContext.sampleRate, getPreviewSubjectCachedPatch(), flags.filterPreviewSubject);
+    longPreview = getDetailedFFT(audioContext.sampleRate, getPreviewSubjectCachedPatch(), flags.filterPreviewSubject);
     paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
 }
 function repaintDetailedFFT(){
@@ -268,6 +260,23 @@ function updateBuffers(patchA, patchB, patchAR, patchBR) {
     updateTHDGraph();
 }
 
+//From Audio.js, takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
+//Quick calc of delay to allow coordination between sound A and sound B even if in stereo - so the null test is valid for any phase offset
+function preMaxCalcStartDelay(patches, sampleRate){
+    let maxDelay = 0;
+    for (let i = 0; i < patches.length; i++) {
+        let patch = patches[i];
+        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
+        if(!patch || patch.rootPhaseDelay>=0) continue;
+        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine);
+        if (delay>maxDelay) maxDelay = delay;
+    }
+    return maxDelay;
+
+}
+
+
+
 let THDGraphData = null;
 function updateTHDGraph(){
     THDGraphData = calculateTHDGraph(getPreviewSubjectCachedPatch());
@@ -306,7 +315,6 @@ function updatePreview(){
     ensureAudioContext();
     const previewPatch = getPreviewSubjectCachedPatch();
     previewResult = getPreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);
-    previewResult.fft = getFFT1024(previewResult.distortedSamples);
     
     previewTHDReport = previewPatch.distortion>0 ? "THD: " + measureTHDPercent(previewPatch).toFixed(3)+"% ["+previewPatchName()+"]" : "Distortion is off";
     jitterReport = 
@@ -389,17 +397,90 @@ function paintPreview(){
         flags.distortionSpectrumShowPhase,
         flags.filterPreviewSubject);
 
-        putOversamplingReport();
+        updateMeasurementReports();
     
 }
 
 let THDReportElement = document.querySelectorAll('.THDReport');
 let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
 let jitterReportElements = document.querySelectorAll('.jitterReport');
-function putOversamplingReport(){
-    oversamplingReportElements.forEach((element) =>element.textContent = getOversamplingReport());
+function updateMeasurementReports(){
+    let oversamplingReports = compareStringArrays(audioBufferA.oversamplingReports, audioBufferB.oversamplingReports);
+    let oversamplingReport = "<p>No oversampling</p>";
+    if (oversamplingReports.length==1){
+        oversamplingReport = "<p>"+oversamplingReports[0] + "</p>";
+    }
+    else if (flags.isStereo && oversamplingReports.length==4){
+        oversamplingReport = "<p>A Left: "+oversamplingReports[0] + "</p><p> A Right:"+oversamplingReports[1] + "</p>"
+                            + "<p>B Left: "+oversamplingReports[1] + "</p><p> B Right:"+oversamplingReports[2] + "</p>";
+    }
+    else if (!flags.isStereo && oversamplingReports.length==2){
+        oversamplingReport = "<p>A: "+oversamplingReports[0]
+                            + "<p>B: "+oversamplingReports[1] ;
+    }
+
+
+
+    oversamplingReportElements.forEach((element) =>element.innerHTML = oversamplingReport);
     THDReportElement.forEach((element) =>element.textContent = previewTHDReport);
     jitterReportElements.forEach((element) =>element.textContent = jitterReport);
+}
+
+function compareStringArrays(array1, array2) {
+    const allStringsSame = array1.every((value, index) => value === array2[index]) 
+                            && array2.every((value, index) => value === array1[index]);
+
+    return allStringsSame ? [array1[0]] : [...array1, ...array2];
+}
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Buffer manipulation
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function getBufferMax(buffer){
+    let max = 0;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.getChannelData(chan);
+        let bufferSize = buffer.length;
+        for (let i = 0; i < bufferSize; i++) {
+            let val = Math.abs( b[i]);
+            if (val>max) max = val;
+        }
+    }
+    return max;
+}
+
+function scaleBuffer(buffer, scale){
+    let max = 0;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.getChannelData(chan);
+        let bufferSize = buffer.length;
+        for (let i = 0; i < bufferSize; i++) {
+            b[i]*=scale;
+        }
+    }
+    return max;
+}
+
+function buildNullTest(bufferA, bufferB){
+    let length = Math.min(bufferA.length, bufferB.length);
+    let nullTest = new AudioBuffer({
+        length: length,
+        sampleRate: bufferA.sampleRate,
+        numberOfChannels: bufferA.numberOfChannels
+      });
+    for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
+        var A = bufferA.getChannelData(channel);
+        var B = bufferB.getChannelData(channel);
+        let b = nullTest.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
+        b[i] = A[i] - B[i];
+        }
+    }
+    return nullTest;
 }
 
 

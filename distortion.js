@@ -23,7 +23,7 @@ let distStopBand = 0;
 let distTransitionBand = 0;
 let filter = null;//generateKaiserSincKernel_fromParams(0.47/oversampling,90,0.025/oversampling);
 let polyphaseKernels = null;
-let oversamplingReport ="No oversampling filter generated yet.";
+let oversamplingReport ="No oversampling.";
 let trueSampleRate = 0;
 
 function buildOSFilters(patch){
@@ -53,7 +53,7 @@ function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics){
     if (!isCyclic && trueSampleRate != sampleRate){
         trueSampleRate = sampleRate;//capture true SampleRate as early as possible - use for report even if in cycle mode
     } 
-    if (patch.distortion==0) return;
+    if (patch.distortion==0) return "No oversampling.";
     if (distOversampling != patch.oversampleTimes 
         || distStopBand != patch.oversampleStopDepth 
         || distTransitionBand != patch.oversampleTransition
@@ -91,6 +91,7 @@ function distort(buffer, patch, sampleRate, isCyclic, includeInharmonics){
     {
         downsample(ob, buffer, filter, oversampling, isCyclic);
     }
+    return isCyclic? null: oversamplingReport;
 }
 
 
@@ -231,8 +232,5 @@ function addUltrasonicOneShot(ob, w, level)
 }
 
 
-function getOversamplingReport(){
-    return oversamplingReport;
-}
 
-export { distort, getOversamplingReport };
+export { distort };
