@@ -23,6 +23,43 @@
 //Distortion fft shown using fft.js
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+import { getDefaultPatch, getDefaultAPatch, getDefaultBPatch, defaultTestSubjectList, getMiniPresets } from './defaults.js';
+import { 
+    toLightMode,
+    fftFill, 
+    getUseFFT,
+    toggleUseFFT,
+    getCanvasTooltips, 
+    detailedFFTResetFrequencyRange, 
+    detailedFFTGetMinDb, 
+    detailedFFTSetMinDb 
+} from './painting.js';
+
+import {disableGroups, setValueFromPatch } from './guiValues.js';
+
+import {
+    playAudio,
+    updateBuffersAndDisplay, updateDisplay,
+    updatePreview, paintPreview,
+    
+    updateDetailedFFT, 
+    repaintDetailedFFT,
+
+    //Common variables
+    getCachedPatches,
+    getFlags,
+
+    startSuspendPreviewUpdates, endSuspendPreviewUpdates
+} from './audioAPI.js';
+
+
+
+
+
+let cachedPatches = getCachedPatches();
+let flags = getFlags();
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Buttons with specific actions
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -40,31 +77,32 @@ document.querySelectorAll('.PlayN').forEach(el=>el.addEventListener('click', fun
 
 
 function play(index){
-    playAudio(index, cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);   
+    playAudio(index, cachedPatches.A, cachedPatches.B, cachedPatches.AR, cachedPatches.BR);   
 }
 
 //load settings for all of the little green buttons
 let previewButtons = document.querySelectorAll('.previewButton');
+let previewSubjectChanged=false;
 previewButtons.forEach(function(button) {
     switch(button.name[0]){    
         case 'N'://Stereo 
             let state = button.name=='NormLoudest'
             button.addEventListener('click', function() {
-                isNormToLoudest = state;
-                updatePreviewButtonState();
+                flags.isNormToLoudest =state;
                 previewSubjectChanged = true;
-                setUpStereo(isStereo);
+                updatePreviewButtonState();
+                flags.changed = true;
             });
-            button.isChecked =()=> isNormToLoudest == state;
+            button.isChecked =()=> flags.isNormToLoudest == state;
             break;  
         case 's'://Stereo 
             button.addEventListener('click', function() {
-                isStereo = !isStereo;
+                flags.isStereo = !flags.isStereo;
                 updatePreviewButtonState();
                 previewSubjectChanged = true;
-                setUpStereo(isStereo);
+                setUpStereo(flags.isStereo);
             });
-            button.isChecked =()=> isStereo;
+            button.isChecked =()=> flags.isStereo;
             break;
         case 'P': //patch to use for preview
             let sub =0;
@@ -77,21 +115,21 @@ previewButtons.forEach(function(button) {
                 case 'PBR': sub=2;chan=1;break;
             };
             button.addEventListener('click', function() {
-                previewSubject = sub;
-                previewSubjectChannel = chan;
+                flags.previewSubject = sub;
+                flags.previewSubjectChannel = chan;
                 previewSubjectChanged = true;
                 DoFullPreviewUpdate();
             });
-            button.isChecked =()=> previewSubject == sub && (!isStereo || previewSubjectChannel==chan);
+            button.isChecked =()=> flags.previewSubject == sub && (!flags.isStereo || flags.previewSubjectChannel==chan);
         break;
         case 'a'://apiFFT
             if (button.name=='apiFFT') {
                 button.addEventListener('click', function() {
-                    useFFT = !useFFT;
+                    let useFFT = toggleUseFFT();
                     if (!useFFT) fftFill("fftCanvas");
                     updatePreviewButtonState();
                 });
-                button.isChecked =()=> useFFT;
+                button.isChecked =()=> getUseFFT();
             }
         break;
         case 'q'://detailed FFT
@@ -115,22 +153,21 @@ previewButtons.forEach(function(button) {
                     case '-':
                         action = ()=>
                         {
-                            canvasTooltips.staticFFTCanvas.drag(0.5, 0,0.5);
+                            getCanvasTooltips().staticFFTCanvas.drag(0.5, 0,0.5);
                             repaintDetailedFFT();
                         }
                         break;
                     case '+':
                         action = ()=>
                             {   
-                                canvasTooltips.staticFFTCanvas.drag(0.5, 0,-0.5);
+                                getCanvasTooltips().staticFFTCanvas.drag(0.5, 0,-0.5);
                                 repaintDetailedFFT();
                             }
                         break;
                     case 'R':
                         action = ()=>
                         {
-                            detailedMinF =20;
-                            detailedMaxF =20000;
+                            detailedFFTResetFrequencyRange();
                             repaintDetailedFFT();
                         };
                         break;
@@ -152,11 +189,11 @@ previewButtons.forEach(function(button) {
                 }
                 action = ()=>
                     {
-                        detailedMinDb =target;
+                        detailedFFTSetMinDb(target);
                         repaintDetailedFFT();
                         updatePreviewButtonState();
                     }
-                checked =()=> detailedMinDb ==target;
+                checked =()=> detailedFFTGetMinDb() ==target;
             }
             button.addEventListener('click', function() {
                 action();
@@ -166,26 +203,26 @@ previewButtons.forEach(function(button) {
         case 'F': //filter preview options
             let subF =parseInt(button.name[1]);
             button.addEventListener('click', function() {
-                filterPreviewSubject = subF;
+                flags.filterPreviewSubject = subF;
                 DoFullPreviewUpdate();
             });
-            button.isChecked =()=> filterPreviewSubject == subF;
+            button.isChecked =()=> flags.filterPreviewSubject == subF;
         break;
         case 'H'://Harmonics preview view options
             let fh = ()=>{};//function to call when clicked
             let ch = ()=>false;//isChecked function
             switch(button.name){
                 case 'HFull': 
-                    fh=()=>previewSpectrumFullWidth=!previewSpectrumFullWidth;
-                    ch=()=>previewSpectrumFullWidth;
+                    fh=()=>flags.previewSpectrumFullWidth=!flags.previewSpectrumFullWidth;
+                    ch=()=>flags.previewSpectrumFullWidth;
                     break;
                 case 'HPhase': 
-                    fh=()=>previewSpectrumShowPhase=!previewSpectrumShowPhase;
-                    ch=()=>previewSpectrumShowPhase;
+                    fh=()=>flags.previewSpectrumShowPhase=!flags.previewSpectrumShowPhase;
+                    ch=()=>flags.previewSpectrumShowPhase;
                     break;
                 case 'HPolarity': 
-                    fh=()=>previewSpectrumPolarity=!previewSpectrumPolarity;
-                    ch=()=>previewSpectrumPolarity;
+                    fh=()=>flags.previewSpectrumPolarity=!flags.previewSpectrumPolarity;
+                    ch=()=>flags.previewSpectrumPolarity;
                     break;
             }
             button.addEventListener('click', function() {
@@ -222,16 +259,16 @@ previewButtons.forEach(function(button) {
             let cd = ()=>false;//isChecked function
             switch(button.name){
                 case 'DFull': 
-                    fd=()=>distortionSpectrumFullWidth=!distortionSpectrumFullWidth;
-                    cd=()=>distortionSpectrumFullWidth;
+                    fd=()=>flags.distortionSpectrumFullWidth=!flags.distortionSpectrumFullWidth;
+                    cd=()=>flags.distortionSpectrumFullWidth;
                     break;
                 case 'DPhase': 
-                    fd=()=>distortionSpectrumShowPhase=!distortionSpectrumShowPhase;
-                    cd=()=>distortionSpectrumShowPhase;
+                    fd=()=>flags.distortionSpectrumShowPhase=!flags.distortionSpectrumShowPhase;
+                    cd=()=>flags.distortionSpectrumShowPhase;
                     break;
                 case 'DPolarity': 
-                    fd=()=>distortionSpectrumPolarity=!distortionSpectrumPolarity;
-                    cd=()=>distortionSpectrumPolarity;
+                    fd=()=>flags.distortionSpectrumPolarity=!flags.distortionSpectrumPolarity;
+                    cd=()=>flags.distortionSpectrumPolarity;
                     break;
             }
             button.addEventListener('click', function() {
@@ -246,12 +283,12 @@ previewButtons.forEach(function(button) {
             let cw = ()=>false;//isChecked function
             switch(button.name){
                 case 'wShowF': 
-                    fw=()=>showBufferFilterOverlay=!showBufferFilterOverlay;
-                    cw=()=>showBufferFilterOverlay;
+                    fw=()=>flags.showBufferFilterOverlay=!flags.showBufferFilterOverlay;
+                    cw=()=>flags.showBufferFilterOverlay;
                     break;
                 case 'wShowEG': 
-                    fw=()=>showBufferEnvelopeOverlay=!showBufferEnvelopeOverlay;
-                    cw=()=>showBufferEnvelopeOverlay;
+                    fw=()=>flags.showBufferEnvelopeOverlay=!flags.showBufferEnvelopeOverlay;
+                    cw=()=>flags.showBufferEnvelopeOverlay;
                 break;
             }
             button.addEventListener('click', function() {
@@ -326,6 +363,7 @@ const commonSectionNames = [
     'DistortionSetup'];
 
 
+let autoUpdateDetailedFFT = true;
 function initSliders(){
     //Call once only at startup
     commonSectionNames.forEach((sectionName)=>{
@@ -343,8 +381,8 @@ function initSliders(){
     //Add time delay to batch up changes
     setInterval(function() {
         if (!isMouseDown && Date.now() - lastUpdate > 300) {
-            if (changed){
-                updateBuffersAndDisplay(cachedPatchA, cachedPatchB, cachedPatchAR, cachedPatchBR);
+            if (flags.changed){
+                updateBuffersAndDisplay(cachedPatches.A, cachedPatches.B, cachedPatches.AR, cachedPatches.BR);
                 if (autoUpdateDetailedFFT) updateDetailedFFT();
             }
             else if (previewSubjectChanged && autoUpdateDetailedFFT){
@@ -393,7 +431,7 @@ function setupNewSliderContainer(sliderContainer) {
 }
 function handleValueChange() {
     updateAllLabelsAndCachePatches();
-    changed=true;
+    flags.changed = true;
     lastUpdate = Date.now();
     updatePreview();
     paintPreview();
@@ -412,14 +450,15 @@ function loadSliderValuesFromContainer(id, patch) {
     });
 }
 
+let miniPresets = getMiniPresets();
 function setupPresetButtons(){    
-    insertPresetButtons('wavePresetButtons', wavePresets);
-    insertPresetButtons('envelopPresetButtons', envelopePresets);
-    insertPresetButtons('speakerPresets', speakerPresets);
-    insertPresetButtons('filterPresetButtons', filterPresets);
-    insertPresetButtons('distortionPresets', distortionPresets);
-    insertPresetButtons('oversamplingPresets', oversamplingPresets);
-    insertPresetButtons('oversamplingPresets', oversamplingPresets);
+    insertPresetButtons('wavePresetButtons', miniPresets.wavePresets);
+    insertPresetButtons('envelopPresetButtons', miniPresets.envelopePresets);
+    insertPresetButtons('speakerPresets', miniPresets.speakerPresets);
+    insertPresetButtons('filterPresetButtons', miniPresets.filterPresets);
+    insertPresetButtons('distortionPresets', miniPresets.distortionPresets);
+    insertPresetButtons('oversamplingPresets', miniPresets.oversamplingPresets);
+    insertPresetButtons('oversamplingPresets', miniPresets.oversamplingPresets);
 }
 
 function insertPresetButtons(id, presetList){     
@@ -437,7 +476,7 @@ function insertPresetButtons(id, presetList){
 
 function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
     try{
-        suspendPreviewUpdates = true;
+        startSuspendPreviewUpdates();
         commonSectionNames.forEach((sectionName)=>{
             loadPatchIntoContainer(sectionName, patch);
         });
@@ -451,10 +490,10 @@ function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
         loadPatchIntoContainer('SoundBRSetup', (patchBR ?? patchB) ??patch);
     }
     finally{
-        suspendPreviewUpdates = false;
+        endSuspendPreviewUpdates();
         updateAllLabelsAndCachePatches();
         updatePreview();
-        changed = true;
+        flags.changed = true;
     }
 }
 
@@ -485,10 +524,10 @@ function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     commonSectionNames.forEach((sectionName)=>{
         handleDisableGroups(sectionName, patch);
     });
-    cachedPatchCmn = {...patch};
+    cachedPatches.Cmn = {...patch};
 
     loadSliderValuesFromContainer('SoundASetup', patch);
-    cachedPatchA = {...patch};
+    cachedPatches.A = {...patch};
     updateLabelsFor('SoundASetup', patch);
     handleDisableGroups('SoundASetup', patch);
 
@@ -498,12 +537,12 @@ function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     else{
         loadSliderValuesFromContainer('SoundARSetup', patch);
     }
-    cachedPatchAR = {...patch};
+    cachedPatches.AR = {...patch};
     updateLabelsFor('SoundARSetup', patch);
     handleDisableGroups('SoundARSetup', patch);
 
     loadSliderValuesFromContainer('SoundBSetup', patch);
-    cachedPatchB = {...patch};
+    cachedPatches.B = {...patch};
     updateLabelsFor('SoundBSetup', patch);
     handleDisableGroups('SoundBSetup', patch);
 
@@ -513,7 +552,7 @@ function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     else{
         loadSliderValuesFromContainer('SoundBRSetup', patch);
     }
-    cachedPatchBR = {...patch};
+    cachedPatches.BR = {...patch};
     updateLabelsFor('SoundBRSetup', patch);
     handleDisableGroups('SoundBRSetup', patch);
 }
@@ -538,13 +577,14 @@ function exportCombinedPatchToJSON(){
     updateAllLabelsAndCachePatches();
     const notesEdit = document.getElementById('notesEdit');
     let patch = { 
-        patchC: {...cachedPatchCmn}, 
-        patchA: {...cachedPatchA},
-        patchAR: {...cachedPatchAR},
-        patchB: {...cachedPatchB},
-        patchBR: {...cachedPatchBR},
+        patchC: {...cachedPatches.Cmn}, 
+        patchA: {...cachedPatches.A},
+        patchAR: {...cachedPatches.AR},
+        patchB: {...cachedPatches.B},
+        patchBR: {...cachedPatches.BR},
         testSubjects: getTestSubjectList(),
-        isStereo: isStereo,
+        isStereo: flags.isStereo,
+        isNormToLoudest: flags.isNormToLoudest,
         notes: notesEdit? notesEdit.value : ""
 
     };
@@ -574,8 +614,8 @@ function importCombinedPatchFromPatch(patch){
     Object.assign(patchBR, patch.patchBR);
     
     // Load the patches and settings
-    isStereo = patch.isStereo ?? false;
-    isNormToLoudest = patch.isNormToLoudest ?? true;
+    flags.isStereo = patch.isStereo ?? false;
+    flags.isNormToLoudest = patch.isNormToLoudest ?? true;
 
     const notesEdit = document.getElementById('notesEdit');
     notesEdit.value = patch.notes ?? "";
@@ -757,7 +797,7 @@ document.querySelectorAll('.slider-container').forEach((div) => {
         if (checkbox.checked) {
             SoundSetups.forEach((setup) => {  
                 setupSliderCopy(name, div, setup.container, setup.label);
-                if (isStereo) setupSliderCopy(name, div, setup.containerR, setup.label + "R")
+                if (flags.isStereo) setupSliderCopy(name, div, setup.containerR, setup.label + "R")
             })
             
             // Disable the div
@@ -960,10 +1000,10 @@ console.log("TestSubjectList: " + getTestSubjectList());
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let hideOnMonos = document.querySelectorAll('.hideForMono');
 let hideForStereo = document.querySelectorAll('.hideForStereo');
-hideOnMonos.forEach((element)=>element.style.display = isStereo? 'block':'none');
+hideOnMonos.forEach((element)=>element.style.display = flags.isStereo? 'block':'none');
 
 function setUpStereo(syncValuesFromLeftToRight){
-    if (isStereo) {
+    if (flags.isStereo) {
         //Just led the testSubject list again
         loadTestSubjectList(getTestSubjectList())
         hideOnMonos.forEach((element)=>element.style.display = 'block');
@@ -983,7 +1023,7 @@ function setUpStereo(syncValuesFromLeftToRight){
         hideForStereo.forEach((element)=>element.style.display = 'block');
         hideOnMonos.forEach((element)=>element.style.display = 'none');
     }
-    changed=true;
+    flags.changed = true;
 }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //ABX TEST GUI Code

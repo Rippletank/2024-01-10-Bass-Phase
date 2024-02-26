@@ -488,3 +488,16 @@ function convolveWrapped(inputBuffer, filterKernel) {
 
     return outputBuffer;
 }
+
+
+
+export {
+    besselI0,
+    kaiserWindow,
+    buildBlackmanHarrisWindow,
+    generateKaiserSincKernel_fromParams,
+    generateBlackmanHarrisFilterKernel,
+    generateUpsamplingPolyphaseKernels,
+    upsample,
+    downsample
+};

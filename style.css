@@ -3,13 +3,19 @@
     --background-color: white;
     --border-color:gray;
     --shadow: rgba(0, 0, 0, 0.1);
+    --tracks-color:#012074;
+    --thumb-color: #135280;
+    --thumb-focus-color: #135280;
   }
   
   [data-theme="dark"] {
-    --text-color: white;
-    --background-color: black;
+    --text-color: rgb(189, 189, 189);
+    --background-color: rgb(26, 25, 25);
     --border-color:gray;
     --shadow: rgba(255, 255, 255, 0.1);
+    --tracks-color:#012074;
+    --thumb-color: #135280;
+    --thumb-focus-color: #135280;
   }
   
   [data-theme="light"] {
@@ -17,6 +23,9 @@
     --background-color: white;
     --border-color:gray;
     --shadow: rgba(0, 0, 0, 0.1);
+    --tracks-color:#c0c0c0;
+    --thumb-color: #387099;
+    --thumb-focus-color: #387099;
   }
   
   body {
@@ -41,6 +50,83 @@ canvas {
     margin: 0 auto;
     aspect-ratio: 2.5;
 }
+
+textarea{
+    color: var(--text-color);
+    background-color: var(--background-color);
+    border-color: var(--border-color);
+}
+
+select{
+    color: var(--text-color);
+    background-color: var(--background-color);
+    border-color: var(--border-color);
+}
+
+
+
+/* Range customisation from here: */
+/* https://www.smashingmagazine.com/2021/12/create-custom-range-input-consistent-browsers/ */
+input[type="range"]{
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    width: 15rem;
+}
+/***** Track Styles *****/
+/***** Chrome, Safari, Opera, and Edge Chromium *****/
+input[type="range"]::-webkit-slider-runnable-track {
+    background: var(--tracks-color);
+    height: 0.5rem;
+  }
+  
+/******** Firefox ********/
+input[type="range"]::-moz-range-track {
+    background: var(--tracks-color);
+    height: 0.5rem;
+}
+/***** Thumb Styles *****/
+/***** Chrome, Safari, Opera, and Edge Chromium *****/
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    margin-top: -3.5px; /* Centers thumb on the track */
+    border-radius: 100%;
+    background-color: var(--thumb-color);
+    height: 1rem;
+    width: 1rem;    
+ }
+/***** Firefox *****/
+input[type="range"]::-moz-range-thumb {
+    border: none; /*Removes extra border that FF applies*/
+    border-radius: 100%;
+    background-color: var(--thumb-color);
+    height: 1rem;
+    width: 1rem;    
+}
+
+/***** Focus Styles *****/
+/* Removes default focus */
+input[type="range"]:focus {
+    outline: none;
+  }
+  
+  /***** Chrome, Safari, Opera, and Edge Chromium *****/
+  input[type="range"]:focus::-webkit-slider-thumb {
+    border: 1px solid var(--thumb-focus-color);
+    outline: 3px solid var(--thumb-focus-color);
+    outline-offset: 0.125rem;
+  }
+  
+  /******** Firefox ********/
+  input[type="range"]:focus::-moz-range-thumb {
+    border: 1px solid var(--thumb-focus-color);
+    outline: 3px solid var(--thumb-focus-color);
+    outline-offset: 0.125rem;     
+  }
+
+
 
 .canvasHalfHeight {
     height: 150px;

@@ -64,7 +64,7 @@ function doSpeakerSim(buffer, sampleRate, patch, isCyclic){
     if (!isCyclic)console.log("m: "+ m + " r: "+ r + " k: "+ k + " q: "+ q);
     const dt = 12000/sampleRate; // Time step
 
-    duffingOscillator_CrankNicolson_Newton(buffer, m, r, k, q, dt, patch.speakerAmount, isCyclic)
+    duffingOscillator_CrankNicolson_Newton(buffer, m, r, k, q, dt, patch.speakerAmount * patch.distortion, isCyclic)
 }
 
 function duffingOscillator_CrankNicolson_Newton(inputBuffer, m, r, k, q, dt, mix, isCyclic) {
@@ -113,58 +113,4 @@ function duffingOscillator_CrankNicolson_Newton(inputBuffer, m, r, k, q, dt, mix
 }
 
 
-
-
-function doSpeakerSimEulerAndDuffing(buffer, sampleRate, patch, isCyclic){
-    let length = buffer.length;
-
-
-    //Duffing Oscillator - https://repository.library.northeastern.edu/files/neu:336724/fulltext.pdf p23
-    //Values taken from reference
-    // const m = 14;//g
-    // const r = 0.78;//N.s/m
-    // const k = 0.0005;//N/m
-    // const q2 = 333000;
-    const m = 1;//g
-    const r = 0.1;//N.s/m
-    const k = 1;//N/m
-    const q2 = 1;
-    //Resonant frequency = 1/2pi sqrt(k/m - r^2/4m^2)
-
-    const invM = 1/m;
-    const h = 0.001//sampleRate;
-    const invMh = invM * h;
-
-    //State Vector- initial conditions
-    let y2t0 = 0;//Second derivative of y at t=0
-    let y1t0 = 0;//First derivative of y at t=0
-    let y0t0 = 0;//y at t=0
-
-    //-4 to preload state vector
-    for(let i=-4; i<length; i++){
-        let assign=false;
-        let xt0 = 0; //excitation at t=0
-        if (i>=0) {
-            xt0 = buffer[i];
-            assign=true;
-        }
-        else if (isCyclic){
-            xt0 = buffer[i+length];
-        }
-
-        const y2t1 = y2t0 + invMh *(xt0 - r * y1t0 - k * (1 - q2 * y0t0 * y0t0) * y0t0) ;
-        const y1t1 = y1t0 + h * y2t0;
-        const y0t1 = y0t0 + h * y1t0; 
-
-        //if (assign) buffer[i] = y0t1;
-        if (assign) buffer[i] = y1t1;
-
-
-        y2t0 = y2t1;
-        y1t0 = y1t1;
-        y0t0 = y0t1;
-
-    }
-
-
-}
+export { doSpeakerSim };

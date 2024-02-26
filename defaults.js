@@ -25,6 +25,18 @@ const zeroLevel=Math.pow(10,smallestLevel/20);//-100db global minimum level for 
 
 const allowedOversampleTimes = [1,2,3,4,6,8,12,16];
 
+let sinePatch={
+    balance:-1,
+    oddLevel:1,
+    oddFalloff:2,
+    oddAlt:0,
+    evenLevel:0,
+    evenFalloff:1,
+    evenAlt:0,
+    sinCos:0,
+    altW:0.5,
+    altOffset:0,
+}
 
 let wavePresets = [
     {
@@ -119,18 +131,7 @@ let wavePresets = [
     },
     {
         name:"Sine", 
-        patch:{
-            balance:-1,
-            oddLevel:1,
-            oddFalloff:2,
-            oddAlt:0,
-            evenLevel:0,
-            evenFalloff:1,
-            evenAlt:0,
-            sinCos:0,
-            altW:0.5,
-            altOffset:0,
-        }
+        patch:sinePatch
     }
 ];
 
@@ -195,6 +196,11 @@ let distortionPresets = [
             jitterADC:0,
             jitterDAC:0,
             jitterPeriodic:0,
+            speakerAmount:0,
+            speakerMass:0.5,
+            speakerDamping:0.5,
+            speakerStiffness:0.5,
+            speakerNonLinearity:0,
         }
     },
     {
@@ -208,6 +214,11 @@ let distortionPresets = [
             jitterADC:0,
             jitterDAC:0,
             jitterPeriodic:0,
+            speakerAmount:0,
+            speakerMass:0.5,
+            speakerDamping:0.5,
+            speakerStiffness:0.5,
+            speakerNonLinearity:0,
         }
     },
     {
@@ -221,6 +232,29 @@ let distortionPresets = [
             jitterADC:0,
             jitterDAC:0,
             jitterPeriodic:0,
+            speakerAmount:0,
+            speakerMass:0.5,
+            speakerDamping:0.5,
+            speakerStiffness:0.5,
+            speakerNonLinearity:0,
+        }
+    },
+    {
+        name:"Speaker",
+        patch:{
+            distortion:1,
+            hyperbolicDistortion:0,
+            oddDistortion:0,
+            tanhDistortion:0,
+            clipDistortion:0,
+            jitterADC:0,
+            jitterDAC:0,
+            jitterPeriodic:0,
+            speakerAmount:0.43,
+            speakerMass:0.05,
+            speakerDamping:0.96,
+            speakerStiffness:0.96,
+            speakerNonLinearity:0.1,
         }
     },
     {
@@ -236,7 +270,12 @@ let distortionPresets = [
             jitterPeriodic:0.5,
             oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
             oversampleStopDepth:0.5,//-70db to -110db - default = -90db
-            oversampleTransition:0.5
+            oversampleTransition:0.5,
+            speakerAmount:0,
+            speakerMass:0.5,
+            speakerDamping:0.5,
+            speakerStiffness:0.5,
+            speakerNonLinearity:0,
         }
     },
 ];
@@ -254,7 +293,7 @@ let speakerPresets = [
         }
     },
     {
-        name:"Nice",
+        name:"Mild",
         patch:{
             speakerAmount:0.43,
             speakerMass:0.05,
@@ -515,3 +554,27 @@ function getDefaultBPatch(){
 //     patch.frequency=400;
 //     return patch;
 // }
+
+
+let miniPresets ={
+    wavePresets:wavePresets, 
+    envelopePresets:envelopePresets, 
+    distortionPresets:distortionPresets, 
+    speakerPresets:speakerPresets, 
+    filterPresets:filterPresets, 
+    oversamplingPresets:oversamplingPresets
+};
+function getMiniPresets(){
+    return miniPresets;
+}
+
+export {
+    sinePatch,
+    getMiniPresets,
+    smallestLevel, 
+    zeroLevel, 
+    allowedOversampleTimes, 
+    defaultTestSubjectList, 
+    getDefaultPatch, 
+    getDefaultAPatch, 
+    getDefaultBPatch};

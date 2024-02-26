@@ -29,6 +29,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+import { downsample, generateBlackmanHarrisFilterKernel } from './oversampling.js';
+
+
+
 function getJitterTimeReport(sampleRate, amount){
     return (DACJitterFactor * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
 }
@@ -214,3 +218,7 @@ function boxMullerRandom(seededRandom) {
     while(v === 0) v = seededRandom.nextFloat(); //exclude zero
     return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
 }
+
+
+
+export { jitter, getJitterTimeReport };

@@ -18,7 +18,8 @@
 //Handles all of the preview and waveform painting
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
+import { smallestLevel } from "./defaults.js";
+import {getFFT64k} from './basicFFT.js';
 
 
 let isDarkMode = localStorage.getItem('isDarkMode') === 'true';
@@ -68,6 +69,13 @@ function fftFill(canvasId){
 
 
 let fftFrameCall = null;
+function getfftFrameCall(){
+    return fftFrameCall;
+}
+function clearFFTFrameCall(){
+    fftFrameCall = null;
+}
+
 const fftStartF = 20;
 const fftEndF = 20000;
 function startFFT(context, analyser, canvasId){
@@ -164,11 +172,23 @@ function startFFT(context, analyser, canvasId){
 
 
 
-let autoUpdateDetailedFFT = true;
 let detailedMinDb =-120;
 let detailedMaxDb =0;
 let detailedMinF =20;
 let detailedMaxF =20000;
+
+function detailedFFTSetMinDb(value){
+    detailedMinDb = value;
+}
+function detailedFFTGetMinDb(){
+    return detailedMinDb;
+}
+function detailedFFTResetFrequencyRange(){
+    detailedMinF =20;
+    detailedMaxF =20000;
+}   
+
+
 const scaleGap =30;
 //Buffer should be 64k samples long float32array
 function paintDetailedFFT(buffer, sampleRate, canvasId){
@@ -534,7 +554,7 @@ let canvasTooltips = //must have members defined here, but the values can be upd
             doubleTap:()=>{}//register double tap is needed, add method afterwards
         }
     };
-
+function getCanvasTooltips(){ return canvasTooltips;}
 
 
 function doPreviewPaint(
@@ -548,7 +568,8 @@ function doPreviewPaint(
     max, //max value in samples data
     showFullSpectrum, //show all harmonics or just first 50
     showPolarity, //show polarity of harmonics or just absolute value
-    showPhase //show phase graph of harmonics
+    showPhase, //show phase graph of harmonics
+    filterPreviewSubject //0 for no filter, 1 for filter, 2 for patch
 ){
     let canvas = document.getElementById(id);
     let ctx = canvas.getContext("2d");
@@ -851,4 +872,46 @@ function paintTHDGraph(data, canvasId){
         }
     }
     ctx.stroke();
+}
+
+
+function getUseFFT(){
+    return useFFT;
+}
+function toggleUseFFT(){
+    useFFT = !useFFT;
+    return useFFT;
+}
+
+export {
+    toLightMode, 
+
+    getCanvasTooltips,
+
+    //Realtime FFT from Web Audio API
+    fftFade, 
+    fftFill, 
+    startFFT, 
+    getUseFFT,
+    toggleUseFFT,
+    getfftFrameCall, 
+    clearFFTFrameCall,
+
+    //Large high resolution FFT
+    detailedFFTResetFrequencyRange ,
+    detailedFFTSetMinDb, 
+    detailedFFTGetMinDb,
+    paintDetailedFFT,
+
+    //Waveforms A, B and nNll
+    paintBuffer,
+    paintEnvelope,
+    paintFilterEnvelope,
+
+    //Quick Preview
+    doPreviewPaint,
+
+    //THD Graph
+    paintTHDGraph,
+
 }

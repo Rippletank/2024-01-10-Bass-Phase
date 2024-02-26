@@ -113,7 +113,12 @@
             <div class="PresetButtons"></div>
             <span class="help-icon">?</span>
             <div class="help-popup">
-                Turn on Stereo to investigate how differences between the sounds reaching each ear are perceived. You can also load and save set ups (patches) to share or repeat later. There are a few example patches to fetch and try out.
+                <p>Turn on Stereo to investigate how differences between the sounds reaching each ear are perceived. </p>
+                <p>Normalise, either looking at A and B 'together' and scaling by the same amount, keeping relative levels the same or 'individually' so they are at the same volume. 
+                    If you are testing phase changes, then together will keep all harmonics at the same level. But if you are testing distortion, then levels may need to be the same.
+                </p>
+                    <p>You can also load and save set ups (patches) to share or repeat later. 
+                    There are a few example patches to fetch and try out.</p>
                 
                 <p><a href="#Notes1">Background info and explanations</a> </p>
             </div>
@@ -832,16 +837,30 @@
         <p>Changes to harmonics controls should not affect the sound of the null test result (with no second harmonic shift).</p>
         <p>With a significant hold time and no second harmonic shift, an offset of pi should and does give 6db and with pi/2 should and does give 3db. With 2Pi, the hold section should and does null, but the offset envelopes will cause a difference to appear during attack and decay.</p>
     </div>
-    <script src="defaults.js"></script>
-    <script src="basicFFT.js"></script>
-    <script src="oversampling.js"></script>
-    <script src="speaker.js"></script>
-    <script src="distortion.js"></script>
-    <script src="jitter.js"></script>
-    <script src="audio.js"></script>
-    <script src="painting.js"></script>
-    <script src="audioAPI.js"></script>
-    <script src="guiValues.js"></script>
-    <script src="gui.js"></script>
+
+
+    <!-- Shared read-only values and function-->
+    <!-- <script src="defaults.js"></script> -->    
+    <!-- <script src="basicFFT.js"></script> -->
+    
+    <!-- Audio Engine - creating and filling audio buffers to use -->
+    <!-- <script src="oversampling.js"></script> -->
+    <!-- <script src="speaker.js"></script> -->
+    <!-- <script src="distortion.js"></script> -->
+    <!-- <script src="jitter.js"></script> -->
+    <!-- <script src="audio.js"></script> -->
+
+
+    <!--Painting buffers/FFTs onto Canvas-->
+    <!-- <script src="painting.js"></script> -->
+
+    <!-- Link between Audio engine, Web Audio API and GUI -->
+    <!-- <script src="audioAPI.js"></script> -->
+
+    <!-- Patch specific names and values -->
+    <!-- <script src="guiValues.js"></script> -->
+   
+    <!-- GUI Module that connects the GUI to the underlying engine etc -->
+    <script type="module" src="gui.js"></script>
 </body>
 </html>

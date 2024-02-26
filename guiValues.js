@@ -18,6 +18,9 @@
 //Allows for units and non-linear scales etc
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+import { allowedOversampleTimes } from './defaults.js';
+import { getCanvasTooltips } from './painting.js';
+import { repaintDetailedFFT, getTrueSampleRate } from './audioAPI.js';
 
 
 const disableGroups =[
@@ -290,7 +293,11 @@ function setValueFromPatch(ve, patch){
             ve.innerHTML =patch.oversampleTimes==0?"<b>off</b>":
                 toInharmonicString(
                     patch.ultrasonicLevel, 
-                    (0.49*trueSampleRate*( 1 + (oversampling-1) * patch.ultrasonicFrequency)).toFixed(0)+' Hz');
+                    (0.49
+                        *getTrueSampleRate()
+                        *( 1 
+                            + (allowedOversampleTimes[patch.oversampleTimes]-1) 
+                                * patch.ultrasonicFrequency)).toFixed(0)+' Hz');
             break;
     }
 }
@@ -351,7 +358,7 @@ function toFilterFreq(x){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 document.querySelectorAll('canvas').forEach(canvas => {
-    let tooltipActions = canvasTooltips[canvas.id];
+    let tooltipActions = getCanvasTooltips()[canvas.id];
     if (!tooltipActions) return;//confirm exist, but this might change
     // Create a tooltip element
     const tooltip = document.createElement('div');
@@ -369,7 +376,7 @@ document.querySelectorAll('canvas').forEach(canvas => {
     // Add a mousemove event listener to the canvas
     canvas.addEventListener('pointermove', function(event){
         if (isDragging){
-            let def = canvasTooltips[canvas.id];
+            let def = getCanvasTooltips()[canvas.id];
             let dx = event.offsetX - startX;
             let dy = event.offsetY - startY;
             startX = event.offsetX;
@@ -387,7 +394,7 @@ document.querySelectorAll('canvas').forEach(canvas => {
         const x = event.offsetX/canvas.clientWidth;
         const y = event.offsetY/canvas.clientHeight;
 
-        let def = canvasTooltips[canvas.id];
+        let def = getCanvasTooltips()[canvas.id];
 
         tooltip.style.display = def.visible()?'block': 'none';
 
@@ -402,13 +409,13 @@ document.querySelectorAll('canvas').forEach(canvas => {
 
     if (tooltipActions.doubleTap){
         canvas.addEventListener('dblclick', function(event) {
-            let def = canvasTooltips[canvas.id];
+            let def = getCanvasTooltips()[canvas.id];
             if (!def || !def.visible || !def.visible()) return;
             def.doubleTap(event.offsetX/canvas.clientWidth, event.offsetY/canvas.clientHeight);
             repaintDetailedFFT();
         });
         canvas.addEventListener('wheel', function(event) {
-            let def = canvasTooltips[canvas.id];
+            let def = getCanvasTooltips()[canvas.id];
             if (!def || !def.visible || !def.visible()) return;
             def.drag(event.offsetX/canvas.clientWidth, event.deltaX/canvas.clientWidth, event.deltaY/canvas.clientHeight);
             StopEventPropagation(event);
@@ -424,7 +431,7 @@ document.querySelectorAll('canvas').forEach(canvas => {
     // Show the tooltip when the mouse enters the canvas
     canvas.addEventListener('pointerdown', function(event) {
         update(event);
-        let def = canvasTooltips[canvas.id];
+        let def = getCanvasTooltips()[canvas.id];
         if (def.drag){
             isDragging = true;
             startX = event.offsetX;
@@ -452,3 +459,8 @@ function StopEventPropagation(e){
     e.returnValue=false;
     return false;
 }
+
+
+
+
+export {disableGroups, setValueFromPatch};

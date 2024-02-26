@@ -20,9 +20,15 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+import { distort } from './distortion.js';
+import { buildBlackmanHarrisWindow } from './oversampling.js';
+import { jitter } from './jitter.js';
+import { getFFTFunction, getFFT1024 } from './basicFFT.js';
+import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
+
+
 let harmonics = 2000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
-let generatedSampleRate = 0;//Sample rate used to generate current buffers
 // Update method to create a buffer
 function getAudioBuffer(
     sampleRate,//Samples per second
@@ -63,7 +69,7 @@ function getAudioBuffer(
     });
 
 
-    maxBufferSize = channels.length>1 ? Math.max(channels[0].bufferSize,channels[1].bufferSize) : channels[0].bufferSize;
+    const maxBufferSize = channels.length>1 ? Math.max(channels[0].bufferSize,channels[1].bufferSize) : channels[0].bufferSize;
 
     //Create buffer
     let audioBuffer = new AudioBuffer({
@@ -137,7 +143,7 @@ function getPreview(referencePatch, filterPreviewSubject, sampleRate){
         sampleRate/virtualSampleRate);
 }
 
-function getBufferForLongFFT(samplerate, referencePatch){
+function getBufferForLongFFT(samplerate, referencePatch, filterPreviewSubject){
     let defaultPatch = getDefaultPatch();
     let patch = {
         ...defaultPatch,
@@ -237,7 +243,7 @@ let THDDefaultPatch = {
     ...getDefaultPatch()
 }
 let THDSinePatch ={
-    ...wavePresets.filter(p=>p.name=="Sine")[0].patch
+    ...sinePatch
 }
 function measureTHDPercent(referencePatch){
     if (referencePatch.distortion==0) return 0;
@@ -483,7 +489,7 @@ function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, dela
     const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / sampleRate;
     const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
-    bufferSize=b.length;
+    const bufferSize=b.length;
 
     //Balance settings
     const firstLevel = patch.balance<=0 ? 1 : (patch.balance==1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance)); //-75db
@@ -621,5 +627,22 @@ function buildNullTest(bufferA, bufferB){
 }
 
 
+export { 
+    //Build the actual audio buffer for playback
+    preMaxCalcStartDelay, 
+    getAudioBuffer, 
+
+    //Process buffers
+    getBufferMax, 
+    scaleBuffer, 
+    buildNullTest, 
+
+    //Quick preview
+    getPreview,
+
+    //More detailed analysis
+    getBufferForLongFFT, 
+    measureTHDPercent, 
+    calculateTHDGraph };
 
 

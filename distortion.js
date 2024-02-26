@@ -12,6 +12,9 @@
 //Quick IIF refresher and general approach for suitable smoothing values https://zipcpu.com/dsp/2017/08/19/simple-filter.html
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+import { doSpeakerSim } from './speaker.js';
+import { generateKaiserSincKernel_fromParams, generateUpsamplingPolyphaseKernels, upsample, downsample } from './oversampling.js';
+import { allowedOversampleTimes } from './defaults.js';
 
 
 let distOversampling =0;
@@ -228,4 +231,8 @@ function addUltrasonicOneShot(ob, w, level)
 }
 
 
+function getOversamplingReport(){
+    return oversamplingReport;
+}
 
+export { distort, getOversamplingReport };

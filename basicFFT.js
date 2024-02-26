@@ -30,8 +30,9 @@
 //FFT Code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+import { zeroLevel } from "./defaults.js";
 
-
+//Used immediately and constantly - cache here
 let getFFT1024 = initFFT(1024);
 let getFFT64k = initFFT(65536);
 
@@ -141,3 +142,7 @@ function initFFT(N)
         }
     }
 }
+
+
+
+export { getFFTFunction, getFFT1024, getFFT64k };

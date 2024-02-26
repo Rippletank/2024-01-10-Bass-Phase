@@ -19,6 +19,55 @@
 //No knowledge of GUI controls or patch management
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+
+import { 
+    //Build the actual audio buffer for playback
+    preMaxCalcStartDelay,
+    getAudioBuffer,     
+
+    //Process buffers
+    getBufferMax, 
+    scaleBuffer, 
+    buildNullTest, 
+    
+    //Quick preview
+    getPreview,
+
+    //More detailed analysis
+    getBufferForLongFFT,
+    measureTHDPercent, 
+    calculateTHDGraph
+ } from './audio.js';
+
+
+import { 
+    //Realtime FFT painting
+    startFFT,
+    fftFade,
+    clearFFTFrameCall, getfftFrameCall, 
+    getUseFFT,
+
+    //Audio buffer painting
+    paintBuffer, paintEnvelope, paintFilterEnvelope, 
+    
+    //Quick preview painting
+    doPreviewPaint,
+
+    //Detailed analysis painting
+    paintDetailedFFT, 
+    paintTHDGraph
+} from './painting.js';
+
+import { getJitterTimeReport } from './jitter.js';
+import { getFFT1024 } from './basicFFT.js';
+import { getOversamplingReport } from './distortion.js';
+
+
+
+
+
+
 let audioContext = null;
 let analyserNode = null;
 let sourceNode = null;
@@ -47,11 +96,11 @@ function playAudio(index, patchA, patchB, patchAR, patchBR) {
     //Can't reuse source node so create a new one
     stop();
     let newSourceNode = audioContext.createBufferSource();
-    if (changed || generatedSampleRate != audioContext.sampleRate){
+    if (flags.changed || generatedSampleRate != audioContext.sampleRate){
         updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR);
     }
     newSourceNode.buffer = index==0 ? audioBufferA.buffer : (index==1 ? audioBufferB.buffer: nullTestBuffer);
-    if (useFFT){
+    if (getUseFFT()){
         newSourceNode.connect(analyserNode);
         analyserNode.connect(audioContext.destination);
     }
@@ -81,16 +130,49 @@ function stop() {
         sourceNode.stop(0);
         sourceNode.disconnect();
         sourceNode = null;
-        cancelAnimationFrame(fftFrameCall);
-        fftFrameCall = null;
+        cancelAnimationFrame(getfftFrameCall());
+        clearFFTFrameCall();
         fftFade('fftCanvas');
     }
 }
 
+function getTrueSampleRate(){
+    return audioContext ? audioContext.sampleRate: 44100;
+}
+
+
+let flags = {
+    //Global changed flag
+    changed: true,   
+
+    //Audio buffers
+    isNormToLoudest: true,
+    isStereo: false,
+    
+    filterPreviewSubject: 0,
+    previewSubject: 0,
+    previewSubjectChannel: 0,   
+    
+    //preview spectrums - additive section
+    previewSpectrumFullWidth :false,
+    previewSpectrumPolarity : true,
+    previewSpectrumShowPhase : true,
+
+    //preview spectrums - distortion section
+    distortionSpectrumFullWidth :false,
+    distortionSpectrumPolarity : true,
+    distortionSpectrumShowPhase : true,
+
+    
+    showBufferEnvelopeOverlay:false,
+    showBufferFilterOverlay:false,
+ };
+
+
 
 let longPreview = null;
 function updateDetailedFFT(){  
-    longPreview = getBufferForLongFFT(audioContext.sampleRate, getPreviewSubjectCachedPatch());
+    longPreview = getBufferForLongFFT(audioContext.sampleRate, getPreviewSubjectCachedPatch(), flags.filterPreviewSubject);
     paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
 }
 function repaintDetailedFFT(){
@@ -102,13 +184,11 @@ function repaintDetailedFFT(){
     paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
 }
 
-let isNormToLoudest = true;
-let isStereo = false;
-let changed = true;
+
 // Main update method - orchestrates the creation of the buffers and their display
 //Called at startup and whenever a parameter changes
 function updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR) {
-    changed = false;
+    flags.changed = false;
     startUpdate();
     setTimeout(function() { //allow for UI to update to indicate busy
     try{
@@ -141,27 +221,30 @@ function endUpdate() {
 
 
 
+
+
+let generatedSampleRate = 0;//Sample rate used to generate current buffers
 function updateBuffers(patchA, patchB, patchAR, patchBR) {
     //Inefficient to create two buffers independently - 
     //envelope and all higher harmonics are the same, 
     //but performance is acceptable and code is maintainable  
 
-    let sampleRate = audioContext ? audioContext.sampleRate: 44100;
-    generatedSampleRate = sampleRate;//Store to check later, if changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
+    let sampleRate = getTrueSampleRate();
+    generatedSampleRate = sampleRate;//Store to check later, if flags.changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
      
     const maxPreDelay = preMaxCalcStartDelay([patchA, patchB, patchAR, patchBR], sampleRate);
 
     audioBufferA = getAudioBuffer(
         sampleRate, 
         patchA,
-        isStereo? patchAR: null,
+        flags.isStereo? patchAR: null,
         maxPreDelay
     );
 
     audioBufferB = getAudioBuffer(
         sampleRate, 
         patchB,
-        isStereo? patchBR: null,
+        flags.isStereo? patchBR: null,
         maxPreDelay
     );
 
@@ -173,8 +256,8 @@ function updateBuffers(patchA, patchB, patchAR, patchBR) {
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
-    scaleBuffer(audioBufferA.buffer, isNormToLoudest? scale: scaleA);
-    scaleBuffer(audioBufferB.buffer, isNormToLoudest? scale: scaleB);
+    scaleBuffer(audioBufferA.buffer, flags.isNormToLoudest? scale: scaleA);
+    scaleBuffer(audioBufferB.buffer, flags.isNormToLoudest? scale: scaleB);
 
     //normalise null test buffer if above threshold
     let nullMax = getBufferMax(nullTestBuffer);
@@ -191,19 +274,17 @@ function updateTHDGraph(){
 }
 
 
-let showBufferEnvelopeOverlay=false;
-let showBufferFilterOverlay=false;
 function updateDisplay(){
     if (!audioBufferA || !audioBufferB || !nullTestBuffer) return;
     let maxLength = Math.max(audioBufferA.buffer.length, audioBufferB.buffer.length, nullTestBuffer.length);
     paintBuffer(audioBufferA.buffer, maxLength, "waveformA");
     paintBuffer(audioBufferB.buffer, maxLength, "waveformB");
     paintBuffer(nullTestBuffer, maxLength, "waveformNull");
-    if (showBufferEnvelopeOverlay){    
+    if (flags.showBufferEnvelopeOverlay){    
         paintEnvelope(audioBufferA.envelopes, maxLength, "waveformA");
         paintEnvelope(audioBufferB.envelopes, maxLength, "waveformB");
     }
-    if (showBufferFilterOverlay){
+    if (flags.showBufferFilterOverlay){
         paintFilterEnvelope(audioBufferA.filters, maxLength, "waveformA");
         paintFilterEnvelope(audioBufferB.filters, maxLength, "waveformB");
     }
@@ -217,10 +298,6 @@ function updateDisplay(){
 
 
 let previewResult = null;
-let filterPreviewSubject =0;
-let previewSubject =0;
-let previewSubjectChannel =0;
-let previewSubjectChanged=false;
 let previewTHDReport = 'Distortion is off';
 let jitterReport = 'Jitter is off';
 let suspendPreviewUpdates = true;
@@ -228,7 +305,7 @@ function updatePreview(){
     if (suspendPreviewUpdates) return;
     ensureAudioContext();
     const previewPatch = getPreviewSubjectCachedPatch();
-    previewResult = getPreview(previewPatch, filterPreviewSubject, audioContext.sampleRate);
+    previewResult = getPreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);
     previewResult.fft = getFFT1024(previewResult.distortedSamples);
     
     previewTHDReport = previewPatch.distortion>0 ? "THD: " + measureTHDPercent(previewPatch).toFixed(3)+"% ["+previewPatchName()+"]" : "Distortion is off";
@@ -242,49 +319,46 @@ function updatePreview(){
 }
 
 function previewPatchName(){
-    switch(previewSubject){
+    switch(flags.previewSubject){
         case 0: 
             return "Common";
             break;
         case 1: 
-            return "Sound "+(!isStereo? "A" : (previewSubjectChannel==0? "A-L" : "A-R"));
+            return "Sound "+(!flags.isStereo? "A" : (flags.previewSubjectChannel==0? "A-L" : "A-R"));
             break;  
         case 2: 
-            return "Sound "+(!isStereo? "B" : (previewSubjectChannel==0? "B-L" : "B-R"));
+            return "Sound "+(!flags.isStereo? "B" : (flags.previewSubjectChannel==0? "B-L" : "B-R"));
             break;  
     }
     return cachedPatch;
 }
 
-let cachedPatchCmn = null;
-let cachedPatchA = null;
-let cachedPatchAR = null;
-let cachedPatchB = null;
-let cachedPatchBR = null;
+let cachedPatches =
+{
+    Cmn :null,
+    A:null,
+    AR:null,
+    B:null,
+    BR:null
+}
 
 function getPreviewSubjectCachedPatch() {
     let cachedPatch;
-    switch(previewSubject){
+    switch(flags.previewSubject){
         case 0: 
-            cachedPatch = cachedPatchCmn;
+            cachedPatch = cachedPatches.Cmn;
             break;
         case 1: 
-            cachedPatch =!isStereo || previewSubjectChannel==0? cachedPatchA : cachedPatchAR;
+            cachedPatch =!flags.isStereo || flags.previewSubjectChannel==0? cachedPatches.A : cachedPatches.AR;
             break;  
         case 2: 
-            cachedPatch =  !isStereo || previewSubjectChannel==0? cachedPatchB : cachedPatchBR;
+            cachedPatch =  !flags.isStereo || flags.previewSubjectChannel==0? cachedPatches.B : cachedPatches.BR;
             break;  
     }
     return cachedPatch;
 }
 
 
-let previewSpectrumFullWidth =false;
-let previewSpectrumPolarity = true;
-let previewSpectrumShowPhase = true;
-let distortionSpectrumFullWidth =false;
-let distortionSpectrumPolarity = true;
-let distortionSpectrumShowPhase = true;
 function paintPreview(){
     if (!previewResult) return;
     doPreviewPaint(
@@ -296,9 +370,10 @@ function paintPreview(){
         previewResult.patch,
         previewResult.min,
         previewResult.max,
-        previewSpectrumFullWidth,
-        previewSpectrumPolarity,
-        previewSpectrumShowPhase);
+        flags.previewSpectrumFullWidth,
+        flags.previewSpectrumPolarity,
+        flags.previewSpectrumShowPhase,
+        flags.filterPreviewSubject);
 
     doPreviewPaint(
         'distortionPreview',
@@ -309,9 +384,10 @@ function paintPreview(){
         previewResult.patch,
         previewResult.min,
         previewResult.max,
-        distortionSpectrumFullWidth,
-        distortionSpectrumPolarity,
-        distortionSpectrumShowPhase);
+        flags.distortionSpectrumFullWidth,
+        flags.distortionSpectrumPolarity,
+        flags.distortionSpectrumShowPhase,
+        flags.filterPreviewSubject);
 
         putOversamplingReport();
     
@@ -321,8 +397,45 @@ let THDReportElement = document.querySelectorAll('.THDReport');
 let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
 let jitterReportElements = document.querySelectorAll('.jitterReport');
 function putOversamplingReport(){
-    oversamplingReportElements.forEach((element) =>element.textContent = oversamplingReport);
+    oversamplingReportElements.forEach((element) =>element.textContent = getOversamplingReport());
     THDReportElement.forEach((element) =>element.textContent = previewTHDReport);
     jitterReportElements.forEach((element) =>element.textContent = jitterReport);
 }
 
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Setters and getters for export
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function startSuspendPreviewUpdates(){ suspendPreviewUpdates = true;}
+function endSuspendPreviewUpdates(){ suspendPreviewUpdates = false;}
+
+function getCachedPatches(){
+    return cachedPatches;
+}
+function getFlags(){
+    return flags;
+}
+
+export {
+    playAudio,
+    getTrueSampleRate,
+
+    updateBuffersAndDisplay,
+    updateDisplay,
+    updatePreview,
+    paintPreview,
+    
+    updateDetailedFFT, 
+    repaintDetailedFFT,
+
+    //Common variables
+    getCachedPatches,
+    getFlags,
+
+    startSuspendPreviewUpdates,
+    endSuspendPreviewUpdates
+}
