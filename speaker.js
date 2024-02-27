@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio Code - fort distortion and FFT of result
+//Part of audio engine - handles speaker simulation for frequency dependent distortion
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code

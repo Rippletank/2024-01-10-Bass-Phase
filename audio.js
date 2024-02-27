@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio Code
+//Audio Engine - main entry point. Handles the creation of the audio buffers, the additive synthesis section and linking to other dsp modules
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code
@@ -23,7 +23,7 @@
 import { distort } from './distortion.js';
 import { buildBlackmanHarrisWindow } from './oversampling.js';
 import { jitter } from './jitter.js';
-import { getFFTFunction, getFFT1024 } from './basicFFT.js';
+import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
 
 
@@ -107,12 +107,24 @@ function getAudioBuffer(
             buffer:audioBuffer,
             envelopes:envelopeBuffers,
             filters:filters,
-            oversamplingReports:oversamplingReports
+            oversamplingReports:oversamplingReports,
+            maxValue: getBufferMax(audioBuffer)
       }
 
 }
 
-
+function getBufferMax(buffer){
+    let max = 0;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.getChannelData(chan);
+        let bufferSize = buffer.length;
+        for (let i = 0; i < bufferSize; i++) {
+            let val = Math.abs( b[i]);
+            if (val>max) max = val;
+        }
+    }
+    return max;
+}
 
 
 //Return object with 3 float arrays,
@@ -147,11 +159,14 @@ function getDetailedFFT(samplerate, referencePatch, filterPreviewSubject){
     let numberOfWavesInBuffer = f * bufferSize/samplerate;
     const adjustedSampleRate = f * bufferSize / Math.round(numberOfWavesInBuffer);//Tweak samplerate to give whole number of cycles in buffer - better FFT
 
-    return _buildPreview(patch, filterPreviewSubject,
+    let result = _buildPreview(patch, filterPreviewSubject,
         adjustedSampleRate, //Ensure is one complete per cycle
         bufferSize,
         true,
         samplerate/adjustedSampleRate);
+
+    result.fft = getFFT64k(result.distortedSamples);
+    return result;
 }
 
 let window65k =buildBlackmanHarrisWindow(65536); //or kaiserWindow(65536, alpha) low alpha looks bad (side lobes show), high alpha is not as narrow as Blackman-Harris
@@ -580,13 +595,10 @@ function mixInSine(
 
 
 export { 
-    //Get the actual audio buffers for playback
     getAudioBuffer, //Two references, one for each sound A & B in  audioAPI.js updateBuffers
 
-    //Quick preview
     getPreview,  //One reference in audioAPI.js updatePreview
 
-    //More detailed analysis
     getDetailedFFT, //one reference in audioAPI.js updateDetailedFFT
     measureTHDPercent, //one reference in audioAPI.js updateTHDPercent
     calculateTHDGraph  //one reference in audioAPI.js updateTHDGraph

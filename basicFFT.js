@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio Code - fort distortion and FFT of result
+//Part of Audio engine - FFT 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code

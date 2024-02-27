@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio API link Code
+//Handles GUI specifics that relate to the patch values and what they mean
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code

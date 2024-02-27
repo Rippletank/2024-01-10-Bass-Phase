@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio API link Code
+//Handles painting of waveform, FFT and other graphs
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code
@@ -19,7 +19,6 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 import { smallestLevel } from "./defaults.js";
-import {getFFT64k} from './basicFFT.js';
 
 
 let isDarkMode = localStorage.getItem('isDarkMode') === 'true';
@@ -191,11 +190,7 @@ function detailedFFTResetFrequencyRange(){
 
 const scaleGap =30;
 //Buffer should be 64k samples long float32array
-function paintDetailedFFT(buffer, sampleRate, canvasId){
-    if (buffer.length!=65536) {
-        console.log('paintDetailedFFT buffer length is not 65536');
-        return;
-    }
+function paintDetailedFFT(fft, bufferLength, sampleRate, canvasId){
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
@@ -207,8 +202,6 @@ function paintDetailedFFT(buffer, sampleRate, canvasId){
     const fftW = w-fftL*2;
     const fftH = h-fftT-scaleGap;
     const fftB = fftT+fftH;
-    const bufferLength = 65536;//fixed at max
-    let fft = getFFT64k(buffer);
 
     const maxLogF = Math.log2(detailedMaxF/detailedMinF);
     const octaveStep = maxLogF / fftW;

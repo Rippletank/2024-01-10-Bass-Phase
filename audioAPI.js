@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio API link Code
+//Links the Web Audio API, the Audio engine and getting anaylsis ready for drawing of waveforms, FFTs etc
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code
@@ -16,7 +16,8 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Audio/WebAudioAPI linking code  
 //knows about Audio API, Audio.js and defaults.js. Calls painting.js for canvas rendering
-//No knowledge of GUI controls or patch management
+//No knowledge of GUI controls or patch management other than names of canvas elements for requesting analysis painting 
+//and names of certain div elements for inserting text reports
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -53,7 +54,7 @@ import {
     paintTHDGraph
 } from './painting.js';
 
-import { getJitterTimeReport } from './jitter.js';
+import { getJitterFactor } from './jitter.js';
 
 
 
@@ -165,7 +166,7 @@ let flags = {
 let longPreview = null;
 function updateDetailedFFT(){  
     longPreview = getDetailedFFT(audioContext.sampleRate, getPreviewSubjectCachedPatch(), flags.filterPreviewSubject);
-    paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
+    paintDetailedFFT(longPreview.fft,  longPreview.distortedSamples.length, longPreview.virtualSampleRate, 'staticFFTCanvas');
 }
 function repaintDetailedFFT(){
     if (!longPreview) 
@@ -173,7 +174,7 @@ function repaintDetailedFFT(){
         updateDetailedFFT()
         return;
     }
-    paintDetailedFFT(longPreview.distortedSamples, longPreview.virtualSampleRate, 'staticFFTCanvas');
+    paintDetailedFFT(longPreview.fft,  longPreview.distortedSamples.length, longPreview.virtualSampleRate, 'staticFFTCanvas');
 }
 
 
@@ -243,8 +244,8 @@ function updateBuffers(patchA, patchB, patchAR, patchBR) {
     nullTestBuffer = buildNullTest(audioBufferA.buffer, audioBufferB.buffer);
 
 
-    let scaleA =0.99 /Math.max(getBufferMax(audioBufferA.buffer), 0.000001);
-    let scaleB =0.99 /Math.max(getBufferMax(audioBufferB.buffer), 0.000001);
+    let scaleA =0.99 /Math.max(audioBufferA.maxValue, 0.000001);
+    let scaleB =0.99 /Math.max(audioBufferB.maxValue, 0.000001);
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
@@ -325,6 +326,13 @@ function updatePreview(){
         "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC) +
         ", Sample period: " + (1000000/audioContext.sampleRate).toFixed(2) + "µs")
 }
+
+
+
+function getJitterTimeReport(sampleRate, amount){
+    return (getJitterFactor() * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
+}
+
 
 function previewPatchName(){
     switch(flags.previewSubject){

@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio Code - fort distortion and FFT of result
+//Part of Audio engine - handles jitter simulation
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code
@@ -32,16 +32,9 @@
 import { downsample, generateBlackmanHarrisFilterKernel } from './oversampling.js';
 
 
-
-function getJitterTimeReport(sampleRate, amount){
-    return (DACJitterFactor * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
-}
-
-
-
 //outBuffer length assumed to be inBuffer.length * some constant
 const jitterOversampling = 3;//FIXED DON~T CHANGE
-const DACJitterFactor=0.25;
+const jitterFactor=0.25;//Maximum size of jitter in samples - 0.25 is 1/4 sample period at lower sample rate before upsampling
 const periodJitterFrequency = 37;
 const jitterDownsampleFilter = generateBlackmanHarrisFilterKernel(0.5/jitterOversampling, 30*jitterOversampling);
 function jitter(inBuffer, sampleRate, patch, isCyclic, randomSeed)
@@ -77,9 +70,9 @@ function jitter(inBuffer, sampleRate, patch, isCyclic, randomSeed)
         
         
         let y3=0;
-        let x3 =2 + DACJitterFactor *( boxMullerRandom(rand) * DACAmount);//
+        let x3 =2 + jitterFactor *( boxMullerRandom(rand) * DACAmount);//
         if (periodicAmount>0){
-            x3 += DACJitterFactor *periodicAmount * Math.sin(periodicW*i);
+            x3 += jitterFactor *periodicAmount * Math.sin(periodicW*i);
         }
 
         let doCalc = true;
@@ -94,7 +87,7 @@ function jitter(inBuffer, sampleRate, patch, isCyclic, randomSeed)
         }
 
         //Calculate sample time offset for y2 from integer point
-        let t2 =  (boxMullerRandom(rand)*DACJitterFactor) * ADCAmount;//-1<->+1 +-amount
+        let t2 =  (boxMullerRandom(rand)*jitterFactor) * ADCAmount;//-1<->+1 +-amount
 
         //Core Lagrange interpolation
         // x values fixed 
@@ -220,5 +213,9 @@ function boxMullerRandom(seededRandom) {
 }
 
 
+//Maximum size of jitter in samples - 0.25 is 1/4 sample period at lower sample rate before upsampling
+function getJitterFactor(){
+    return jitterFactor;
+}
 
-export { jitter, getJitterTimeReport };
+export { jitter, getJitterFactor };

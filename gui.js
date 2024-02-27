@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Audio API link Code
+//Handles specifically wiring up the GUI to the audio code 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code
@@ -85,7 +85,7 @@ let previewButtons = document.querySelectorAll('.previewButton');
 let previewSubjectChanged=false;
 previewButtons.forEach(function(button) {
     switch(button.name[0]){    
-        case 'N'://Stereo 
+        case 'N'://Normalisation option 
             let state = button.name=='NormLoudest'
             button.addEventListener('click', function() {
                 flags.isNormToLoudest =state;
@@ -298,7 +298,7 @@ previewButtons.forEach(function(button) {
             });
             button.isChecked =cw;
         break;
-        case 't':
+        case 't'://theme switch
             button.addEventListener('click', function() {
                 let body = document.body;
                 let isDarMode = toLightMode(body, body.getAttribute('data-theme') === 'dark');
