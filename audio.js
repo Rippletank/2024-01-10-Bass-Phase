@@ -118,6 +118,93 @@ function getAudioBuffer(
 
 }
 
+function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest){
+    let scaleA =0.99 /Math.max(audioBufferA.maxValue, 0.000001);
+    let scaleB =0.99 /Math.max(audioBufferB.maxValue, 0.000001);
+    //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
+    let scale = Math.min(scaleA, scaleB);
+
+    if (!isNormToLoudest && scaleA != scaleB){
+        //individually normalise - so first bring up to the level of the loudest, 
+        //Why? - so the null test still feels valid in terms of level of difference
+        //Border line worth doing scaling twice but 
+        if (scale==scaleA) 
+        {
+            scaleBuffer(audioBufferA.buffer, scaleA/scaleB);
+            scale = scaleB;
+        }
+        else 
+        {
+            scaleBuffer(audioBufferB.buffer, scaleB/scaleA);
+            scale = scaleA;
+        }
+
+    }
+
+    let audioBufferNull = {
+        buffer: buildNullTest(audioBufferA.buffer, audioBufferB.buffer)//Caluclate before finally scaling to give accruate null level in db
+    }
+
+    scaleBuffer(audioBufferA.buffer, scale);
+    scaleBuffer(audioBufferB.buffer, scale);
+
+
+    //normalise null test buffer if above threshold
+    audioBufferNull.maxValue = getBufferMax(audioBufferNull.buffer);
+    audioBufferNull.maxValueDBL = 20 * Math.log10(audioBufferNull.maxValue);//convert to dB
+    if (audioBufferNull.maxValueDBL>-100){//avoid scaling if null test is close to silent (>-100db)
+        scaleBuffer(audioBufferNull.buffer, 0.99 / audioBufferNull.maxValue);
+    }
+    return audioBufferNull;
+}
+
+//Takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
+//Quick calc of delay to allow coordination between sound A and sound B even if in stereo - so the null test is valid for any phase offset
+function preMaxCalcStartDelay(patches, sampleRate){
+    let maxDelay = 0;
+    for (let i = 0; i < patches.length; i++) {
+        let patch = patches[i];
+        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
+        if(!patch || patch.rootPhaseDelay>=0) continue;
+        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine);
+        if (delay>maxDelay) maxDelay = delay;
+    }
+    return maxDelay;
+
+}
+
+
+function scaleBuffer(buffer, scale){
+    let max = 0;
+    for(let chan=0;chan<buffer.numberOfChannels;chan++){
+        let b = buffer.data[chan];
+        let bufferSize = b.length;
+        for (let i = 0; i < bufferSize; i++) {
+            b[i]*=scale;
+        }
+    }
+    return max;
+}
+
+function buildNullTest(bufferA, bufferB){
+    let length = Math.min(bufferA.length, bufferB.length);
+    let nullTest = {
+        length: length,
+        sampleRate: bufferA.sampleRate,
+        numberOfChannels: bufferA.numberOfChannels,
+        data: new Array(bufferA.numberOfChannels).fill(new Float32Array(length))
+      };
+    for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
+        var A = bufferA.data[channel];
+        var B = bufferB.data[channel];
+        let b = nullTest.data[channel];
+        for (let i = 0; i < length; i++) {
+        b[i] = A[i] - B[i];
+        }
+    }
+    return nullTest;
+}
+
 function getBufferMax(buffer){
     let max = 0;
     for(let chan=0;chan<buffer.numberOfChannels;chan++){
@@ -599,14 +686,18 @@ function mixInSine(
 
 
 
+
 export { 
-    getAudioBuffer, //Two references, one for each sound A & B in  audioAPI.js updateBuffers
+    getAudioBuffer, 
+    scaleAndGetNullBuffer,
+    preMaxCalcStartDelay,
 
-    getPreview,  //One reference in audioAPI.js updatePreview
+    getPreview,  
 
-    getDetailedFFT, //one reference in audioAPI.js updateDetailedFFT
-    getTHDPercent, //one reference in audioAPI.js updateTHDPercent
-    getTHDGraph  //one reference in audioAPI.js updateTHDGraph
+    getDetailedFFT, 
+    getTHDPercent, 
+    getTHDGraph, 
+
 };
 
 

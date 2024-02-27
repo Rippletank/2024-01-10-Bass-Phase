@@ -22,10 +22,6 @@
 
 
 
-import { 
-    getAudioBuffer,
- } from './audio.js';
-
  import {
     setDetailedFFTCallback,
     calculateDetailedFFT,
@@ -37,7 +33,10 @@ import {
     calculateTHDPercent,
 
     setPreviewCallback,
-    calculatePreview
+    calculatePreview,
+
+    setAudioBufferCallback,
+    calculateAudioBuffer
  } from './workerLauncher.js'
 
 
@@ -46,9 +45,9 @@ import {
 import { 
     //Realtime FFT painting
     startFFT,
+    getUseFFT,
     fftFade,
     clearFFTFrameCall, getfftFrameCall, 
-    getUseFFT,
 
     //Audio buffer painting
     paintBuffer, paintEnvelope, paintFilterEnvelope, 
@@ -61,17 +60,44 @@ import {
 import { getJitterFactor } from './jitter.js';
 
 
+let flags = {
+    //Global changed flag
+    changed: true,   
+
+    //Audio buffers
+    isNormToLoudest: true,
+    isStereo: false,
+    
+    filterPreviewSubject: 0,
+    previewSubject: 0,
+    previewSubjectChannel: 0,   
+    
+    //preview spectrums - additive section
+    previewSpectrumFullWidth :false,
+    previewSpectrumPolarity : true,
+    previewSpectrumShowPhase : true,
+
+    //preview spectrums - distortion section
+    distortionSpectrumFullWidth :false,
+    distortionSpectrumPolarity : true,
+    distortionSpectrumShowPhase : true,
+
+    
+    showBufferEnvelopeOverlay:false,
+    showBufferFilterOverlay:false,
+ };
 
 
 
-
+//web audio api objects
 let audioContext = null;
 let analyserNode = null;
 let sourceNode = null;
+
+//internal buffer objects - returned from audio.js
 let audioBufferA = null;
 let audioBufferB = null;
 let nullTestBuffer = null;
-let nullTestMaxDb = 0;
 
 function ensureAudioContext(){
     if (!audioContext){
@@ -163,32 +189,6 @@ function getTrueSampleRate(){
 }
 
 
-let flags = {
-    //Global changed flag
-    changed: true,   
-
-    //Audio buffers
-    isNormToLoudest: true,
-    isStereo: false,
-    
-    filterPreviewSubject: 0,
-    previewSubject: 0,
-    previewSubjectChannel: 0,   
-    
-    //preview spectrums - additive section
-    previewSpectrumFullWidth :false,
-    previewSpectrumPolarity : true,
-    previewSpectrumShowPhase : true,
-
-    //preview spectrums - distortion section
-    distortionSpectrumFullWidth :false,
-    distortionSpectrumPolarity : true,
-    distortionSpectrumShowPhase : true,
-
-    
-    showBufferEnvelopeOverlay:false,
-    showBufferFilterOverlay:false,
- };
 
 
 
@@ -226,6 +226,7 @@ function doPaintDetailedFFT(){
 
 // Main update method - orchestrates the creation of the buffers and their display
 //Called at startup and whenever a parameter changes
+let buffersPatchVersion = 0;
 function updateBuffersAndDisplay(indexToPlayWhenDone = -1) {
     flags.changed = false;
     
@@ -239,19 +240,19 @@ function updateBuffersAndDisplay(indexToPlayWhenDone = -1) {
     startUpdate();
     setTimeout(function() { //allow for UI to update to indicate busy
     try{
-        //let t0 = performance.now();
+        // let t0 = performance.now();
         updateBuffers(patchesToUse);
         updateDisplay();
+        updateTHDGraph(patchesToUse); 
         fftFade('fftCanvas'); 
         if (indexToPlayWhenDone>=0) playAudio(indexToPlayWhenDone);
 
-        //let t1 = performance.now();
-        //("Execution time: " + (t1 - t0) + " milliseconds.");
+        // let t1 = performance.now();
+        // console.log("Execution time: " + (t1 - t0) + " milliseconds.");
     }
     finally{
         endUpdate();
-    }},0);
-    updateTHDGraph(patchesToUse);   
+    }},0);  
 }
 
 let fullwaves = document.querySelectorAll('.fullwave');
@@ -271,7 +272,6 @@ function endUpdate() {
 
 
 let generatedSampleRate = 0;//Sample rate used to generate current buffers
-let buffersPatchVersion = 0;
 function updateBuffers(patchesToUse) {
     //Inefficient to create two buffers independently - 
     //envelope and all higher harmonics are the same, 
@@ -279,79 +279,20 @@ function updateBuffers(patchesToUse) {
     let sampleRate = getTrueSampleRate();
     generatedSampleRate = sampleRate;//Store to check later, if flags.changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
      
-    const maxPreDelay = preMaxCalcStartDelay([patchesToUse.A, patchesToUse.B, patchesToUse.AR,patchesToUse.BR], sampleRate);
 
-    audioBufferA = getAudioBuffer(
-        sampleRate, 
-        patchesToUse.A,
-        flags.isStereo? patchesToUse.AR: null,
-        maxPreDelay
-    );
-
-    audioBufferB = getAudioBuffer(
-        sampleRate, 
-        patchesToUse.B,
-        flags.isStereo? patchesToUse.BR: null,
-        maxPreDelay
-    );
-
-
-    let scaleA =0.99 /Math.max(audioBufferA.maxValue, 0.000001);
-    let scaleB =0.99 /Math.max(audioBufferB.maxValue, 0.000001);
-    //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
-    let scale = Math.min(scaleA, scaleB);
-
-    if (!flags.isNormToLoudest && scaleA != scaleB){
-        //individually normalise - so first bring up to the level of the loudest, 
-        //Why? - so the null test still feels valid in terms of level of difference
-        //Border line worth doing scaling twice but 
-        if (scale==scaleA) 
-        {
-            scaleBuffer(audioBufferA.buffer, scaleA/scaleB);
-            scale = scaleB;
-        }
-        else 
-        {
-            scaleBuffer(audioBufferB.buffer, scaleB/scaleA);
-            scale = scaleA;
-        }
-
-    }
-
-    let nulBuffer = buildNullTest(audioBufferA.buffer, audioBufferB.buffer);//Caluclate before finally scaling to give accruate null level in db
-
-
-    scaleBuffer(audioBufferA.buffer, scale);
-    scaleBuffer(audioBufferB.buffer, scale);
-
-
-    //normalise null test buffer if above threshold
-    let nullMax = getBufferMax(nulBuffer);
-    let maxNullDB = 20 * Math.log10(nullMax);//convert to dB
-    if (maxNullDB>-100){//avoid scaling if null test is close to silent (>-100db)
-        scaleBuffer(nullMax, 0.99 / nullMax);
-    }
-    nullTestBuffer = {
-        buffer: nulBuffer,
-        maxValue: nullMax,
-        maxValueDBL: maxNullDB,//convert to dB
-    }
+    calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest );
 }
 
-//From Audio.js, takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
-//Quick calc of delay to allow coordination between sound A and sound B even if in stereo - so the null test is valid for any phase offset
-function preMaxCalcStartDelay(patches, sampleRate){
-    let maxDelay = 0;
-    for (let i = 0; i < patches.length; i++) {
-        let patch = patches[i];
-        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
-        if(!patch || patch.rootPhaseDelay>=0) continue;
-        let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine);
-        if (delay>maxDelay) maxDelay = delay;
-    }
-    return maxDelay;
+setAudioBufferCallback((bufferA, bufferB, bufferNull)=>{
+    audioBufferA = bufferA;
+    audioBufferB = bufferB;
+    nullTestBuffer = bufferNull;
+    doPaintBuffersAndNull();
+});
 
-}
+
+
+
 
 function doPaintBuffersAndNull(){
     if (!audioBufferA || !audioBufferB || !nullTestBuffer) return;
@@ -370,7 +311,7 @@ function doPaintBuffersAndNull(){
 
 
     let nullTest = document.getElementById('nullTestdb');
-    nullTest.textContent = "Peak Level: " +nullTestMaxDb.toFixed(1) + "dB";
+    nullTest.textContent = "Peak Level: " + nullTestBuffer.maxValueDBL.toFixed(1) + "dB";
 }
 
 let THDGraphData = null;
@@ -602,36 +543,6 @@ function getBufferMax(buffer){
     return max;
 }
 
-function scaleBuffer(buffer, scale){
-    let max = 0;
-    for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.data[chan];
-        let bufferSize = b.length;
-        for (let i = 0; i < bufferSize; i++) {
-            b[i]*=scale;
-        }
-    }
-    return max;
-}
-
-function buildNullTest(bufferA, bufferB){
-    let length = Math.min(bufferA.length, bufferB.length);
-    let nullTest = {
-        length: length,
-        sampleRate: bufferA.sampleRate,
-        numberOfChannels: bufferA.numberOfChannels,
-        data: new Array(bufferA.numberOfChannels).fill(new Float32Array(length))
-      };
-    for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
-        var A = bufferA.data[channel];
-        var B = bufferB.data[channel];
-        let b = nullTest.data[channel];
-        for (let i = 0; i < length; i++) {
-        b[i] = A[i] - B[i];
-        }
-    }
-    return nullTest;
-}
 
 
 

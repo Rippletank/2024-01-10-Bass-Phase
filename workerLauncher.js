@@ -13,23 +13,17 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 import {
-    getAudioBuffer, //Two references, one for each sound A & B in  audioAPI.js updateBuffers
+    getAudioBuffer, 
+    preMaxCalcStartDelay,
+    scaleAndGetNullBuffer,
 
-    getPreview,  //One reference in audioAPI.js updatePreview
-
-    getDetailedFFT, //one reference in audioAPI.js updateDetailedFFT
-    getTHDPercent, //one reference in audioAPI.js updateTHDPercent
-    getTHDGraph  //one reference in audioAPI.js updateTHDGraph
+    getPreview,    
+     
+    getDetailedFFT, 
+    getTHDPercent,
+    getTHDGraph, 
 }
 from './audio.js';
-
-
-
-
-
-
-
-
 
 
 let detailedFFTCallback = (fft)=>{};
@@ -62,4 +56,31 @@ export function setPreviewCallback( callback ) {
 }
 export function calculatePreview( referencePatch, filterPreviewSubject, sampleRate ) {
     previewCallback( getPreview( referencePatch, filterPreviewSubject, sampleRate ) );
+}
+
+let audioBufferCallback = (bufferA, bufferB, bufferNull)=>{};
+export function setAudioBufferCallback( callback ) {
+    audioBufferCallback = callback;
+}
+export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest ) {
+    const maxPreDelay = preMaxCalcStartDelay([patchesToUse.A, patchesToUse.B, patchesToUse.AR,patchesToUse.BR], sampleRate);
+
+    let audioBufferA = getAudioBuffer(
+        sampleRate, 
+        patchesToUse.A,
+        isStereo? patchesToUse.AR: null,
+        maxPreDelay
+    );
+
+    let audioBufferB = getAudioBuffer(
+        sampleRate, 
+        patchesToUse.B,
+        isStereo? patchesToUse.BR: null,
+        maxPreDelay
+    );
+
+    let nullTestBuffer = scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest);
+
+
+    audioBufferCallback(  audioBufferA, audioBufferB, nullTestBuffer  );
 }
