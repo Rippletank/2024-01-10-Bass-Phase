@@ -42,6 +42,9 @@ self.onmessage = function(event) {
             case 'getDetailedFFT':
                 doDetailedFFT(data.sampleRate, data.patch, data.filterPreviewSubject );
                 break;
+            case 'getAudioBuffer':
+                doAudioBuffer(data.patchesToUse, data.sampleRate, data.isStereo , data.isNormToLoudest);
+                break;
             default:
                 throw new Error(`Unknown action: ${action}`);
         }
@@ -67,4 +70,31 @@ function doDetailedFFT(sampleRate, patch, filterPreviewSubject) {
     let virtualSampleRate = fft.virtualSampleRate;
     self.postMessage({ magnitudes, virtualSampleRate }, [magnitudes.buffer]);
 }
+
+function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
+    const maxPreDelay = preMaxCalcStartDelay([patchesToUse.A, patchesToUse.B, patchesToUse.AR,patchesToUse.BR], sampleRate);
+
+    let bufferA = getAudioBuffer(
+        sampleRate, 
+        patchesToUse.A,
+        isStereo? patchesToUse.AR: null,
+        maxPreDelay
+    );
+
+    let bufferB = getAudioBuffer(
+        sampleRate, 
+        patchesToUse.B,
+        isStereo? patchesToUse.BR: null,
+        maxPreDelay
+    );
+
+    let bufferNull = scaleAndGetNullBuffer(bufferA, bufferB, isNormToLoudest);
+    self.postMessage({ bufferA, bufferB, bufferNull });
+}
+
+
+
+
+
+
 export function thisIsAModule(){}

@@ -47,7 +47,7 @@ function getAudioBuffer(
         let delayN = maxPreDelay;
         let phaseShift0 = 0;
             
-        if (envMode==1 ){
+        if (patch.envMode==1 ){
             //Mode1 - delay envelopes by the same as the phase delay
             let delay = Math.abs(patch.rootPhaseDelay) * 0.5 * sampleRate/(patch.frequency+patch.frequencyFine) ;
             delay0 += patch.rootPhaseDelay<0 ? 0 : delay;

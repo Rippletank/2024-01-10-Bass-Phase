@@ -17,11 +17,7 @@ import {
     preMaxCalcStartDelay,
     scaleAndGetNullBuffer,
 
-    getPreview,    
-
-    getDetailedFFT, 
-    getTHDPercent,
-    getTHDGraph, 
+    getPreview,
 }
 from './audio.js';
 
@@ -172,6 +168,63 @@ function checkForCachedDetailedFFT(){
 
 
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Audio Buffer worker calls
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const audioBufferWorker = new Worker('audioWorker.js', { type: 'module' });
+let audioBufferWorkerBusy = false;
+audioBufferWorker.onmessage = function(event) {
+    const { data } = event;
+    audioBufferWorkerBusy = false;    
+    if (data.error) {
+      console.error(`There was an error calling the Audio Buffer function: ${data.error}`);
+    } else {
+        audioBufferCallback(data.bufferA, data.bufferB, data.bufferNull);
+    }
+    checkForCachedAudioBuffer();
+  }; 
+  audioBufferWorker.onerror = function(error) {
+    audioBufferWorkerBusy=false;
+    console.error(`An error occurred in the Audio Buffer worker: ${error.message}`);
+    checkForCachedAudioBuffer()
+  }
+let audioBufferCallback = (bufferA, bufferB, bufferNull)=>{};
+export function setAudioBufferCallback( callback ) {
+    audioBufferCallback = callback;
+}
+let audioBufferCached = null;
+export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest ) {
+    if (audioBufferWorkerBusy){
+        audioBufferCached = {patchesToUse, sampleRate, isStereo, isNormToLoudest};
+        return;
+    }
+    audioBufferCached=null;
+    audioBufferWorkerBusy=true;
+    audioBufferWorker.postMessage({
+        action: 'getAudioBuffer',
+        patchesToUse:patchesToUse,
+        sampleRate:sampleRate,
+        isStereo:isStereo,
+        isNormToLoudest:isNormToLoudest
+      });
+}
+
+function checkForCachedAudioBuffer(){
+    if (audioBufferCached){
+        calculateAudioBuffer(
+            audioBufferCached.patchesToUse, 
+            audioBufferCached.sampleRate, 
+            audioBufferCached.isStereo,
+            audioBufferCached.isNormToLoudest);
+    }
+}
+
+
+
+
+
+
+
 
 
 
@@ -183,29 +236,5 @@ export function calculatePreview( referencePatch, filterPreviewSubject, sampleRa
     previewCallback( getPreview( referencePatch, filterPreviewSubject, sampleRate ) );
 }
 
-let audioBufferCallback = (bufferA, bufferB, bufferNull)=>{};
-export function setAudioBufferCallback( callback ) {
-    audioBufferCallback = callback;
-}
-export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest ) {
-    const maxPreDelay = preMaxCalcStartDelay([patchesToUse.A, patchesToUse.B, patchesToUse.AR,patchesToUse.BR], sampleRate);
-
-    let audioBufferA = getAudioBuffer(
-        sampleRate, 
-        patchesToUse.A,
-        isStereo? patchesToUse.AR: null,
-        maxPreDelay
-    );
-
-    let audioBufferB = getAudioBuffer(
-        sampleRate, 
-        patchesToUse.B,
-        isStereo? patchesToUse.BR: null,
-        maxPreDelay
-    );
-
-    let nullTestBuffer = scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest);
 
 
-    audioBufferCallback(  audioBufferA, audioBufferB, nullTestBuffer  );
-}
