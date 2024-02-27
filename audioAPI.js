@@ -470,7 +470,7 @@ function getCachedPatches(){
 }
 let cachedPatchVersion =0;
 function setCachedPatches(newCachedPatches){
-    cachedPatches.version = ++cachedPatchVersion
+    newCachedPatches.version = ++cachedPatchVersion
     cachedPatches = newCachedPatches;
 }
 function forceBufferRegeneration(){
