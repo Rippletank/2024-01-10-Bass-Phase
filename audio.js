@@ -253,7 +253,7 @@ let THDDefaultPatch = {
 let THDSinePatch ={
     ...sinePatch
 }
-function measureTHDPercent(referencePatch){
+function getTHDPercent(referencePatch){
     if (referencePatch.distortion==0) return 0;
 
     let patch = {
@@ -302,7 +302,7 @@ let THDStepsPerOctave = 4;
 let THDEfficiencyFactor = 2; //must be power of 2 Adjust the resolution and FFT Size to be more efficient with calculation times
 let THDfftResolution = 2.5;//Hz Nominal resolution - will be adjusted by Efficiency factor
 let THDfftSize = 16384; //will be adjusted by Efficiency factor
-function calculateTHDGraph(referencePatch){
+function getTHDGraph(referencePatch){
     if (referencePatch.distortion==0) return [];
 
     let patch = {
@@ -600,8 +600,8 @@ export {
     getPreview,  //One reference in audioAPI.js updatePreview
 
     getDetailedFFT, //one reference in audioAPI.js updateDetailedFFT
-    measureTHDPercent, //one reference in audioAPI.js updateTHDPercent
-    calculateTHDGraph  //one reference in audioAPI.js updateTHDGraph
+    getTHDPercent, //one reference in audioAPI.js updateTHDPercent
+    getTHDGraph  //one reference in audioAPI.js updateTHDGraph
 };
 
 

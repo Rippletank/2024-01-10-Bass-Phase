@@ -41,7 +41,7 @@ import {disableGroups, setValueFromPatch } from './guiValues.js';
 import {
     playAudio,
     updateBuffersAndDisplay, updateDisplay,
-    updatePreview, paintPreview,
+    updatePreview, doPaintPreview,
     
     updateDetailedFFT, 
     repaintDetailedFFT,
@@ -228,7 +228,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 fh();
                 updatePreviewButtonState();
-                paintPreview();
+                doPaintPreview();
             });
             button.isChecked =ch;
         break;
@@ -274,7 +274,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 fd();
                 updatePreviewButtonState();
-                paintPreview();
+                doPaintPreview();
             });
             button.isChecked =cd;
         break;
@@ -315,7 +315,6 @@ previewButtons.forEach(function(button) {
 function DoFullPreviewUpdate(){
     updatePreviewButtonState();
     updatePreview();
-    paintPreview();
 }
 
 
@@ -434,7 +433,6 @@ function handleValueChange() {
     flags.changed = true;
     lastUpdate = Date.now();
     updatePreview();
-    paintPreview();
 }
 
 function loadSliderValuesFromContainer(id, patch) {
@@ -512,7 +510,7 @@ function loadPatchIntoContainer(id, patch) {
 
 
 
-
+let cachedPatchVersion =0;
 function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     let patch = {};
     commonSectionNames.forEach((sectionName)=>{
@@ -555,6 +553,8 @@ function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     cachedPatches.BR = {...patch};
     updateLabelsFor('SoundBRSetup', patch);
     handleDisableGroups('SoundBRSetup', patch);
+
+    cachedPatches.version = ++cachedPatchVersion;
 }
 
 
@@ -668,7 +668,7 @@ function n_loadFromFile(loadProc) {
             let reader = new FileReader();
             reader.onload = (event) => {
                 let contents = event.target.result;
-                console.log("File accessed ok");
+                console.log("Load from file access complete!");
                 console.log(contents) 
                 loadProc(contents)
             };
@@ -686,7 +686,7 @@ function n_loadFromFile(loadProc) {
 // Save to clipboard
 function n_saveToClipboard(json) {
     navigator.clipboard.writeText(json).then(() => {
-        console.log('Copying to clipboard was successful!');
+        //console.log('Copying to clipboard was successful!');
     }, (err) => {
         console.error('Could not copy text: ', err);
     });
@@ -999,7 +999,7 @@ function handleDisableGroups(id, patch){
 //Initialise display of waveform and audio buffers on first load
 initSliders();
 
-console.log("TestSubjectList: " + getTestSubjectList());    
+//console.log("TestSubjectList: " + getTestSubjectList());    
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Functions for handling switching from mono to stereo

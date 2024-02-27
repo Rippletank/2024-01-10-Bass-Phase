@@ -53,7 +53,6 @@
 
 
 function doSpeakerSim(buffer, sampleRate, patch, isCyclic){
-    //doSpeakerSimEulerAndDuffing(buffer, sampleRate, patch, isCyclic);
     const m = 0.01 + 100 * patch.speakerMass; // Mass
     const r = 0.05 + 1 * patch.speakerDamping ; // Damping coefficient
     const k = 0.5 + 4* patch.speakerStiffness; // Linear stiffness
@@ -61,7 +60,7 @@ function doSpeakerSim(buffer, sampleRate, patch, isCyclic){
     //Resonant frequency = 1/2pi sqrt(k/m - r^2/4m^2) from paper BUT this may only be an approximation
     //const resF = 1/(2*Math.PI) * Math.sqrt(k/m - r*r/(4*m*m));//for debug  -- not used in this code
     //console.log("Resonant Frequency: "+resF);
-    if (!isCyclic)console.log("m: "+ m + " r: "+ r + " k: "+ k + " q: "+ q);
+    //if (!isCyclic)console.log("m: "+ m + " r: "+ r + " k: "+ k + " q: "+ q);
     const dt = 12000/sampleRate; // Time step
 
     duffingOscillator_CrankNicolson_Newton(buffer, m, r, k, q, dt, patch.speakerAmount * patch.distortion, isCyclic)

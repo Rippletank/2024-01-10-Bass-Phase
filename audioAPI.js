@@ -23,17 +23,24 @@
 
 
 import { 
-    //Build the actual audio buffer for playback
-    getAudioBuffer,     
-
-    //Quick preview
-    getPreview,
-
-    //More detailed analysis
-    getDetailedFFT,
-    measureTHDPercent, 
-    calculateTHDGraph
+    getAudioBuffer,
  } from './audio.js';
+
+ import {
+    setDetailedFFTCallback,
+    calculateDetailedFFT,
+
+    setTHDGraphCallback,
+    calculateTHDGraph,
+
+    setTHDPercentCallback,
+    calculateTHDPercent,
+
+    setPreviewCallback,
+    calculatePreview
+ } from './workerLauncher.js'
+
+
 
 
 import { 
@@ -46,10 +53,7 @@ import {
     //Audio buffer painting
     paintBuffer, paintEnvelope, paintFilterEnvelope, 
     
-    //Quick preview painting
-    doPreviewPaint,
-
-    //Detailed analysis painting
+    paintPreview,
     paintDetailedFFT, 
     paintTHDGraph
 } from './painting.js';
@@ -164,17 +168,33 @@ let flags = {
 
 
 let longPreview = null;
+let longPreviewPatchVersion = 0;
 function updateDetailedFFT(){  
-    longPreview = getDetailedFFT(audioContext.sampleRate, getPreviewSubjectCachedPatch(), flags.filterPreviewSubject);
-    paintDetailedFFT(longPreview.fft,  longPreview.distortedSamples.length, longPreview.virtualSampleRate, 'staticFFTCanvas');
+    //check versions to see if already processing
+    let newVersion = cachedPatches.version ?? 0; 
+    let patch =getPreviewSubjectCachedPatch();
+    if (longPreviewPatchVersion == newVersion)return;
+
+    longPreviewPatchVersion = newVersion;
+    calculateDetailedFFT(audioContext.sampleRate, patch, flags.filterPreviewSubject);
 }
+setDetailedFFTCallback((preview)=>{
+    longPreview = preview; 
+    doPaintDetailedFFT();
+});
+
 function repaintDetailedFFT(){
     if (!longPreview) 
     {
         updateDetailedFFT()
         return;
     }
-    paintDetailedFFT(longPreview.fft,  longPreview.distortedSamples.length, longPreview.virtualSampleRate, 'staticFFTCanvas');
+    doPaintDetailedFFT();
+}
+function doPaintDetailedFFT(){
+    //Assumes longPreview is in place and up to date
+    let previewToUse = longPreview; //Threadsafety
+    paintDetailedFFT(previewToUse.fft,  previewToUse.distortedSamples.length, previewToUse.virtualSampleRate, 'staticFFTCanvas');
 }
 
 
@@ -186,14 +206,14 @@ function updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR) {
     setTimeout(function() { //allow for UI to update to indicate busy
     try{
         ensureAudioContext();
-        let t0 = performance.now();
+        //let t0 = performance.now();
     
         updateBuffers(patchA, patchB, patchAR, patchBR);
         updateDisplay();
         fftFade('fftCanvas');
     
-        let t1 = performance.now();
-        console.log("Execution time: " + (t1 - t0) + " milliseconds.");
+        //let t1 = performance.now();
+        //("Execution time: " + (t1 - t0) + " milliseconds.");
     }
     finally{
         endUpdate();
@@ -277,10 +297,22 @@ function preMaxCalcStartDelay(patches, sampleRate){
 }
 
 
-
 let THDGraphData = null;
+let THDGraphDataPatchVersion = 0;
 function updateTHDGraph(){
-    THDGraphData = calculateTHDGraph(getPreviewSubjectCachedPatch());
+    //check versions to see if already processing
+    let newVersion = cachedPatches.version ?? 0; 
+    let patch =getPreviewSubjectCachedPatch();
+    if (THDGraphDataPatchVersion == newVersion)return;
+    THDGraphDataPatchVersion = newVersion;
+    calculateTHDGraph(patch);
+}
+setTHDGraphCallback((graphData)=>{
+    THDGraphData = graphData; 
+    doPaintTHDGraph();
+});
+function doPaintTHDGraph(){
+    paintTHDGraph(THDGraphData, 'THDGraphCanvas');
 }
 
 
@@ -298,34 +330,68 @@ function updateDisplay(){
         paintFilterEnvelope(audioBufferA.filters, maxLength, "waveformA");
         paintFilterEnvelope(audioBufferB.filters, maxLength, "waveformB");
     }
-    paintPreview()
+
+
     let nullTest = document.getElementById('nullTestdb');
     nullTest.textContent = "Peak Level: " +nullTestMax.toFixed(1) + "dB";
 
     
-    paintTHDGraph(THDGraphData, 'THDGraphCanvas');
+    doPaintPreview();
+    doPaintTHDGraph();
+}
+
+
+let jitterReport = 'Jitter is off';
+let suspendPreviewUpdates = true;
+let previewPatchVersion = 0;
+function updatePreview(){
+    if (suspendPreviewUpdates) return;
+
+    //Avoid duplicated processing - check if this version has already been previewed
+    const newVersion = cachedPatches.version ?? 0;
+    if (previewPatchVersion == newVersion)return;
+    previewPatchVersion = newVersion;
+
+    ensureAudioContext();
+
+    const previewPatch = getPreviewSubjectCachedPatch();
+
+    calculatePreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);        
+    getTHDReport(previewPatch);
+    jitterReport = 
+                    previewPatch.jitterADC==0 && previewPatch.jitterDAC==0  && previewPatch.jitterPeriodic==0 ? "Jitter is off" :
+                    ("Jitter (rms): " +
+                        "ADC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterADC) + ', ' +
+                        "Periodic : " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterPeriodic) + ', ' +
+                        "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC) +
+                        ", Sample period: " + (1000000/audioContext.sampleRate).toFixed(2) + "µs")
 }
 
 
 let previewResult = null;
+setPreviewCallback((preview)=>{
+    previewResult = preview; 
+    doPaintPreview();
+});
+
+
+
 let previewTHDReport = 'Distortion is off';
-let jitterReport = 'Jitter is off';
-let suspendPreviewUpdates = true;
-function updatePreview(){
-    if (suspendPreviewUpdates) return;
-    ensureAudioContext();
-    const previewPatch = getPreviewSubjectCachedPatch();
-    previewResult = getPreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);
-    
-    previewTHDReport = previewPatch.distortion>0 ? "THD: " + measureTHDPercent(previewPatch).toFixed(3)+"% ["+previewPatchName()+"]" : "Distortion is off";
-    jitterReport = 
-    previewPatch.jitterADC==0 && previewPatch.jitterDAC==0  && previewPatch.jitterPeriodic==0 ? "Jitter is off" :
-    ("Jitter (rms): " +
-        "ADC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterADC) + ', ' +
-        "Periodic : " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterPeriodic) + ', ' +
-        "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC) +
-        ", Sample period: " + (1000000/audioContext.sampleRate).toFixed(2) + "µs")
+function getTHDReport(patch){
+    if (patch.distortion==0)
+    {
+        previewTHDReport = "Distortion is off";
+        updateTHDMeasurementReport();
+    }
+    else
+    {
+        calculateTHDPercent(patch);
+    }
 }
+setTHDPercentCallback((THDPercent)=>{
+    previewTHDReport = "THD: " + THDPercent.toFixed(3)+"% ["+previewPatchName()+"]"; 
+    updateTHDMeasurementReport();
+});
 
 
 
@@ -355,7 +421,8 @@ let cachedPatches =
     A:null,
     AR:null,
     B:null,
-    BR:null
+    BR:null,
+    version:0
 }
 
 function getPreviewSubjectCachedPatch() {
@@ -375,9 +442,9 @@ function getPreviewSubjectCachedPatch() {
 }
 
 
-function paintPreview(){
+function doPaintPreview(){
     if (!previewResult) return;
-    doPreviewPaint(
+    paintPreview(
         'wavePreview',
         previewResult.samples,
         previewResult.magnitude,
@@ -391,7 +458,7 @@ function paintPreview(){
         flags.previewSpectrumShowPhase,
         flags.filterPreviewSubject);
 
-    doPreviewPaint(
+    paintPreview(
         'distortionPreview',
         previewResult.distortedSamples,
         previewResult.fft.magnitude,
@@ -413,25 +480,31 @@ let THDReportElement = document.querySelectorAll('.THDReport');
 let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
 let jitterReportElements = document.querySelectorAll('.jitterReport');
 function updateMeasurementReports(){
-    let oversamplingReports = compareStringArrays(audioBufferA.oversamplingReports, audioBufferB.oversamplingReports);
-    let oversamplingReport = "<p>No oversampling</p>";
-    if (oversamplingReports.length==1){
-        oversamplingReport = "<p>"+oversamplingReports[0] + "</p>";
-    }
-    else if (flags.isStereo && oversamplingReports.length==4){
-        oversamplingReport = "<p>A Left: "+oversamplingReports[0] + "</p><p> A Right:"+oversamplingReports[1] + "</p>"
-                            + "<p>B Left: "+oversamplingReports[1] + "</p><p> B Right:"+oversamplingReports[2] + "</p>";
-    }
-    else if (!flags.isStereo && oversamplingReports.length==2){
-        oversamplingReport = "<p>A: "+oversamplingReports[0]
-                            + "<p>B: "+oversamplingReports[1] ;
+    if (audioBufferA && audioBufferB) 
+    {
+        let oversamplingReports = compareStringArrays(audioBufferA.oversamplingReports, audioBufferB.oversamplingReports);
+        let oversamplingReport = "<p>No oversampling</p>";
+        if (oversamplingReports.length==1){
+            oversamplingReport = "<p>"+oversamplingReports[0] + "</p>";
+        }
+        else if (flags.isStereo && oversamplingReports.length==4){
+            oversamplingReport = "<p>A Left: "+oversamplingReports[0] + "</p><p> A Right:"+oversamplingReports[1] + "</p>"
+                                + "<p>B Left: "+oversamplingReports[1] + "</p><p> B Right:"+oversamplingReports[2] + "</p>";
+        }
+        else if (!flags.isStereo && oversamplingReports.length==2){
+            oversamplingReport = "<p>A: "+oversamplingReports[0]
+                                + "<p>B: "+oversamplingReports[1] ;
+        }
+
+        oversamplingReportElements.forEach((element) =>element.innerHTML = oversamplingReport);
     }
 
-
-
-    oversamplingReportElements.forEach((element) =>element.innerHTML = oversamplingReport);
-    THDReportElement.forEach((element) =>element.textContent = previewTHDReport);
+    updateTHDMeasurementReport();
     jitterReportElements.forEach((element) =>element.textContent = jitterReport);
+}
+
+function updateTHDMeasurementReport(){
+    THDReportElement.forEach((element) =>element.textContent = previewTHDReport);
 }
 
 function compareStringArrays(array1, array2) {
@@ -516,7 +589,7 @@ export {
     updateBuffersAndDisplay,
     updateDisplay,
     updatePreview,
-    paintPreview,
+    doPaintPreview,
     
     updateDetailedFFT, 
     repaintDetailedFFT,

@@ -252,6 +252,9 @@ input[type="range"]:focus {
 .topSpaced{
     margin-top: 2em;
 }
+.bottomSpacedSlight{
+    margin-bottom: 0.5em;
+}
 .topSpacedImportant{
     margin-top: 1em !important;
 }

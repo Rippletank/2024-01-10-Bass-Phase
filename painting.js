@@ -550,7 +550,7 @@ let canvasTooltips = //must have members defined here, but the values can be upd
 function getCanvasTooltips(){ return canvasTooltips;}
 
 
-function doPreviewPaint(
+function paintPreview(
     id, //id of canvas element
     samples, //array of samples
     magnitude, //array of magnitude values for harmonics
@@ -902,7 +902,7 @@ export {
     paintFilterEnvelope,
 
     //Quick Preview
-    doPreviewPaint,
+    paintPreview,
 
     //THD Graph
     paintTHDGraph,
