@@ -48,6 +48,7 @@ import {
 
     //Common variables
     getCachedPatches,
+    setCachedPatches,
     getFlags,
 
     startSuspendPreviewUpdates, endSuspendPreviewUpdates
@@ -55,9 +56,6 @@ import {
 
 
 
-
-
-let cachedPatches = getCachedPatches();
 let flags = getFlags();
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -77,7 +75,7 @@ document.querySelectorAll('.PlayN').forEach(el=>el.addEventListener('click', fun
 
 
 function play(index){
-    playAudio(index, cachedPatches.A, cachedPatches.B, cachedPatches.AR, cachedPatches.BR);   
+    playAudio(index);   
 }
 
 //load settings for all of the little green buttons
@@ -381,7 +379,7 @@ function initSliders(){
     setInterval(function() {
         if (!isMouseDown && Date.now() - lastUpdate > 300) {
             if (flags.changed){
-                updateBuffersAndDisplay(cachedPatches.A, cachedPatches.B, cachedPatches.AR, cachedPatches.BR);
+                updateBuffersAndDisplay();
                 if (autoUpdateDetailedFFT) updateDetailedFFT();
             }
             else if (previewSubjectChanged && autoUpdateDetailedFFT){
@@ -522,7 +520,10 @@ function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     commonSectionNames.forEach((sectionName)=>{
         handleDisableGroups(sectionName, patch);
     });
-    cachedPatches.Cmn = {...patch};
+    let cachedPatches ={
+        Cmn: {...patch},
+        version: ++cachedPatchVersion
+    }
 
     loadSliderValuesFromContainer('SoundASetup', patch);
     cachedPatches.A = {...patch};
@@ -554,7 +555,7 @@ function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     updateLabelsFor('SoundBRSetup', patch);
     handleDisableGroups('SoundBRSetup', patch);
 
-    cachedPatches.version = ++cachedPatchVersion;
+    setCachedPatches(cachedPatches);
 }
 
 
@@ -576,6 +577,7 @@ function updateLabelsFor(containerId, patch) {
 function exportCombinedPatchToJSON(){
     updateAllLabelsAndCachePatches();
     const notesEdit = document.getElementById('notesEdit');
+    const cachedPatches = getCachedPatches();
     let patch = { 
         patchC: {...cachedPatches.Cmn}, 
         patchA: {...cachedPatches.A},

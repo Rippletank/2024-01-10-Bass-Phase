@@ -71,7 +71,7 @@ let sourceNode = null;
 let audioBufferA = null;
 let audioBufferB = null;
 let nullTestBuffer = null;
-let nullTestMax = 0;
+let nullTestMaxDb = 0;
 
 function ensureAudioContext(){
     if (!audioContext){
@@ -88,15 +88,16 @@ function ensureAudioContext(){
 
 
 // Play method, index 0 = A, 1 = B
-function playAudio(index, patchA, patchB, patchAR, patchBR) {
+function playAudio(index) {
     ensureAudioContext();
     //Can't reuse source node so create a new one
     stop();
-    let newSourceNode = audioContext.createBufferSource();
     if (flags.changed || generatedSampleRate != audioContext.sampleRate){
-        updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR);
+        updateBuffersAndDisplay(index);
+        return;
     }
-    newSourceNode.buffer = index==0 ? audioBufferA.buffer : (index==1 ? audioBufferB.buffer: nullTestBuffer);
+    let newSourceNode = audioContext.createBufferSource();
+    newSourceNode.buffer = checkForAudioBuffer(pickPlaybackBuffer(index));
     if (getUseFFT()){
         newSourceNode.connect(analyserNode);
         analyserNode.connect(audioContext.destination);
@@ -121,6 +122,30 @@ function playAudio(index, patchA, patchB, patchAR, patchBR) {
     newSourceNode.start(0);
     startFFT(audioContext,analyserNode, 'fftCanvas');
 }
+
+function pickPlaybackBuffer(index){
+    switch(index){
+        case 0: return audioBufferA;
+        case 1: return audioBufferB;
+        default: return nullTestBuffer;
+    }
+}
+
+function checkForAudioBuffer(audioBuffer){
+    if (!audioBuffer.apiBuffer)
+    {
+        audioBuffer.apiBuffer = new AudioBuffer({
+            length: audioBuffer.buffer.length,
+            numberOfChannels: audioBuffer.buffer.numberOfChannels,
+            sampleRate: audioBuffer.buffer.sampleRate
+        });
+        for (let i = 0; i < audioBuffer.buffer.numberOfChannels; i++) {
+            audioBuffer.apiBuffer.copyToChannel(audioBuffer.buffer.data[i], i);
+        }
+    }
+    return audioBuffer.apiBuffer;
+}
+
 
 function stop() {
     if (sourceNode) {
@@ -171,11 +196,12 @@ let longPreview = null;
 let longPreviewPatchVersion = 0;
 function updateDetailedFFT(){  
     //check versions to see if already processing
-    let newVersion = cachedPatches.version ?? 0; 
-    let patch =getPreviewSubjectCachedPatch();
+    let patchesToUse =cachedPatches;//Thread safe
+    let newVersion = patchesToUse.version ?? 0; 
     if (longPreviewPatchVersion == newVersion)return;
-
     longPreviewPatchVersion = newVersion;
+
+    let patch =getPreviewSubjectCachedPatch(patchesToUse);
     calculateDetailedFFT(audioContext.sampleRate, patch, flags.filterPreviewSubject);
 }
 setDetailedFFTCallback((preview)=>{
@@ -200,24 +226,32 @@ function doPaintDetailedFFT(){
 
 // Main update method - orchestrates the creation of the buffers and their display
 //Called at startup and whenever a parameter changes
-function updateBuffersAndDisplay(patchA, patchB, patchAR, patchBR) {
+function updateBuffersAndDisplay(indexToPlayWhenDone = -1) {
     flags.changed = false;
+    
+    //Avoid duplicated processing - check if this version has already been processed
+    let patchesToUse =cachedPatches;//Thread safe
+    if (buffersPatchVersion == patchesToUse.version) return;
+    buffersPatchVersion = patchesToUse.version;
+
+
+    ensureAudioContext();
     startUpdate();
     setTimeout(function() { //allow for UI to update to indicate busy
     try{
-        ensureAudioContext();
         //let t0 = performance.now();
-    
-        updateBuffers(patchA, patchB, patchAR, patchBR);
+        updateBuffers(patchesToUse);
         updateDisplay();
-        fftFade('fftCanvas');
-    
+        fftFade('fftCanvas'); 
+        if (indexToPlayWhenDone>=0) playAudio(indexToPlayWhenDone);
+
         //let t1 = performance.now();
         //("Execution time: " + (t1 - t0) + " milliseconds.");
     }
     finally{
         endUpdate();
     }},0);
+    updateTHDGraph(patchesToUse);   
 }
 
 let fullwaves = document.querySelectorAll('.fullwave');
@@ -237,31 +271,29 @@ function endUpdate() {
 
 
 let generatedSampleRate = 0;//Sample rate used to generate current buffers
-function updateBuffers(patchA, patchB, patchAR, patchBR) {
+let buffersPatchVersion = 0;
+function updateBuffers(patchesToUse) {
     //Inefficient to create two buffers independently - 
     //envelope and all higher harmonics are the same, 
     //but performance is acceptable and code is maintainable  
-
     let sampleRate = getTrueSampleRate();
     generatedSampleRate = sampleRate;//Store to check later, if flags.changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
      
-    const maxPreDelay = preMaxCalcStartDelay([patchA, patchB, patchAR, patchBR], sampleRate);
+    const maxPreDelay = preMaxCalcStartDelay([patchesToUse.A, patchesToUse.B, patchesToUse.AR,patchesToUse.BR], sampleRate);
 
     audioBufferA = getAudioBuffer(
         sampleRate, 
-        patchA,
-        flags.isStereo? patchAR: null,
+        patchesToUse.A,
+        flags.isStereo? patchesToUse.AR: null,
         maxPreDelay
     );
 
     audioBufferB = getAudioBuffer(
         sampleRate, 
-        patchB,
-        flags.isStereo? patchBR: null,
+        patchesToUse.B,
+        flags.isStereo? patchesToUse.BR: null,
         maxPreDelay
     );
-
-    nullTestBuffer = buildNullTest(audioBufferA.buffer, audioBufferB.buffer);
 
 
     let scaleA =0.99 /Math.max(audioBufferA.maxValue, 0.000001);
@@ -269,16 +301,41 @@ function updateBuffers(patchA, patchB, patchAR, patchBR) {
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
-    scaleBuffer(audioBufferA.buffer, flags.isNormToLoudest? scale: scaleA);
-    scaleBuffer(audioBufferB.buffer, flags.isNormToLoudest? scale: scaleB);
+    if (!flags.isNormToLoudest && scaleA != scaleB){
+        //individually normalise - so first bring up to the level of the loudest, 
+        //Why? - so the null test still feels valid in terms of level of difference
+        //Border line worth doing scaling twice but 
+        if (scale==scaleA) 
+        {
+            scaleBuffer(audioBufferA.buffer, scaleA/scaleB);
+            scale = scaleB;
+        }
+        else 
+        {
+            scaleBuffer(audioBufferB.buffer, scaleB/scaleA);
+            scale = scaleA;
+        }
+
+    }
+
+    let nulBuffer = buildNullTest(audioBufferA.buffer, audioBufferB.buffer);//Caluclate before finally scaling to give accruate null level in db
+
+
+    scaleBuffer(audioBufferA.buffer, scale);
+    scaleBuffer(audioBufferB.buffer, scale);
+
 
     //normalise null test buffer if above threshold
-    let nullMax = getBufferMax(nullTestBuffer);
-    nullTestMax = 20 * Math.log10(nullMax);//convert to dB
-    if (nullTestMax>-100){//avoid scaling if null test is close to silent (>-100db)
-        scaleBuffer(nullTestBuffer, 0.99 / nullMax);
+    let nullMax = getBufferMax(nulBuffer);
+    let maxNullDB = 20 * Math.log10(nullMax);//convert to dB
+    if (maxNullDB>-100){//avoid scaling if null test is close to silent (>-100db)
+        scaleBuffer(nullMax, 0.99 / nullMax);
     }
-    updateTHDGraph();
+    nullTestBuffer = {
+        buffer: nulBuffer,
+        maxValue: nullMax,
+        maxValueDBL: maxNullDB,//convert to dB
+    }
 }
 
 //From Audio.js, takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
@@ -296,32 +353,12 @@ function preMaxCalcStartDelay(patches, sampleRate){
 
 }
 
-
-let THDGraphData = null;
-let THDGraphDataPatchVersion = 0;
-function updateTHDGraph(){
-    //check versions to see if already processing
-    let newVersion = cachedPatches.version ?? 0; 
-    let patch =getPreviewSubjectCachedPatch();
-    if (THDGraphDataPatchVersion == newVersion)return;
-    THDGraphDataPatchVersion = newVersion;
-    calculateTHDGraph(patch);
-}
-setTHDGraphCallback((graphData)=>{
-    THDGraphData = graphData; 
-    doPaintTHDGraph();
-});
-function doPaintTHDGraph(){
-    paintTHDGraph(THDGraphData, 'THDGraphCanvas');
-}
-
-
-function updateDisplay(){
+function doPaintBuffersAndNull(){
     if (!audioBufferA || !audioBufferB || !nullTestBuffer) return;
-    let maxLength = Math.max(audioBufferA.buffer.length, audioBufferB.buffer.length, nullTestBuffer.length);
+    let maxLength = Math.max(audioBufferA.buffer.length, audioBufferB.buffer.length, nullTestBuffer.buffer.length);
     paintBuffer(audioBufferA.buffer, maxLength, "waveformA");
     paintBuffer(audioBufferB.buffer, maxLength, "waveformB");
-    paintBuffer(nullTestBuffer, maxLength, "waveformNull");
+    paintBuffer(nullTestBuffer.buffer, maxLength, "waveformNull");
     if (flags.showBufferEnvelopeOverlay){    
         paintEnvelope(audioBufferA.envelopes, maxLength, "waveformA");
         paintEnvelope(audioBufferB.envelopes, maxLength, "waveformB");
@@ -333,12 +370,30 @@ function updateDisplay(){
 
 
     let nullTest = document.getElementById('nullTestdb');
-    nullTest.textContent = "Peak Level: " +nullTestMax.toFixed(1) + "dB";
+    nullTest.textContent = "Peak Level: " +nullTestMaxDb.toFixed(1) + "dB";
+}
 
-    
+let THDGraphData = null;
+function updateTHDGraph(patchesToUse){
+    let patch =getPreviewSubjectCachedPatch(patchesToUse);
+    calculateTHDGraph(patch);
+}
+setTHDGraphCallback((graphData)=>{
+    THDGraphData = graphData; 
+    doPaintTHDGraph();
+});
+function doPaintTHDGraph(){
+    if (!THDGraphData) return;
+    paintTHDGraph(THDGraphData, 'THDGraphCanvas');
+}
+
+
+function updateDisplay(){
+    doPaintBuffersAndNull();    
     doPaintPreview();
     doPaintTHDGraph();
 }
+
 
 
 let jitterReport = 'Jitter is off';
@@ -348,13 +403,14 @@ function updatePreview(){
     if (suspendPreviewUpdates) return;
 
     //Avoid duplicated processing - check if this version has already been previewed
-    const newVersion = cachedPatches.version ?? 0;
+    let patchesToUse =cachedPatches;//Thread safe
+    const newVersion = patchesToUse.version ?? 0;
     if (previewPatchVersion == newVersion)return;
     previewPatchVersion = newVersion;
 
     ensureAudioContext();
 
-    const previewPatch = getPreviewSubjectCachedPatch();
+    const previewPatch = getPreviewSubjectCachedPatch(patchesToUse);
 
     calculatePreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);        
     getTHDReport(previewPatch);
@@ -400,6 +456,22 @@ function getJitterTimeReport(sampleRate, amount){
 }
 
 
+let cachedPatches =
+{
+    Cmn :null,
+    A:null,
+    AR:null,
+    B:null,
+    BR:null,
+    version:0
+}
+function getCachedPatches(){
+    return cachedPatches;
+}
+function setCachedPatches(newCachedPatches){
+    cachedPatches = newCachedPatches;
+}
+
 function previewPatchName(){
     switch(flags.previewSubject){
         case 0: 
@@ -415,27 +487,18 @@ function previewPatchName(){
     return cachedPatch;
 }
 
-let cachedPatches =
-{
-    Cmn :null,
-    A:null,
-    AR:null,
-    B:null,
-    BR:null,
-    version:0
-}
 
-function getPreviewSubjectCachedPatch() {
+function getPreviewSubjectCachedPatch(patchesToUse) {
     let cachedPatch;
     switch(flags.previewSubject){
         case 0: 
-            cachedPatch = cachedPatches.Cmn;
+            cachedPatch = patchesToUse.Cmn;
             break;
         case 1: 
-            cachedPatch =!flags.isStereo || flags.previewSubjectChannel==0? cachedPatches.A : cachedPatches.AR;
+            cachedPatch =!flags.isStereo || flags.previewSubjectChannel==0? patchesToUse.A : patchesToUse.AR;
             break;  
         case 2: 
-            cachedPatch =  !flags.isStereo || flags.previewSubjectChannel==0? cachedPatches.B : cachedPatches.BR;
+            cachedPatch =  !flags.isStereo || flags.previewSubjectChannel==0? patchesToUse.B : patchesToUse.BR;
             break;  
     }
     return cachedPatch;
@@ -524,7 +587,7 @@ function compareStringArrays(array1, array2) {
 function getBufferMax(buffer){
     let max = 0;
     for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.getChannelData(chan);
+        let b = buffer.data[chan];
         let bufferSize = buffer.length;
         for (let i = 0; i < bufferSize; i++) {
             let val = Math.abs( b[i]);
@@ -537,7 +600,7 @@ function getBufferMax(buffer){
 function scaleBuffer(buffer, scale){
     let max = 0;
     for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.getChannelData(chan);
+        let b = buffer.data[chan];
         let bufferSize = buffer.length;
         for (let i = 0; i < bufferSize; i++) {
             b[i]*=scale;
@@ -548,15 +611,16 @@ function scaleBuffer(buffer, scale){
 
 function buildNullTest(bufferA, bufferB){
     let length = Math.min(bufferA.length, bufferB.length);
-    let nullTest = new AudioBuffer({
+    let nullTest = {
         length: length,
         sampleRate: bufferA.sampleRate,
-        numberOfChannels: bufferA.numberOfChannels
-      });
+        numberOfChannels: bufferA.numberOfChannels,
+        data: new Array(bufferA.numberOfChannels).fill(new Float32Array(length))
+      };
     for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
-        var A = bufferA.getChannelData(channel);
-        var B = bufferB.getChannelData(channel);
-        let b = nullTest.getChannelData(channel);
+        var A = bufferA.data[channel];
+        var B = bufferB.data[channel];
+        let b = nullTest.data[channel];
         for (let i = 0; i < length; i++) {
         b[i] = A[i] - B[i];
         }
@@ -575,9 +639,7 @@ function buildNullTest(bufferA, bufferB){
 function startSuspendPreviewUpdates(){ suspendPreviewUpdates = true;}
 function endSuspendPreviewUpdates(){ suspendPreviewUpdates = false;}
 
-function getCachedPatches(){
-    return cachedPatches;
-}
+
 function getFlags(){
     return flags;
 }
@@ -594,8 +656,10 @@ export {
     updateDetailedFFT, 
     repaintDetailedFFT,
 
-    //Common variables
     getCachedPatches,
+    setCachedPatches,
+
+    //Common variables
     getFlags,
 
     startSuspendPreviewUpdates,

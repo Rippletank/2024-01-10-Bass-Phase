@@ -420,7 +420,7 @@ function paintBuffer(buffer, maxLength, canvasId){
 
 
     for (let chan = 0; chan < buffer.numberOfChannels ; chan++) {
-        let b = buffer.getChannelData(chan);
+        let b = buffer.data[chan];
         const h = canvas.height/(2*buffer.numberOfChannels);
         const zeroY = h + chan * 2 * h;
         const step = canvas.width / maxLength;

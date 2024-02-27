@@ -16,7 +16,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Audio Code - creates buffers with audio data according to parameters
-//No knowledge of GUI, only knows about AudioBuffer from WebAudioAPI and default values in defaults.js
+//No knowledge of GUI, only other audio engine modules and default values in defaults.js
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -72,11 +72,16 @@ function getAudioBuffer(
     const maxBufferSize = channels.length>1 ? Math.max(channels[0].bufferSize,channels[1].bufferSize) : channels[0].bufferSize;
 
     //Create buffer
-    let audioBuffer = new AudioBuffer({
+    let data = [];
+    for(let i=0;i<channels.length;i++){
+        data.push(new Float32Array(maxBufferSize));
+    }
+    let audioBuffer = {
         length: maxBufferSize,
         sampleRate: sampleRate,
-        numberOfChannels: channels.length
-      });
+        numberOfChannels: channels.length,
+        data: data
+      };
      
       let envelopeBuffers =[];
       let filters =[];
@@ -86,7 +91,7 @@ function getAudioBuffer(
       for(let i=0;i<channels.length;i++){
             let c = channels[i];
             let patch = c.patch;
-            let b = audioBuffer.getChannelData(i);
+            let b = audioBuffer.data[i];
             let envelopeBuffer =buildEnvelopeBuffer(sampleRate, maxBufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
             let filter =null;
             if (patch.filterSlope!=0) 
@@ -116,7 +121,7 @@ function getAudioBuffer(
 function getBufferMax(buffer){
     let max = 0;
     for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.getChannelData(chan);
+        let b = buffer.data[chan];
         let bufferSize = buffer.length;
         for (let i = 0; i < bufferSize; i++) {
             let val = Math.abs( b[i]);
