@@ -190,7 +190,7 @@ function detailedFFTResetFrequencyRange(){
 
 const scaleGap =30;
 //Buffer should be 64k samples long float32array
-function paintDetailedFFT(fft, bufferLength, sampleRate, canvasId){
+function paintDetailedFFT(magnitudes, sampleRate, canvasId){
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
@@ -205,7 +205,7 @@ function paintDetailedFFT(fft, bufferLength, sampleRate, canvasId){
 
     const maxLogF = Math.log2(detailedMaxF/detailedMinF);
     const octaveStep = maxLogF / fftW;
-    const freqStep = bufferLength / sampleRate;
+    const freqStep = magnitudes.length*2 / sampleRate;
     const dbScale = (detailedMaxDb-detailedMinDb) / 20;
     const dbOffset = detailedMinDb / 20;
     const hScale = fftH/dbScale;
@@ -240,7 +240,7 @@ function paintDetailedFFT(fft, bufferLength, sampleRate, canvasId){
         if (endBin>startBin){
             let max = 0;
             for (let j = startBin; j < endBin; j++) {
-                max = Math.max(max,fft.magnitude[j]);
+                max = Math.max(max,magnitudes[j]);
             }
             let y = fftB - ( (Math.log10(max) -dbOffset) * hScale);// (20*Math.log10(max) -detailedMinDb)/(detailedMaxDb-detailedMinDb) * fftH;
             if (!y || y>fftB) y=fftB-2;

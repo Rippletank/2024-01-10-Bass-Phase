@@ -26,24 +26,21 @@ import {
 }
 from './audio.js';
 
-
-
-self.onerror = function(error) {
-    // Handle any errors that occur in the worker
-    console.error(`An error occurred in the worker: ${error.message}`);
-};
-
 // If you need to load external scripts, you can do so with importScripts
 // importScripts('script1.js', 'script2.js');
 
 self.onmessage = function(event) {
+    var data = event.data;
     try {
-        switch (event.data.action) {
+        switch (data.action) {
             case 'getTHDGraph':
-                doTHDGraphData(event.data.referencePatch);
+                doTHDGraphData(data.referencePatch);
                 break;
             case 'getTHDPercent':
-                doTHDPercent(event.data.referencePatch);
+                doTHDPercent(data.referencePatch);
+                break;
+            case 'getDetailedFFT':
+                doDetailedFFT(data.sampleRate, data.patch, data.filterPreviewSubject );
                 break;
             default:
                 throw new Error(`Unknown action: ${action}`);
@@ -64,4 +61,10 @@ function doTHDPercent(referencePatch) {
     self.postMessage({ THDPercent });
 }
 
+function doDetailedFFT(sampleRate, patch, filterPreviewSubject) {
+    var fft = getDetailedFFT( sampleRate, patch, filterPreviewSubject );
+    let magnitudes = fft.fft.magnitude;
+    let virtualSampleRate = fft.virtualSampleRate;
+    self.postMessage({ magnitudes, virtualSampleRate }, [magnitudes.buffer]);
+}
 export function thisIsAModule(){}

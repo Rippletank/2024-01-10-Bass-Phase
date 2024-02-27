@@ -329,8 +329,8 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
         magnitude:magnitude,
         phase:phase,
         mean:b.reduce((a, b) => a + b, 0) / b.length, //average value
-        max:Math.max(...b),
-        min:Math.min(...b),
+        max:getMax(b),
+        min:getMin(b),
         filter:filter,
         patch:patch,
         distortedSamples:distorted,
@@ -338,6 +338,22 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     };
 }
 
+function getMax(buffer){
+    let max = 0;
+    for (let i = 0; i < buffer.length; i++) {
+        let val = Math.abs(buffer[i]);
+        if (val>max) max = val;
+    }
+    return max;    
+}
+function getMin(buffer){   
+    let min = 0;
+    for (let i = 0; i < buffer.length; i++) {
+        let val = Math.abs(buffer[i]);
+        if (val<min) min = val;
+    }
+    return min;
+}
 
 let THDDefaultPatch = {
     ...getDefaultPatch()

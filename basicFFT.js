@@ -124,8 +124,8 @@ function initFFT(N)
             L = iStep ;
         }
 
-        let mag=[];
-        let phase=[];
+        let mag=new Float32Array(N_2);
+        let phase=new Float32Array(N_2);
         for(let i=0;i<N_2;i++){
             const x=fr[i];
             const y=fi[i];
@@ -133,8 +133,8 @@ function initFFT(N)
             let p =m>zeroLevel? 
                     Math.atan2(x,-y) //x and y are rotated here to get the phase correct FFT is cosine based but Synthesis method is sine based
                 :0;//phase when magnitude is close to zero to avoid noise being misinterpreted as phase
-            mag.push(m);
-            phase.push(p);
+            mag[i]=m;
+            phase[i]=p;
         }
         return {
             magnitude: mag,

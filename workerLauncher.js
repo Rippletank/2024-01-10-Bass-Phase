@@ -27,74 +27,154 @@ from './audio.js';
 
 
 
-
-
-
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//THD Graph worker calls
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 const THDGraphWorker = new Worker('audioWorker.js', { type: 'module' });
+let THDGraphWorkerBusy = false;
 THDGraphWorker.onmessage = function(event) {
     const { data } = event;
+    THDGraphWorkerBusy = false;
   
-    // Check if there's an error
     if (data.error) {
       console.error(`There was an error calling the THD Graph function: ${data.error}`);
     } else {
-        // Handle the result
         THDGraphCallback(data.graphData);
     }
-  };   
+    checkForCachedTHDGraph()
+  };  
+THDGraphWorker.onerror = function(error) {
+    THDGraphWorkerBusy = false;
+    console.error(`An error occurred in the THD Graph worker: ${error.message}`);
+    checkForCachedTHDGraph();
+  } 
 let THDGraphCallback = (graphData)=>{};
 export function setTHDGraphCallback( callback ) {
     THDGraphCallback = callback;
 }
+let THDGraphCachedPatch = null;
 export function calculateTHDGraph( referencePatch ) {
+    if (THDGraphWorkerBusy){
+        THDGraphCachedPatch = referencePatch;
+        return;
+    }
+    THDGraphCachedPatch=null;
+    THDGraphWorkerBusy = true;
     THDGraphWorker.postMessage({
         action: 'getTHDGraph',
         referencePatch: referencePatch,
       });
 }
+function checkForCachedTHDGraph(){
+    if (THDGraphCachedPatch){
+        calculateTHDGraph(THDGraphCachedPatch);
+    }
+}
 
 
 
 
 
-
-
-
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//THD Percent worker calls
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 const THDPercentWorker = new Worker('audioWorker.js', { type: 'module' });
+let THDPercentWorkerBusy = false;
 THDPercentWorker.onmessage = function(event) {
+    THDPercentWorkerBusy=false;
     const { data } = event;
-  
-    // Check if there's an error
     if (data.error) {
       console.error(`There was an error calling the THD Percent function: ${data.error}`);
     } else {
-        // Handle the result
         THDPercentCallback(data.THDPercent);
-    }
+    }    
+    checkForCachedTHDPercent()
   }; 
+THDPercentWorker.onerror = function(error) {
+    THDPercentWorkerBusy=false;
+    console.error(`An error occurred in the THD Percent worker: ${error.message}`);
+    checkForCachedTHDPercent()
+}
 let THDPercentCallback = (THDPercent)=>{};
 export function setTHDPercentCallback( callback ) {
     THDPercentCallback = callback;
 }
+let THDPercentCachedPatch = null;
 export function calculateTHDPercent( referencePatch ) {
+    if (THDPercentWorkerBusy){
+        THDPercentCachedPatch = referencePatch;
+        return;
+    }
+    THDPercentCachedPatch=null;
+    THDPercentWorkerBusy=true;
     THDPercentWorker.postMessage({
         action: 'getTHDPercent',
         referencePatch: referencePatch,
       });
 }
+function checkForCachedTHDPercent(){
+    if (THDPercentCachedPatch){
+        calculateTHDPercent(THDPercentCachedPatch);
+    }
+}
 
 
 
 
 
-
-let detailedFFTCallback = (fft)=>{};
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Detailed FFT worker calls
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const detailedFFTWorker = new Worker('audioWorker.js', { type: 'module' });
+let detailedFFTWorkerBusy = false;
+detailedFFTWorker.onmessage = function(event) {
+    const { data } = event;
+    detailedFFTWorkerBusy = false;    
+    if (data.error) {
+      console.error(`There was an error calling the detailed FFT function: ${data.error}`);
+    } else {
+        detailedFFTCallback(data);
+    }
+    checkForCachedDetailedFFT();
+  }; 
+detailedFFTWorker.onerror = function(error) {
+    detailedFFTWorkerBusy=false;
+      console.error(`An error occurred in the detailed FFT worker: ${error.message}`);
+      checkForCachedDetailedFFT()
+  }
+let detailedFFTCallback = (data)=>{};
 export function setDetailedFFTCallback( callback ) {
     detailedFFTCallback = callback;
 }
+let detailedFFTCached = null;
 export function calculateDetailedFFT( sampleRate, patch, filterPreviewSubject ) {
-    detailedFFTCallback( getDetailedFFT( sampleRate, patch, filterPreviewSubject ) );
+    if (detailedFFTWorkerBusy){
+        detailedFFTCached = {sampleRate, patch, filterPreviewSubject};
+        return;
+    }
+    detailedFFTCached=null;
+    detailedFFTWorkerBusy=true;
+    detailedFFTWorker.postMessage({
+        action: 'getDetailedFFT',
+        sampleRate: sampleRate,
+        patch: patch,
+        filterPreviewSubject: filterPreviewSubject
+      });
 }
+function checkForCachedDetailedFFT(){
+    if (THDPercentCachedPatch){
+        calculateDetailedFFT(
+            detailedFFTCached.SampleRate, 
+            detailedFFTCached.Patch, 
+            detailedFFTCached.FilterPreviewSubject);
+    }
+}
+
+
+
+
+
+
 let previewCallback = (previewData)=>{};
 export function setPreviewCallback( callback ) {
     previewCallback = callback;

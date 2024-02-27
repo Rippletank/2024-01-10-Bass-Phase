@@ -220,7 +220,7 @@ function repaintDetailedFFT(){
 function doPaintDetailedFFT(){
     //Assumes longPreview is in place and up to date
     let previewToUse = longPreview; //Threadsafety
-    paintDetailedFFT(previewToUse.fft,  previewToUse.distortedSamples.length, previewToUse.virtualSampleRate, 'staticFFTCanvas');
+    paintDetailedFFT(previewToUse.magnitudes, previewToUse.virtualSampleRate, 'staticFFTCanvas');
 }
 
 
