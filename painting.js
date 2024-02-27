@@ -850,21 +850,25 @@ function paintTHDGraph(data, canvasId){
     ctx.stroke();
 
 
-    ctx.beginPath();    
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = getColor(0, 0, 0);
-    for (let i = 0; i < data.length; i++) {
-        let d = data[i];
-        let y = b - Math.log10(d.thd/0.001) * yScale;
-        if (y>b) y=b;
-        let x = l + Math.log2(d.frequency/20) * xScale;
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
+    if (data.thd)
+    {
+        ctx.beginPath();    
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColor(0, 0, 0);
+        for (let i = 0; i < data.thd.length; i++) {
+            let frequency = data.frequencies[i];
+            let thd = data.thd[i];
+            let y = b - Math.log10(thd/0.001) * yScale;
+            if (y>b) y=b;
+            let x = l + Math.log2(frequency/20) * xScale;
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
         }
+        ctx.stroke();
     }
-    ctx.stroke();
 }
 
 

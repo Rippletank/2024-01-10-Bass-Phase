@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Launch webworkers to handle audio processing on separate threads
+//Launch webworkers to handle separate threads for calls to the audio.js functions
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code
@@ -18,12 +18,74 @@ import {
     scaleAndGetNullBuffer,
 
     getPreview,    
-     
+
     getDetailedFFT, 
     getTHDPercent,
     getTHDGraph, 
 }
 from './audio.js';
+
+
+
+
+
+
+const THDGraphWorker = new Worker('audioWorker.js', { type: 'module' });
+THDGraphWorker.onmessage = function(event) {
+    const { data } = event;
+  
+    // Check if there's an error
+    if (data.error) {
+      console.error(`There was an error calling the THD Graph function: ${data.error}`);
+    } else {
+        // Handle the result
+        THDGraphCallback(data.graphData);
+    }
+  };   
+let THDGraphCallback = (graphData)=>{};
+export function setTHDGraphCallback( callback ) {
+    THDGraphCallback = callback;
+}
+export function calculateTHDGraph( referencePatch ) {
+    THDGraphWorker.postMessage({
+        action: 'getTHDGraph',
+        referencePatch: referencePatch,
+      });
+}
+
+
+
+
+
+
+
+
+const THDPercentWorker = new Worker('audioWorker.js', { type: 'module' });
+THDPercentWorker.onmessage = function(event) {
+    const { data } = event;
+  
+    // Check if there's an error
+    if (data.error) {
+      console.error(`There was an error calling the THD Percent function: ${data.error}`);
+    } else {
+        // Handle the result
+        THDPercentCallback(data.THDPercent);
+    }
+  }; 
+let THDPercentCallback = (THDPercent)=>{};
+export function setTHDPercentCallback( callback ) {
+    THDPercentCallback = callback;
+}
+export function calculateTHDPercent( referencePatch ) {
+    THDPercentWorker.postMessage({
+        action: 'getTHDPercent',
+        referencePatch: referencePatch,
+      });
+}
+
+
+
+
 
 
 let detailedFFTCallback = (fft)=>{};
@@ -33,24 +95,7 @@ export function setDetailedFFTCallback( callback ) {
 export function calculateDetailedFFT( sampleRate, patch, filterPreviewSubject ) {
     detailedFFTCallback( getDetailedFFT( sampleRate, patch, filterPreviewSubject ) );
 }
-
-let THDGraphCallback = (fft)=>{};
-export function setTHDGraphCallback( callback ) {
-    THDGraphCallback = callback;
-}
-export function calculateTHDGraph( referencePatch ) {
-    THDGraphCallback( getTHDGraph( referencePatch ) );
-}
-
-let THDPercentCallback = (fft)=>{};
-export function setTHDPercentCallback( callback ) {
-    THDPercentCallback = callback;
-}
-export function calculateTHDPercent( referencePatch ) {
-    THDPercentCallback( getTHDPercent( referencePatch ) );
-}
-
-let previewCallback = (preview)=>{};
+let previewCallback = (previewData)=>{};
 export function setPreviewCallback( callback ) {
     previewCallback = callback;
 }

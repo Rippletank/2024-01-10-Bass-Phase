@@ -136,7 +136,7 @@ function playAudio(index) {
         if (newSourceNode==sourceNode)
         {
             //delay stop to allow fft to finish decay
-            setInterval(function() {
+            setTimeout(function() {
                 if (newSourceNode==sourceNode) {
                     stop();
                 }
@@ -235,52 +235,28 @@ function updateBuffersAndDisplay(indexToPlayWhenDone = -1) {
     if (buffersPatchVersion == patchesToUse.version) return;
     buffersPatchVersion = patchesToUse.version;
 
-
     ensureAudioContext();
-    startUpdate();
-    setTimeout(function() { //allow for UI to update to indicate busy
-    try{
-        // let t0 = performance.now();
-        updateBuffers(patchesToUse);
-        updateDisplay();
-        updateTHDGraph(patchesToUse); 
-        fftFade('fftCanvas'); 
-        if (indexToPlayWhenDone>=0) playAudio(indexToPlayWhenDone);
-
-        // let t1 = performance.now();
-        // console.log("Execution time: " + (t1 - t0) + " milliseconds.");
-    }
-    finally{
-        endUpdate();
-    }},0);  
+    updateBuffers(patchesToUse);
+    updateTHDGraph(patchesToUse); 
+    fftFade('fftCanvas'); 
+    if (indexToPlayWhenDone>=0) playAudio(indexToPlayWhenDone);
 }
 
-let fullwaves = document.querySelectorAll('.fullwave');
-function startUpdate() {
-    fullwaves.forEach(canvas => {
-        canvas.classList.add('blur');
-    });
-}
-function endUpdate() {
-    fullwaves.forEach(canvas => {
-        canvas.classList.remove('blur');
-    });
-}
 
 
 
 
 
 let generatedSampleRate = 0;//Sample rate used to generate current buffers
-function updateBuffers(patchesToUse) {
-    //Inefficient to create two buffers independently - 
-    //envelope and all higher harmonics are the same, 
-    //but performance is acceptable and code is maintainable  
+function updateBuffers(patchesToUse) { 
     let sampleRate = getTrueSampleRate();
     generatedSampleRate = sampleRate;//Store to check later, if flags.changed then regenerate buffers to prevent samplerate conversion artefacts as much as possible
      
-
-    calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest );
+    startBufferUpdate();
+    //Allow the UI to update
+    setTimeout(function() {
+        calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest );
+    },0);
 }
 
 setAudioBufferCallback((bufferA, bufferB, bufferNull)=>{
@@ -288,8 +264,20 @@ setAudioBufferCallback((bufferA, bufferB, bufferNull)=>{
     audioBufferB = bufferB;
     nullTestBuffer = bufferNull;
     doPaintBuffersAndNull();
+    endBufferUpdate();
 });
 
+let fullwaves = document.querySelectorAll('.fullwave');
+function startBufferUpdate() {
+    fullwaves.forEach(canvas => {
+        canvas.classList.add('blur');
+    });
+}
+function endBufferUpdate() {
+    fullwaves.forEach(canvas => {
+        canvas.classList.remove('blur');
+    });
+}
 
 
 
@@ -317,7 +305,11 @@ function doPaintBuffersAndNull(){
 let THDGraphData = null;
 function updateTHDGraph(patchesToUse){
     let patch =getPreviewSubjectCachedPatch(patchesToUse);
-    calculateTHDGraph(patch);
+    startTHDGraphUpdate();
+    //Allow the UI to update
+    setTimeout(function() {
+        calculateTHDGraph(patch);
+    },0);
 }
 setTHDGraphCallback((graphData)=>{
     THDGraphData = graphData; 
@@ -326,7 +318,23 @@ setTHDGraphCallback((graphData)=>{
 function doPaintTHDGraph(){
     if (!THDGraphData) return;
     paintTHDGraph(THDGraphData, 'THDGraphCanvas');
+    endTHDGraphUpdate();
 }
+
+
+let thdGraphElement = document.querySelectorAll('.thdGraphElement');
+function startTHDGraphUpdate() {
+    thdGraphElement.forEach(canvas => {
+        canvas.classList.add('blur');
+    });
+}
+function endTHDGraphUpdate() {
+    thdGraphElement.forEach(canvas => {
+        canvas.classList.remove('blur');
+    });
+}
+
+
 
 
 function updateDisplay(){

@@ -395,7 +395,10 @@ let THDEfficiencyFactor = 2; //must be power of 2 Adjust the resolution and FFT 
 let THDfftResolution = 2.5;//Hz Nominal resolution - will be adjusted by Efficiency factor
 let THDfftSize = 16384; //will be adjusted by Efficiency factor
 function getTHDGraph(referencePatch){
-    if (referencePatch.distortion==0) return [];
+    if (referencePatch.distortion==0) return {
+        frequencies:new Float32Array(0),
+        thd:new Float32Array(0)
+    };
 
     let patch = {
         ...THDDefaultPatch,//all values covered
@@ -423,7 +426,12 @@ function getTHDGraph(referencePatch){
 
     let harmonicsToInclude = 10;
     let maxBin = bufferSize/2-1;
-    let THD = [];
+    let THD ={
+        frequencies:new Float32Array(frequencies.length),
+        thd:new Float32Array(frequencies.length)
+    }
+    
+    ;
     for(let i=0;i<frequencies.length;i++){
         patch.frequency=frequencies[i];
         let b = new Float32Array(bufferSize);
@@ -438,11 +446,8 @@ function getTHDGraph(referencePatch){
             let vn = fft.magnitude[i];
             total += vn * vn;
         }
-        THD.push(
-            {
-               frequency:patch.frequency,
-               thd:  Math.sqrt(total) / fft.magnitude[fundamentalBin] *100
-            });
+        THD.frequencies[i] = patch.frequency;
+        THD.thd[i] = Math.sqrt(total) / fft.magnitude[fundamentalBin] *100;
     }
 
     return THD;
