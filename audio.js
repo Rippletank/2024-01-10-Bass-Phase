@@ -122,7 +122,7 @@ function getBufferMax(buffer){
     let max = 0;
     for(let chan=0;chan<buffer.numberOfChannels;chan++){
         let b = buffer.data[chan];
-        let bufferSize = buffer.length;
+        let bufferSize = b.length;
         for (let i = 0; i < bufferSize; i++) {
             let val = Math.abs( b[i]);
             if (val>max) max = val;

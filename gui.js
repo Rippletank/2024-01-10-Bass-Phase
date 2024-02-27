@@ -46,9 +46,9 @@ import {
     updateDetailedFFT, 
     repaintDetailedFFT,
 
-    //Common variables
     getCachedPatches,
     setCachedPatches,
+    forceBufferRegeneration,
     getFlags,
 
     startSuspendPreviewUpdates, endSuspendPreviewUpdates
@@ -89,6 +89,7 @@ previewButtons.forEach(function(button) {
                 flags.isNormToLoudest =state;
                 previewSubjectChanged = true;
                 updatePreviewButtonState();
+                forceBufferRegeneration();
                 flags.changed = true;
             });
             button.isChecked =()=> flags.isNormToLoudest == state;
@@ -97,6 +98,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 flags.isStereo = !flags.isStereo;
                 updatePreviewButtonState();
+                forceBufferRegeneration();
                 previewSubjectChanged = true;
                 setUpStereo(flags.isStereo);
             });
@@ -508,7 +510,6 @@ function loadPatchIntoContainer(id, patch) {
 
 
 
-let cachedPatchVersion =0;
 function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     let patch = {};
     commonSectionNames.forEach((sectionName)=>{
@@ -522,7 +523,6 @@ function updateAllLabelsAndCachePatches(syncLeftToRightValues = false){
     });
     let cachedPatches ={
         Cmn: {...patch},
-        version: ++cachedPatchVersion
     }
 
     loadSliderValuesFromContainer('SoundASetup', patch);

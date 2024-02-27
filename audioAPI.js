@@ -468,8 +468,13 @@ let cachedPatches =
 function getCachedPatches(){
     return cachedPatches;
 }
+let cachedPatchVersion =0;
 function setCachedPatches(newCachedPatches){
+    cachedPatches.version = ++cachedPatchVersion
     cachedPatches = newCachedPatches;
+}
+function forceBufferRegeneration(){
+    cachedPatches.version = ++cachedPatchVersion
 }
 
 function previewPatchName(){
@@ -588,7 +593,7 @@ function getBufferMax(buffer){
     let max = 0;
     for(let chan=0;chan<buffer.numberOfChannels;chan++){
         let b = buffer.data[chan];
-        let bufferSize = buffer.length;
+        let bufferSize = b.length;
         for (let i = 0; i < bufferSize; i++) {
             let val = Math.abs( b[i]);
             if (val>max) max = val;
@@ -601,7 +606,7 @@ function scaleBuffer(buffer, scale){
     let max = 0;
     for(let chan=0;chan<buffer.numberOfChannels;chan++){
         let b = buffer.data[chan];
-        let bufferSize = buffer.length;
+        let bufferSize = b.length;
         for (let i = 0; i < bufferSize; i++) {
             b[i]*=scale;
         }
@@ -658,6 +663,7 @@ export {
 
     getCachedPatches,
     setCachedPatches,
+    forceBufferRegeneration,
 
     //Common variables
     getFlags,
