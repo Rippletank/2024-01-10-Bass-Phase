@@ -188,18 +188,22 @@ function scaleBuffer(buffer, scale){
 
 function buildNullTest(bufferA, bufferB){
     let length = Math.min(bufferA.length, bufferB.length);
+    let nullData = [];
+    for(let i = 0; i < bufferA.numberOfChannels; i++){
+        nullData.push(new Float32Array(length));
+    }
     let nullTest = {
         length: length,
         sampleRate: bufferA.sampleRate,
         numberOfChannels: bufferA.numberOfChannels,
-        data: new Array(bufferA.numberOfChannels).fill(new Float32Array(length))
+        data: nullData
       };
     for (let channel = 0; channel < bufferA.numberOfChannels; channel++) {
         var A = bufferA.data[channel];
         var B = bufferB.data[channel];
-        let b = nullTest.data[channel];
+        let N = nullTest.data[channel];
         for (let i = 0; i < length; i++) {
-        b[i] = A[i] - B[i];
+        N[i] = A[i] - B[i];
         }
     }
     return nullTest;
@@ -236,7 +240,7 @@ function getPreview(referencePatch, filterPreviewSubject, sampleRate){
         bufferSize,
         false,
         sampleRate/virtualSampleRate);
-        result.fft = getFFT1024(result.distortedSamples);
+    result.fft = getFFT1024(result.distortedSamples);
     return result;
 }
 
@@ -264,12 +268,8 @@ function getDetailedFFT(samplerate, referencePatch, filterPreviewSubject){
 let window65k =buildBlackmanHarrisWindow(65536); //or kaiserWindow(65536, alpha) low alpha looks bad (side lobes show), high alpha is not as narrow as Blackman-Harris
 //relativeSampleRates = is the ratio of the actual sample rate to the virtual sample rate - how much lower the real one is - don't include harmonics above the real Nyquist limit
 function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false, relativeSampleRates=1){
-    let envelopeBuffer =[];
-    let b = [];
-    for (let i = 0; i < bufferSize; i++) {
-        envelopeBuffer.push(1);
-        b.push(0);
-    }
+    let envelopeBuffer =new Float32Array(bufferSize).fill(1);
+    let b = new Float32Array(bufferSize);
 
     let filter =null;
     if (patch.filterSlope>0 && filterPreviewSubject>0){
@@ -320,14 +320,14 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
         AddInharmonics(patch, sampleRate, b, window  , 0);
     } 
 
-    let distorted =[...b];
+    let distorted =new Float32Array(b);
     distort(distorted, patch, sampleRate, true, includeInharmonics);
     jitter(distorted, sampleRate, patch, true, Math.random());
 
     return {
         samples:b,
-        magnitude:magnitude,
-        phase:phase,
+        magnitude:new Float32Array(magnitude),
+        phase:new Float32Array(phase),
         mean:b.reduce((a, b) => a + b, 0) / b.length, //average value
         max:getMax(b),
         min:getMin(b),
@@ -492,7 +492,7 @@ function buildEnvelopeBuffer(
         let isDecay = false;
         const attackRate = 1 / (attack * sampleRate); //Linear attack
         const decayLambda = ln1024 / (decay * sampleRate); //Exponential decay -> decay is time in seconds to get to 1/1024 (-60db)of start value
-        let envValues = [0]; // Array to store env values - ensure starts at zero
+        let envValues = new Float32Array(bufferSize); // Array to store env values - ensure starts at zero
         for (let i = 1; i < bufferSize; i++) {
             if (isHold){
                 if (--holdSamples <=0){
@@ -515,7 +515,7 @@ function buildEnvelopeBuffer(
             }
             //Band limit envelope 1-pole IIR low pass
             y +=  a * (x - y);
-            envValues.push(y);
+            envValues[i] = y;
         }
         return envValues;
 }
@@ -550,7 +550,7 @@ function buildFilter(
         let y=f1;
         const a = 1/Math.max(1,patch.envelopeFilter);
 
-        let envValues = []; // Array to store env values
+        let envValues = new Float32Array(bufferSize); // Array to store env values
         for (let i = 0; i < bufferSize; i++) {
             if (isHold){
                 if (i >= holdSamples){
@@ -577,17 +577,17 @@ function buildFilter(
             }
             //Band limit envelope 1-pole IIR low pass
             y +=  a * (x - y);
-            envValues.push(1/(20*Math.pow(2,y) * pi2_sr));// convert to rads/sample freq = 20*Math.pow(2,y), w0 = 2piF/sampleRate then store 1/w0
+            envValues[i]=1/(20*Math.pow(2,y) * pi2_sr);// convert to rads/sample freq = 20*Math.pow(2,y), w0 = 2piF/sampleRate then store 1/w0
         }
         let order2 = patch.filterSlope/6*2; //2n, n=filterOrder, filterOrder = filterSlope/6
         const passBandEnd = Math.pow(1/(0.994*0.994)-1,1/order2); //inverse of butterworth equation, 0.994 is point where response is down -0.05db
         const stopBandEnd= Math.pow(1/(zeroLevel*zeroLevel)-1,1/order2); //inverse of butterworth equation, zeroLevel when response is consider zero
         
         const lutSize = 10000;
-        let lut = [];
+        let lut =new Float32Array(lutSize);
         const scale = (stopBandEnd-passBandEnd)/lutSize;
         for (let i = 0; i < lutSize; i++) {
-            lut.push(Math.pow(1 + Math.pow(passBandEnd + i*scale ,order2),-0.5));
+            lut[i] = Math.pow(1 + Math.pow(passBandEnd + i*scale ,order2),-0.5);
         }
         
         return {

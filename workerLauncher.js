@@ -12,15 +12,6 @@
 //Quick IIF refresher and general approach for suitable smoothing values https://zipcpu.com/dsp/2017/08/19/simple-filter.html
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-import {
-    getAudioBuffer, 
-    preMaxCalcStartDelay,
-    scaleAndGetNullBuffer,
-
-    getPreview,
-}
-from './audio.js';
-
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -225,15 +216,52 @@ function checkForCachedAudioBuffer(){
 
 
 
-
-
-
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//preview worker calls
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const previewWorker = new Worker('audioWorker.js', { type: 'module' });
+let previewWorkerBusy = false;
+previewWorker.onmessage = function(event) {
+    const { data } = event;
+    previewWorkerBusy = false;    
+    if (data.error) {
+      console.error(`There was an error calling the Preview function: ${data.error}`);
+    } else {
+        previewCallback(data.preview);
+    }
+    checkForCachedPreview();
+  }; 
+previewWorker.onerror = function(error) {
+    previewWorkerBusy=false;
+    console.error(`An error occurred in the Preview worker: ${error.message}`);
+    checkForCachedPreview()
+  }
 let previewCallback = (previewData)=>{};
 export function setPreviewCallback( callback ) {
     previewCallback = callback;
 }
+let previewCached = null;
 export function calculatePreview( referencePatch, filterPreviewSubject, sampleRate ) {
-    previewCallback( getPreview( referencePatch, filterPreviewSubject, sampleRate ) );
+    if (previewWorkerBusy){
+        previewCached = {referencePatch, filterPreviewSubject, sampleRate};
+        return;
+    }
+    previewCached=null;
+    previewWorkerBusy=true;
+    previewWorker.postMessage({
+        action: 'getPreview',
+        referencePatch:referencePatch,
+        filterPreviewSubject:filterPreviewSubject,
+        sampleRate:sampleRate
+      });
+}
+function checkForCachedPreview(){
+    if (previewCached){
+        calculatePreview(
+            previewCached.referencePatch, 
+            previewCached.filterPreviewSubject, 
+            previewCached.sampleRate);
+    }
 }
 
 

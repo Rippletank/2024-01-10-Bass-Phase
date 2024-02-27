@@ -45,6 +45,9 @@ self.onmessage = function(event) {
             case 'getAudioBuffer':
                 doAudioBuffer(data.patchesToUse, data.sampleRate, data.isStereo , data.isNormToLoudest);
                 break;
+            case 'getPreview':
+                doPreview(data.referencePatch, data.filterPreviewSubject , data.sampleRate);
+                break;
             default:
                 throw new Error(`Unknown action: ${action}`);
         }
@@ -71,6 +74,23 @@ function doDetailedFFT(sampleRate, patch, filterPreviewSubject) {
     self.postMessage({ magnitudes, virtualSampleRate }, [magnitudes.buffer]);
 }
 
+function doPreview(referencePatch, filterPreviewSubject, sampleRate) {
+    var preview = getPreview( referencePatch, filterPreviewSubject, sampleRate );
+    let transferList = [
+        preview.fft.magnitude.buffer, 
+        preview.fft.phase.buffer,
+        preview.samples.buffer,
+        preview.magnitude.buffer,
+        preview.phase.buffer,
+        preview.distortedSamples.buffer
+    ];
+    if (preview.filter){
+        transferList.push(preview.filter.invW0.buffer);
+        transferList.push(preview.filter.lut.buffer);
+    }
+    self.postMessage({ preview }, transferList);
+}
+
 function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
     const maxPreDelay = preMaxCalcStartDelay([patchesToUse.A, patchesToUse.B, patchesToUse.AR,patchesToUse.BR], sampleRate);
 
@@ -89,9 +109,33 @@ function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
     );
 
     let bufferNull = scaleAndGetNullBuffer(bufferA, bufferB, isNormToLoudest);
-    self.postMessage({ bufferA, bufferB, bufferNull });
+
+    let transferList = [    ];
+    getAudioBufferTransferList(transferList, bufferA)
+    getAudioBufferTransferList(transferList, bufferB)
+    getAudioBufferTransferList(transferList, bufferNull)
+
+    self.postMessage({ bufferA, bufferB, bufferNull }, transferList);
 }
 
+function getAudioBufferTransferList(list, buffer){
+    if (buffer.buffer){
+        buffer.buffer.data.forEach((b)=>list.push(b.buffer));
+    }
+    if (buffer.filters){
+        buffer.filters.forEach((filter)=>
+        {
+            list.push(filter.invW0.buffer);
+            list.push(filter.lut.buffer);
+        });
+    }
+    if (buffer.envelopes){
+        buffer.envelopes.forEach((envelope)=>
+        {
+            list.push(envelope.buffer);
+        });
+    }   
+}
 
 
 
