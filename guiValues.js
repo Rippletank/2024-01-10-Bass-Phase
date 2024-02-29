@@ -284,6 +284,55 @@ function setValueFromPatch(ve, patch){
         case "jitterPeriodic": 
             ve.textContent =toPercent(patch.jitterPeriodic);break;
 
+        case "digitalBitDepth":
+            ve.textContent =patch.digitalBitDepth==25? "off" : patch.digitalBitDepth.toFixed(0)+"bit";
+            break;
+
+        case "digitalDitherLevel":
+            let rmsFactor = 1;
+            let includeBits = true;
+            switch(Math.round(patch.digitalDitherType)){
+                case 0: 
+                    rmsFactor = 1;
+                    includeBits = true;
+                    break;
+                case 1: 
+                    rmsFactor = 0.408;
+                    includeBits = true;
+                    break;
+                case 2: 
+                    rmsFactor = 0.408;
+                    includeBits = false;
+                    break;
+            }
+            if (patch.digitalDitherLevel==0){
+                ve.textContent ="off";
+            }
+            else
+            {
+                let rms = patch.digitalDitherLevel * 0.5 * rmsFactor;
+                //Show only rms for gaussian dither because it is technically unbounded. Include rms in brackets for the others
+                ve.textContent = (includeBits? patch.digitalDitherLevel.toFixed(1)+" bit" + (patch.digitalDitherLevel==1? "" :"s") + " [": "")
+                    + rms.toFixed(2) + "rms"
+                    + (includeBits? "]" :"");
+            }
+            break;
+        case "digitalDitherFakeness":
+            ve.textContent =toPercent(patch.digitalDitherFakeness);break;
+        case "digitalDitherSubtract":
+            ve.textContent =toPercent(patch.digitalDitherSubtract);break;
+        case "digitalDitherShaping":
+            ve.textContent =toPercent(patch.digitalDitherShaping);break;
+
+        case "digitalDitherType":
+            let ditherTypeText = "off";
+            switch(Math.round(patch.digitalDitherType)){
+                case 0: ditherTypeText = "Rectangular";break;
+                case 1: ditherTypeText = "Triangular";break;
+                case 2: ditherTypeText = "Gaussian";break;
+            }
+            ve.textContent =ditherTypeText;
+            break;
             
         case "oversampleTimes":
             ve.textContent =allowedOversampleTimes[patch.oversampleTimes]+'x';break;

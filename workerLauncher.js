@@ -192,7 +192,7 @@ export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNorm
     audioBufferCached=null;
     audioBufferWorkerBusy=true;
     audioBufferWorker.postMessage({
-        action: 'getAudioBuffer',
+        action: 'getAudioBuffers',
         patchesToUse:patchesToUse,
         sampleRate:sampleRate,
         isStereo:isStereo,

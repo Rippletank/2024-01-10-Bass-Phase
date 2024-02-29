@@ -193,9 +193,6 @@ const distortionPresets = [
             oddDistortion:0,
             tanhDistortion:0.4,
             clipDistortion:0,
-            jitterADC:0,
-            jitterDAC:0,
-            jitterPeriodic:0,
             speakerAmount:0,
             speakerMass:0.5,
             speakerDamping:0.5,
@@ -211,9 +208,6 @@ const distortionPresets = [
             oddDistortion:0,
             tanhDistortion:0.06,
             clipDistortion:0,
-            jitterADC:0,
-            jitterDAC:0,
-            jitterPeriodic:0,
             speakerAmount:0,
             speakerMass:0.5,
             speakerDamping:0.5,
@@ -229,9 +223,6 @@ const distortionPresets = [
             oddDistortion:0.5,
             tanhDistortion:0.7,
             clipDistortion:0,
-            jitterADC:0,
-            jitterDAC:0,
-            jitterPeriodic:0,
             speakerAmount:0,
             speakerMass:0.5,
             speakerDamping:0.5,
@@ -247,9 +238,6 @@ const distortionPresets = [
             oddDistortion:0,
             tanhDistortion:0,
             clipDistortion:0,
-            jitterADC:0,
-            jitterDAC:0,
-            jitterPeriodic:0,
             speakerAmount:0.43,
             speakerMass:0.05,
             speakerDamping:0.96,
@@ -257,28 +245,67 @@ const distortionPresets = [
             speakerNonLinearity:0.1,
         }
     },
+];
+
+
+const digitalPresets = [
+    {
+        name:"Default",
+        patch:{
+            jitterADC:0,
+            jitterDAC:0,
+            jitterPeriodic:0,
+            digitalDitherType:0,
+            digitalDitherLevel:0,
+            digitalDitherSubtract:0,
+            digitalBitDepth:25,
+            digitalDitherFakeness:0,
+            digitalDitherShaping:0,
+        }
+    },
     {
         name:"Jitter",
         patch:{
-            distortion:1,
-            hyperbolicDistortion:0,
-            oddDistortion:0,
-            tanhDistortion:0,
-            clipDistortion:0,
             jitterADC:0.5,
             jitterDAC:0.5,
             jitterPeriodic:0.5,
-            oversampleTimes:0,//How many times samplerate is raised, index into allowedOversampleTimes [1,2,3,4,6,8,12,16]
-            oversampleStopDepth:0.5,//-70db to -110db - default = -90db
-            oversampleTransition:0.5,
-            speakerAmount:0,
-            speakerMass:0.5,
-            speakerDamping:0.5,
-            speakerStiffness:0.5,
-            speakerNonLinearity:0,
+            digitalDitherLevel:0,
+            digitalDitherSubtract:0,
+            digitalDitherType:0,
+            digitalBitDepth:25,
+            digitalDitherFakeness:0,
+            digitalDitherShaping:0,
         }
     },
-];
+    {
+        name:"Dither 8bit",
+        patch:{
+            jitterADC:0,
+            jitterDAC:0,
+            jitterPeriodic:0,
+            digitalDitherType:1,//triangular
+            digitalDitherLevel:2,
+            digitalDitherSubtract:0,
+            digitalBitDepth:8,//gives 
+            digitalDitherFakeness:0,
+            digitalDitherShaping:0,
+        }
+    },
+    {
+        name:"Dither 8bit (fake)",
+        patch:{
+            jitterADC:0,
+            jitterDAC:0,
+            jitterPeriodic:0,
+            digitalDitherType:1,//triangular
+            digitalDitherLevel:2,
+            digitalDitherSubtract:0,
+            digitalBitDepth:8,//gives 
+            digitalDitherFakeness:1,
+            digitalDitherShaping:0,
+        }
+    },
+]
 
 const speakerPresets = [
     {
@@ -489,6 +516,12 @@ function getTrueDefaultPatch(){
         jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering
         jitterPeriodic:0,//0..1 0 = off, 1 = max jitter applied at fixed frequency to ADC
 
+        digitalBitDepth:25,//25==off, otherwise 2..24 
+        digitalDitherLevel:0,//0..2, 0 = off, 2 = max dither 2bit depth
+        digitalDitherType:0,//0..2, 0 = Retangular, 1 Triangular, 2 = Gaussian
+        digitalDitherSubtract:0,//0..1 Amount of noise subtracted from the signal after bit depth reduction
+        digitalDitherShaping:0,//0..1 Amount of noise shaping applied to the dither
+
         inharmonicALevel:-91,//-91..0, in db -91 is off
         inharmonicBLevel:-91,//-91..0, in db -91 is off
         inharmonicCLevel:-91,//-91..0, in db -91 is off
@@ -557,12 +590,13 @@ function getDefaultBPatch(){
 
 
 const miniPresets ={
-    wavePresets:wavePresets, 
-    envelopePresets:envelopePresets, 
-    distortionPresets:distortionPresets, 
-    speakerPresets:speakerPresets, 
-    filterPresets:filterPresets, 
-    oversamplingPresets:oversamplingPresets
+    wavePresets, 
+    envelopePresets, 
+    distortionPresets, 
+    speakerPresets, 
+    filterPresets, 
+    oversamplingPresets,
+    digitalPresets
 };
 function getMiniPresets(){
     return miniPresets;

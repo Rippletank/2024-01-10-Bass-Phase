@@ -30,6 +30,7 @@
 
 
 import { downsample, generateBlackmanHarrisFilterKernel } from './oversampling.js';
+import { SeededSplitMix32Random } from './gaussianRandom.js';
 
 
 //outBuffer length assumed to be inBuffer.length * some constant
@@ -39,7 +40,7 @@ const periodJitterFrequency = 37;
 const jitterDownsampleFilter = generateBlackmanHarrisFilterKernel(0.5/jitterOversampling, 30*jitterOversampling);
 function jitter(inBuffer, sampleRate, patch, isCyclic, randomSeed)
 {
-    if (patch.jitterADC==0 && patch.jitterDAC==0 && patch.jitterPeriodic==0)  return ;
+    if (!patch.jitterADC && !patch.jitterDAC && !patch.jitterPeriodic)  return ;
     const DACAmount = patch.jitterDAC;
     const ADCAmount = patch.jitterADC;
     const periodicAmount = patch.jitterPeriodic;
@@ -70,7 +71,7 @@ function jitter(inBuffer, sampleRate, patch, isCyclic, randomSeed)
         
         
         let y3=0;
-        let x3 =2 + jitterFactor *( boxMullerRandom(rand) * DACAmount);//
+        let x3 =2 + jitterFactor *(rand.nextGaussian() * DACAmount);//
         if (periodicAmount>0){
             x3 += jitterFactor *periodicAmount * Math.sin(periodicW*i);
         }
@@ -87,7 +88,7 @@ function jitter(inBuffer, sampleRate, patch, isCyclic, randomSeed)
         }
 
         //Calculate sample time offset for y2 from integer point
-        let t2 =  (boxMullerRandom(rand)*jitterFactor) * ADCAmount;//-1<->+1 +-amount
+        let t2 =  (rand.nextGaussian() *jitterFactor) * ADCAmount;//-1<->+1 +-amount
 
         //Core Lagrange interpolation
         // x values fixed 
@@ -139,83 +140,10 @@ function jitter(inBuffer, sampleRate, patch, isCyclic, randomSeed)
 }
 
 
-
-
-// function jitter_ADC(buffer, amount, seed, isCyclic){
-//     let rand =new  SeededSplitMix32Random(seed)
-//     let length = buffer.length;
-//     for(let i=0;i<length;i++){
-//         let y1 = buffer[i];
-//         let y0, y2;
-//         // let x0=-1;
-//         // let x1=0;
-//         // let x2=1;
-
-//         if (isCyclic) {
-//             // Wrap edge values
-//             y0 = buffer[(i - 1 + length) % length];
-//             y2 = buffer[(i + 1) % length];
-//         } else {
-//             // Set edge values to zero
-//             y0 = i - 1 >= 0 ? buffer[i - 1] : 0;
-//             y2 = i + 1 < length ? buffer[i + 1] : 0;
-//         }
-
-//         // Quadratic interpolation
-//         let x =  (boxMullerRandom(rand)*0.5) * amount;//-1<->+1 +-amount/2 - max of half sample period either side
-
-//         // let y = ((t - x1) * (t - x2) / ((x0 - x1) * (x0 - x2))) * y0
-//         //        + ((t - x0) * (t - x2) / ((x1 - x0) * (x1 - x2))) * y1
-//         //        + ((t - x0) * (t - x1) / ((x2 - x0) * (x2 - x1))) * y2;
-
-//         buffer[i] = (x  * (x - 1) / 2) * y0
-//         - (x + 1) * (x - 1) * y1
-//         + ((x + 1) * x / 2) * y2;
-
-//     }
-// }
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Seeded random number generator giving normal distribution of values
-//Originally direct from  Github Copilot \/(^_^)\/
-//but changed SplitMix32 ->from referenced stackoverflow posts
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-// Seeded random number generator
-function SeededSplitMix32Random(seed) {
-    this.m = 0x80000000-1; // 2**31;
-    this.state =Math.floor( (seed ? seed : Math.random()) *this.m);
-}
-
-//SplitMix32
-//https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
-//https://stackoverflow.com/questions/17035441/looking-for-decent-quality-prng-with-only-32-bits-of-state
-SeededSplitMix32Random.prototype.nextInt = function() {
-    let z = (this.state += 0x9E3779B9) | 0; //Ensure z is a 32bit integer
-    z ^= z >> 16; 
-    z *= 0x21f0aaad;
-    z ^= z >> 15;
-    z *= 0x735a2d97;
-    z ^= z >> 15;
-    return z;
-}
-SeededSplitMix32Random.prototype.nextFloat = function() {
-    // returns in range [0,1]
-    return this.nextInt() / this.m ;
-}
-
-// Box-Muller transform
-function boxMullerRandom(seededRandom) {
-    let u = 0, v = 0;
-    while(u === 0) u = seededRandom.nextFloat(); //exclude zero
-    while(v === 0) v = seededRandom.nextFloat(); //exclude zero
-    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-}
-
-
 //Maximum size of jitter in samples - 0.25 is 1/4 sample period at lower sample rate before upsampling
 function getJitterFactor(){
     return jitterFactor;
 }
+
 
 export { jitter, getJitterFactor };

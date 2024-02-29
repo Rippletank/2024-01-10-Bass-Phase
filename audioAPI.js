@@ -423,7 +423,13 @@ function setCachedPatches(newCachedPatches){
     cachedPatches = newCachedPatches;
 }
 function forceBufferRegeneration(){
-    cachedPatches.version = ++cachedPatchVersion
+    buffersPatchVersion=0;
+}
+
+
+function forcePreviewRegeneration(){
+    previewPatchVersion=0;
+    longPreviewPatchVersion=0;
 }
 
 function previewPatchName(){
@@ -583,6 +589,7 @@ export {
     getCachedPatches,
     setCachedPatches,
     forceBufferRegeneration,
+    forcePreviewRegeneration,
 
     //Common variables
     getFlags,

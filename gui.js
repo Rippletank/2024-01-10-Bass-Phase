@@ -49,6 +49,7 @@ import {
     getCachedPatches,
     setCachedPatches,
     forceBufferRegeneration,
+    forcePreviewRegeneration,
     getFlags,
 
     startSuspendPreviewUpdates, endSuspendPreviewUpdates
@@ -314,6 +315,7 @@ previewButtons.forEach(function(button) {
 
 function DoFullPreviewUpdate(){
     updatePreviewButtonState();
+    forcePreviewRegeneration();
     updatePreview();
 }
 
@@ -354,12 +356,14 @@ fftFill("fftCanvas");
 //Generally methods for sliders and preset buttons
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
+//Ids of div sections that contain sliders and should be checked and loaded
 const commonSectionNames = [
     'CommonSettings', 
     'FilterSetup', 
     'TestSetup', 
-    'DistortionSetup'];
+    'DistortionSetup',
+    'DigitalSetup'
+];
 
 
 let autoUpdateDetailedFFT = true;
@@ -379,21 +383,22 @@ function initSliders(){
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
     setInterval(function() {
-        if (!isMouseDown && Date.now() - lastUpdate > 300) {
+        if (!isMouseDown && Date.now() - lastUpdate > 200) {
             if (flags.changed){
                 updateBuffersAndDisplay();
                 if (autoUpdateDetailedFFT) updateDetailedFFT();
+                previewSubjectChanged=false;
             }
             else if (previewSubjectChanged && autoUpdateDetailedFFT){
                 previewSubjectChanged=false;
                 updateDetailedFFT();//Respond to changes of previewSubject (and isStereo)
             }
         }
-    }, 300); 
+    }, 200); 
 
     setTimeout(function() {
         if (autoUpdateDetailedFFT) updateDetailedFFT();
-    },2000);
+    },500);
 }
 
 
@@ -456,7 +461,7 @@ function setupPresetButtons(){
     insertPresetButtons('filterPresetButtons', miniPresets.filterPresets);
     insertPresetButtons('distortionPresets', miniPresets.distortionPresets);
     insertPresetButtons('oversamplingPresets', miniPresets.oversamplingPresets);
-    insertPresetButtons('oversamplingPresets', miniPresets.oversamplingPresets);
+    insertPresetButtons('digitalPresets', miniPresets.digitalPresets);
 }
 
 function insertPresetButtons(id, presetList){     

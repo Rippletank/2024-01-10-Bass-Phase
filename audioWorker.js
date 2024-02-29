@@ -26,6 +26,7 @@ import {
 }
 from './audio.js';
 
+
 // If you need to load external scripts, you can do so with importScripts
 // importScripts('script1.js', 'script2.js');
 
@@ -42,7 +43,7 @@ self.onmessage = function(event) {
             case 'getDetailedFFT':
                 doDetailedFFT(data.sampleRate, data.patch, data.filterPreviewSubject );
                 break;
-            case 'getAudioBuffer':
+            case 'getAudioBuffers':
                 doAudioBuffer(data.patchesToUse, data.sampleRate, data.isStereo , data.isNormToLoudest);
                 break;
             case 'getPreview':
@@ -58,23 +59,30 @@ self.onmessage = function(event) {
 };
 
 function doTHDGraphData(referencePatch) {
+    //let t = performance.now();
     var graphData = getTHDGraph( referencePatch );
     self.postMessage({ graphData },  [graphData.thd.buffer, graphData.frequencies.buffer]);
+    //console.log('THD graph time:', performance.now()-t);
 }
 
 function doTHDPercent(referencePatch) {
+    //let t = performance.now();
     var THDPercent = getTHDPercent( referencePatch );
     self.postMessage({ THDPercent });
+    //console.log('THD percent time:', performance.now()-t);
 }
 
 function doDetailedFFT(sampleRate, patch, filterPreviewSubject) {
+    //let t = performance.now();
     var fft = getDetailedFFT( sampleRate, patch, filterPreviewSubject );
     let magnitudes = fft.fft.magnitude;
     let virtualSampleRate = fft.virtualSampleRate;
     self.postMessage({ magnitudes, virtualSampleRate }, [magnitudes.buffer]);
+    //console.log('Detailed FFT time:', performance.now()-t);
 }
 
 function doPreview(referencePatch, filterPreviewSubject, sampleRate) {
+    //let t = performance.now();
     var preview = getPreview( referencePatch, filterPreviewSubject, sampleRate );
     let transferList = [
         preview.fft.magnitude.buffer, 
@@ -89,10 +97,16 @@ function doPreview(referencePatch, filterPreviewSubject, sampleRate) {
         transferList.push(preview.filter.lut.buffer);
     }
     self.postMessage({ preview }, transferList);
+    //console.log('Preview time:', performance.now()-t);
 }
 
+
+
+
 function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
-    const maxPreDelay = preMaxCalcStartDelay([patchesToUse.A, patchesToUse.B, patchesToUse.AR,patchesToUse.BR], sampleRate);
+    //let t = performance.now();
+    let patchList = [patchesToUse.A, patchesToUse.AR, patchesToUse.B, patchesToUse.BR]
+    const maxPreDelay = preMaxCalcStartDelay(patchList, sampleRate);
 
     let bufferA = getAudioBuffer(
         sampleRate, 
@@ -108,7 +122,7 @@ function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
         maxPreDelay
     );
 
-    let bufferNull = scaleAndGetNullBuffer(bufferA, bufferB, isNormToLoudest);
+    let bufferNull = scaleAndGetNullBuffer(bufferA, bufferB, isNormToLoudest, patchList);
 
     let transferList = [    ];
     getAudioBufferTransferList(transferList, bufferA)
@@ -116,6 +130,7 @@ function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
     getAudioBufferTransferList(transferList, bufferNull)
 
     self.postMessage({ bufferA, bufferB, bufferNull }, transferList);
+    //console.log('Audio buffer time:', performance.now()-t);
 }
 
 function getAudioBufferTransferList(list, buffer){

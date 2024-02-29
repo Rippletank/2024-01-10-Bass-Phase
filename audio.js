@@ -24,6 +24,7 @@ import { distort } from './distortion.js';
 import { buildBlackmanHarrisWindow } from './oversampling.js';
 import { jitter } from './jitter.js';
 import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
+import { digitalSimulation } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
 
 
@@ -118,7 +119,7 @@ function getAudioBuffer(
 
 }
 
-function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest){
+function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patchList){
     let scaleA =0.99 /Math.max(audioBufferA.maxValue, 0.000001);
     let scaleB =0.99 /Math.max(audioBufferB.maxValue, 0.000001);
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
@@ -138,8 +139,12 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest){
             scaleBuffer(audioBufferB.buffer, scaleB/scaleA);
             scale = scaleA;
         }
-
     }
+    
+    digitalSimulation(audioBufferA.buffer.data[0], patchList[0], audioBufferA.sampleRate);
+    if (audioBufferA.numberOfChannels>1) digitalSimulation(audioBufferA.buffer.data[1], patchList[1], audioBufferA.sampleRate);
+    digitalSimulation(audioBufferB.buffer.data[0], patchList[2], audioBufferB.sampleRate);
+    if (audioBufferB.numberOfChannels>1) digitalSimulation(audioBufferB.buffer.data[1], patchList[3], audioBufferB.sampleRate);
 
     let audioBufferNull = {
         buffer: buildNullTest(audioBufferA.buffer, audioBufferB.buffer)//Caluclate before finally scaling to give accruate null level in db
@@ -147,7 +152,6 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest){
 
     scaleBuffer(audioBufferA.buffer, scale);
     scaleBuffer(audioBufferB.buffer, scale);
-
 
     //normalise null test buffer if above threshold
     audioBufferNull.maxValue = getBufferMax(audioBufferNull.buffer);
@@ -267,7 +271,7 @@ function getDetailedFFT(samplerate, referencePatch, filterPreviewSubject){
 
 let window65k =buildBlackmanHarrisWindow(65536); //or kaiserWindow(65536, alpha) low alpha looks bad (side lobes show), high alpha is not as narrow as Blackman-Harris
 //relativeSampleRates = is the ratio of the actual sample rate to the virtual sample rate - how much lower the real one is - don't include harmonics above the real Nyquist limit
-function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonics= false, relativeSampleRates=1){
+function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonicsAndDigital= false, relativeSampleRates=1){
     let envelopeBuffer =new Float32Array(bufferSize).fill(1);
     let b = new Float32Array(bufferSize);
 
@@ -313,7 +317,7 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, 0, 0, patch.rootPhaseDelay * Math.PI,postProcessor, Math.min(relativeSampleRates,1));
     
 
-    if (includeInharmonics){
+    if (includeInharmonicsAndDigital){
         //Add inharmonics but process with Blackman-Harris window to keep FFT shape as clean as possible
         //This if for preview and use in detailed FFT so sounds is unimportant
         const window =bufferSize==65536? window65k : buildBlackmanHarrisWindow(bufferSize)
@@ -321,9 +325,13 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
     } 
 
     let distorted =new Float32Array(b);
-    distort(distorted, patch, sampleRate, true, includeInharmonics);
-    jitter(distorted, sampleRate, patch, true, Math.random());
+    distort(distorted, patch, sampleRate, true, includeInharmonicsAndDigital);
 
+    if (includeInharmonicsAndDigital) {
+        jitter(distorted, sampleRate, patch, true, Math.random());
+        digitalSimulation(distorted, patch, sampleRate);
+    }
+    
     return {
         samples:b,
         magnitude:new Float32Array(magnitude),
