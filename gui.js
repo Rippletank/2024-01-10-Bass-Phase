@@ -84,6 +84,12 @@ let previewButtons = document.querySelectorAll('.previewButton');
 let previewSubjectChanged=false;
 previewButtons.forEach(function(button) {
     switch(button.name[0]){    
+        case 'e'://Expand All/Collapse All
+            button.addEventListener('click', function() {
+                toggleGlobalExapnder();
+            });
+            button.isChecked =()=>false;
+            break;
         case 'N'://Normalisation option 
             let state = button.name=='NormLoudest'
             button.addEventListener('click', function() {
@@ -574,6 +580,66 @@ function updateLabelsFor(containerId, patch) {
     });
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Collapsing Containers
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const headers = document.querySelectorAll('.collapsible-header');
+const globalToggle = document.getElementById('globalToggle');
+
+const toggleSection = (header) => {
+    const content = header.nextElementSibling;
+    const chevron = header.querySelector('.chevron');
+    const headerText = header.querySelector('.header-text');
+
+    if (content.style.maxHeight) {
+        //Collapse the section
+        content.style.maxHeight = null;
+        chevron.classList.remove('rotate'); // Rotate chevron back
+        headerText.classList.remove('fade-out'); // Restore text opacity
+    } else {
+        //Expand the section
+        content.style.maxHeight = content.scrollHeight + "px";
+        chevron.classList.add('rotate'); // Rotate chevron to indicate open
+        headerText.classList.add('fade-out'); // Fade out the header text
+    } 
+};
+
+
+headers.forEach(header => {
+    header.addEventListener('click', function() {
+        toggleSection(this);
+        updateGlobalToggleText();
+    });
+});
+
+function toggleGlobalExapnder(){
+    const shouldExpand = globalToggle.textContent.includes('Expand');
+    headers.forEach(header => {
+        const content = header.nextElementSibling;
+        if ((shouldExpand && !content.style.maxHeight) || (!shouldExpand && content.style.maxHeight)) {
+            toggleSection(header);
+        }
+    });
+    updateGlobalToggleText();
+};
+
+const updateGlobalToggleText = () => {
+    const total = headers.length;
+    let expanded = 0;
+    headers.forEach(header => {
+        if (header.nextElementSibling.style.maxHeight) {
+            expanded++;
+        }
+    });
+    if (expanded === 0 || expanded < total / 2) {
+        globalToggle.textContent = 'Expand All';
+    } else {
+        globalToggle.textContent = 'Collapse All';
+    }
+};
+
+toggleGlobalExapnder();
+//updateGlobalToggleText();
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Import/Export Patch

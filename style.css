@@ -456,3 +456,33 @@ input[type="range"]:focus {
     text-align: center;
     color: #6b8b6b;
 }
+
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.bordered .collapsible-header {
+    cursor: pointer;
+    text-align: right;
+}
+
+.header-text {
+    transition: opacity 0.3s ease;
+}
+
+.fade-out {
+    opacity: 0; 
+}
+
+.chevron {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-left: 1em;
+}
+
+.rotate {
+    transform: rotate(180deg);
+}
