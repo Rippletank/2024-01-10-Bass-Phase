@@ -742,13 +742,6 @@
             <div class="help-popup">Type of dither noise distribution across the range set by level, Rectangle, Triangular or Gaussian (normal).</div>
         </div>
         <div class="slider-container">
-            <label for="digitalDitherFakeness">Dither Fakeness:</label>
-            <input type="range" id="digitalDitherFakeness" name="digitalDitherFakeness" min="0" max="1" step="0.1" value="0">
-            <output class="valueSpan" name="digitalDitherFakeness">0</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Applies give percentage of the noise AFTER the bit depth reduction, so at 100% is just added noise NOT dither. Uses Equal-Power-Law cross-fading.</div>
-        </div>
-        <div class="slider-container">
             <label for="digitalDitherShaping">Dither Shaping:</label>
             <input type="range" id="digitalDitherShaping" name="digitalDitherShaping" min="0" max="1" step="0.1" value="0">
             <output class="valueSpan" name="digitalDitherShaping">0%</output>
@@ -756,8 +749,15 @@
             <div class="help-popup">
                 <p>Amount of error feedback.</p>
                 <p>Results in a simple type of noise shaping where there is a gentle high-pass filtering.</p>                
-                <p>Not sophisticated but may be interesting.</p>                
+                <p>Least sophisticated type of noise shaping but may be interesting.</p>                
             </div>
+        </div>
+        <div class="slider-container">
+            <label for="digitalDitherFakeness">Fake Dither:</label>
+            <input type="range" id="digitalDitherFakeness" name="digitalDitherFakeness" min="0" max="1" step="0.1" value="0">
+            <output class="valueSpan" name="digitalDitherFakeness">0</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Applies give percentage of the noise AFTER the bit depth reduction, so at 100% is just added noise NOT dither. Uses Equal-Power-Law cross-fading and shaping to sound as close as possible to the real noise.</div>
         </div>
         <div class="slider-container">
             <label for="digitalBitDepth">Bit depth:</label>

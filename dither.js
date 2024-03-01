@@ -35,8 +35,12 @@ export function digitalSimulation(buffer, patch, samplerate){
     const maxInt =Math.pow(2, Math.round(patch.digitalBitDepth)-1);//-1 to allow for + & - values
     const ditherType = Math.round(patch.digitalDitherType);
     const level = patch.digitalDitherLevel / maxInt;
+
+    //Fake noise floor, equal power pan law
     const beforeLevel = level *Math.cos(Math.PI * 0.5 * patch.digitalDitherFakeness);
-    const afterLevel = level *Math.sin(Math.PI * 0.5 * patch.digitalDitherFakeness);
+    const afterLevel = level *Math.sin(Math.PI * 0.5 * patch.digitalDitherFakeness) 
+            * Math.pow(10,-4.8/20*patch.digitalDitherSubtract);//Subtractive dithering seems to give -4.5dB reduction in noise floor
+                                                                //Reinforced by http://www.robertwannamaker.com/writings/rw_phd.pdf p87
 
 
     let dither = new Float32Array(buffer.length);
@@ -58,18 +62,24 @@ export function digitalSimulation(buffer, patch, samplerate){
 
 
     if (patch.digitalBitDepth<25){
+        //Bit reduction turned on
         if (patch.digitalDitherShaping>0){
-            reduceBitDepthWithFullDither(buffer, maxInt, dither, patch.digitalDitherSubtract, patch.digitalDitherShaping)  
+            //Shaping ON - just do the calculation
+            reduceBitDepthWithFullDither_BoxCarShaping(buffer, maxInt, dither, patch.digitalDitherSubtract, patch.digitalDitherShaping)  
         }
         else if (beforeLevel>0){
+            //No noise shaping
             if (patch.digitalDitherSubtract>0){
+                //Subtractive dithering
                 reduceBitDepthWithDitherAndSubtract(buffer, maxInt, dither, patch.digitalDitherSubtract)
             }
             else{
+                //No subtractive dithering
                 reduceBitDepthWithDitherNoSubtract(buffer, maxInt, dither)
             }
         }
         else{
+            //No dither or shaping at all 
             reduceBitDepth(buffer, maxInt)
         }
 
@@ -78,18 +88,27 @@ export function digitalSimulation(buffer, patch, samplerate){
 
     if (afterLevel>0)
     {
+        let fakeDither = new Float32Array(buffer.length);
         //Fake noise, sounds similar to noise produced by dither but is after bit depth reduction so has no effect on quantisation noise
         //Intended to help with ear tests
         switch(Math.round(patch.digitalDitherType)){
             case 0:
-                addRectangularDither(buffer, afterLevel);
+                addRectangularDither(fakeDither, afterLevel);
                 break;
             case 1:
-                addTriangularDither(buffer, afterLevel);
+                addTriangularDither(fakeDither, afterLevel);
                 break;
             case 2:
-                addGaussianDither(buffer, afterLevel);
+                addGaussianDither(fakeDither, afterLevel);
                 break;
+        }
+        
+        if (afterLevel>0 && patch.digitalDitherShaping){
+            //Filter the fake noise, too
+            filterDither_BoxCar(fakeDither, patch.digitalDitherShaping);
+        }
+        for (let i = 0; i < buffer.length; i++){
+            buffer[i] += fakeDither[i];
         }
     }
 }
@@ -153,7 +172,7 @@ function reduceBitDepthWithDitherAndSubtract(buffer, max, dither, subLevel){
     }
 }
 
-function reduceBitDepthWithFullDither(buffer, max, dither, subLevel, shaping){
+function reduceBitDepthWithFullDither_BoxCarShaping(buffer, max, dither, subLevel, shaping){
     //ignore binary quirks// const min =-(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
     const invMax = 1/max;//efficiency
     let e =0;
@@ -163,5 +182,14 @@ function reduceBitDepthWithFullDither(buffer, max, dither, subLevel, shaping){
         let b =Math.round((x + d) * max); //ignore binary quirks//  Math.min(max, Math.max(min, Math.round((x + d) * max  )));
         buffer[i] = b *invMax -d* subLevel;
         e = buffer[i] - x;
+    }
+}
+
+function filterDither_BoxCar(dither, shaping){
+    let e =0;
+    for(let i = 0; i < dither.length; i++){
+        let x = dither[i]-e*shaping;
+        e = dither[i];
+        dither[i] = x;
     }
 }
