@@ -125,39 +125,47 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
+    //Normalise here to provide just under full scale input to digitalSimulation functions
     if (!isNormToLoudest && scaleA != scaleB){
-        //individually normalise - so first bring up to the level of the loudest, 
-        //Why? - so the null test still feels valid in terms of level of difference
-        //Border line worth doing scaling twice but 
         if (scale==scaleA) 
         {
-            scaleBuffer(audioBufferA.buffer, scaleA/scaleB);
-            scale = scaleB;
+            scaleBuffer(audioBufferA.buffer, scaleA);
+            scaleBuffer(audioBufferB.buffer, scaleB);
+            scale = scaleB;//
         }
         else 
         {
-            scaleBuffer(audioBufferB.buffer, scaleB/scaleA);
+            scaleBuffer(audioBufferB.buffer, scaleB);
+            scaleBuffer(audioBufferB.buffer, scaleB);
             scale = scaleA;
         }
     }
+    else{
+        scaleBuffer(audioBufferA.buffer, scale);
+        scaleBuffer(audioBufferB.buffer, scale);
+    }
     
     digitalSimulation(audioBufferA.buffer.data[0], patchList[0], audioBufferA.sampleRate);
-    if (audioBufferA.numberOfChannels>1) digitalSimulation(audioBufferA.buffer.data[1], patchList[1], audioBufferA.sampleRate);
+    if (audioBufferA.buffer.numberOfChannels>1) digitalSimulation(audioBufferA.buffer.data[1], patchList[1], audioBufferA.sampleRate);
     digitalSimulation(audioBufferB.buffer.data[0], patchList[2], audioBufferB.sampleRate);
-    if (audioBufferB.numberOfChannels>1) digitalSimulation(audioBufferB.buffer.data[1], patchList[3], audioBufferB.sampleRate);
+    if (audioBufferB.buffer.numberOfChannels>1) digitalSimulation(audioBufferB.buffer.data[1], patchList[3], audioBufferB.sampleRate);
 
     let audioBufferNull = {
-        buffer: buildNullTest(audioBufferA.buffer, audioBufferB.buffer)//Caluclate before finally scaling to give accruate null level in db
+        buffer: buildNullTest(audioBufferA.buffer, audioBufferB.buffer)
     }
 
-    scaleBuffer(audioBufferA.buffer, scale);
-    scaleBuffer(audioBufferB.buffer, scale);
+    
+    scaleSquaredSingleBuffer(audioBufferA.buffer.data[0], patchList[0].attenuation);
+    if (audioBufferA.buffer.numberOfChannels>1) scaleSquaredSingleBuffer(audioBufferA.buffer.data[1], patchList[1].attenuation);
+    scaleSquaredSingleBuffer(audioBufferB.buffer.data[0], patchList[2].attenuation);
+    if (audioBufferB.buffer.numberOfChannels>1) scaleSquaredSingleBuffer(audioBufferB.buffer.data[1], patchList[3].attenuation);
 
-    //normalise null test buffer if above threshold
-    audioBufferNull.maxValue = getBufferMax(audioBufferNull.buffer);
+    
+    let nullMax = getBufferMax(audioBufferNull.buffer);
+    audioBufferNull.maxValue = nullMax/scale;
     audioBufferNull.maxValueDBL = 20 * Math.log10(audioBufferNull.maxValue);//convert to dB
     if (audioBufferNull.maxValueDBL>-100){//avoid scaling if null test is close to silent (>-100db)
-        scaleBuffer(audioBufferNull.buffer, 0.99 / audioBufferNull.maxValue);
+        scaleBuffer(audioBufferNull.buffer, 0.99 / nullMax);
     }
     return audioBufferNull;
 }
@@ -188,6 +196,14 @@ function scaleBuffer(buffer, scale){
         }
     }
     return max;
+}
+
+function scaleSquaredSingleBuffer(buffer, scale){
+    if (scale==1) return;
+    scale *= scale;
+    for (let i = 0; i < buffer.length; i++) {
+        buffer[i] *= scale;
+    }   
 }
 
 function buildNullTest(bufferA, bufferB){

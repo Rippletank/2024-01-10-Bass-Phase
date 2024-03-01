@@ -127,40 +127,40 @@ function addGaussianDither(buffer, level)//level is 0..2
 }
 
 function reduceBitDepth(buffer, max){
-    const min = -(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
+    //ignore binary quirks// const min =-(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
     const invMax = 1/max;//efficiency
     for(let i = 0; i < buffer.length; i++){
-        let d = Math.min(max, Math.max(min, Math.round(buffer[i] * max)));
+        let d =  Math.round(buffer[i] * max) //ignore binary quirks// Math.min(max, Math.max(min, Math.round(buffer[i] * max)));
         buffer[i] = d *invMax;
     }
 }
 
 function reduceBitDepthWithDitherNoSubtract(buffer, max, dither){
-    const min = -(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
+    //ignore binary quirks// const min =-(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
     const invMax = 1/max;//efficiency
     for(let i = 0; i < buffer.length; i++){
-        let b = Math.min(max, Math.max(min, Math.round((buffer[i] + dither[i]) * max  )));
+        let b =Math.round((buffer[i] + dither[i]) * max  ) //ignore binary quirks// Math.min(max, Math.max(min, Math.round((buffer[i] + dither[i]) * max  )));
         buffer[i] = b *invMax;
     }
 }
 function reduceBitDepthWithDitherAndSubtract(buffer, max, dither, subLevel){
-    const min = -(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
+    //ignore binary quirks// const min =-(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
     const invMax = 1/max;//efficiency
     for(let i = 0; i < buffer.length; i++){
         let d = dither[i];
-        let b = Math.min(max, Math.max(min, Math.round((buffer[i] + d) * max  )));
+        let b = Math.round((buffer[i] + d) * max  ); //ignore binary quirks// Math.min(max, Math.max(min, Math.round((buffer[i] + d) * max  )));
         buffer[i] = b *invMax -d * subLevel;
     }
 }
 
 function reduceBitDepthWithFullDither(buffer, max, dither, subLevel, shaping){
-    const min = -(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
+    //ignore binary quirks// const min =-(max-1); //since zero is one of the values, and because of 2-s complement, max negative value is one less than max positive value
     const invMax = 1/max;//efficiency
     let e =0;
     for(let i = 0; i < buffer.length; i++){
         let d = dither[i];
         let x = buffer[i]-e*shaping;
-        let b = Math.min(max, Math.max(min, Math.round((x + d) * max  )));
+        let b =Math.round((x + d) * max); //ignore binary quirks//  Math.min(max, Math.max(min, Math.round((x + d) * max  )));
         buffer[i] = b *invMax -d* subLevel;
         e = buffer[i] - x;
     }

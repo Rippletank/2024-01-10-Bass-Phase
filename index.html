@@ -710,6 +710,9 @@
             <div class="help-popup">
                 <p>Dither simulation using some common dither types.</p>
                 <p>Also includes a bit depth reduction simulation to make quantisation distortion more noticeable.</p>
+                <p>Applied after normalisation of the waveforms.</p>
+                <p>Clipping and asymmetry of +ve and -ve max values for integers is NOT modelled (code for this is commented out) 
+                    as the intention is to model the quantisation process and explore dither algorithms, not explore quirks of binary numbers.</p>
             </div>
         </div>
         <div class="slider-container">
@@ -761,9 +764,32 @@
             <input type="range" id="digitalBitDepth" name="digitalBitDepth" min="2" max="25" step="1" value="25">
             <output class="valueSpan" name="digitalBitDepth">off</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Simulates the reduction of bit depth by rounding to values allow with given number of bits. Negative values have one less possible value to allow for the zero value.</div>
+            <div class="help-popup">
+                <p>Simulates the reduction of bit depth by rounding to values allow with given number of bits.</p>
+                <p>Ignores that negative values have one less possible value to allow for the zero value 
+                as that fact is kind of irrelevant to the theory behind quantisation and dithering.</p> 
+                <p>Similarly, doesn't model DAC clipping, either. Code for both was implemented but commented out as it was distracting.</p>    
+            </div>
         </div>
 
+
+        <div class="presetHeader">
+            <h3>Output Attenuation</h3>
+            <div class="PresetButtons"></div>
+            <span class="help-icon">?</span>
+            <div class="help-popup">
+                <p>Applied at very end of chain, after normalisation and quantisation processing.</p>
+            </div>
+        </div>
+        <div class="slider-container">
+            <label for="attenuation">Attenuation:</label>
+            <input type="range" id="attenuation" name="attenuation" min="0" max="1" step="0.001" value="0">
+            <output class="valueSpan" name="attenuation">0db</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">
+                <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if desired.</p>
+            </div>
+        </div>
 
     </div>
 
@@ -924,7 +950,6 @@
     <!-- <script src="distortion.js"></script> -->
     <!-- <script src="jitter.js"></script> -->
     <!-- <script src="audio.js"></script> -->
-
 
     <!--Painting buffers/FFTs onto Canvas-->
     <!-- <script src="painting.js"></script> -->

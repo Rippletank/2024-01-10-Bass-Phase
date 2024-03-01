@@ -512,6 +512,13 @@ function getTrueDefaultPatch(){
         ultrasonicFrequency:0.5,//range linearly between normal Nyquist and oversampled Nyquist
         ultrasonicLevel:-91,//-91..0, in db -91 is off
 
+        inharmonicALevel:-91,//-91..0, in db -91 is off
+        inharmonicBLevel:-91,//-91..0, in db -91 is off
+        inharmonicCLevel:-91,//-91..0, in db -91 is off
+        inharmonicAFrequency:1000,//Hz (for now?)
+        inharmonicBSemitones:1,//semitones above root
+        inharmonicCSemitones:1,//semitones above root
+
         jitterADC:0,//0..1 0 = off, 1 = max jitter applied as if ADC was jittering
         jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering
         jitterPeriodic:0,//0..1 0 = off, 1 = max jitter applied at fixed frequency to ADC
@@ -522,13 +529,7 @@ function getTrueDefaultPatch(){
         digitalDitherSubtract:0,//0..1 Amount of noise subtracted from the signal after bit depth reduction
         digitalDitherShaping:0,//0..1 Amount of noise shaping applied to the dither
 
-        inharmonicALevel:-91,//-91..0, in db -91 is off
-        inharmonicBLevel:-91,//-91..0, in db -91 is off
-        inharmonicCLevel:-91,//-91..0, in db -91 is off
-        inharmonicAFrequency:1000,//Hz (for now?)
-        inharmonicBSemitones:1,//semitones above root
-        inharmonicCSemitones:1,//semitones above root
-
+        attenuation:1,//0..1 final attenuation applied to the signal
     }
 }
 

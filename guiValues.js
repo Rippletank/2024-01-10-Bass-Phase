@@ -323,6 +323,8 @@ function setValueFromPatch(ve, patch){
             ve.textContent =toPercent(patch.digitalDitherSubtract);break;
         case "digitalDitherShaping":
             ve.textContent =toPercent(patch.digitalDitherShaping);break;
+        case "attenuation":
+            ve.textContent =(-20*Math.log10(patch.attenuation*patch.attenuation)).toFixed(2)+'db';break;
 
         case "digitalDitherType":
             let ditherTypeText = "off";
