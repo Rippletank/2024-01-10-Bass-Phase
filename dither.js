@@ -19,7 +19,7 @@
 //Dither types: https://www.youtube.com/watch?v=t1X6DI-9_eU
 //Noise Shaping: https://www.youtube.com/watch?v=1cMae5i1Eec
 //
-//Exhaustive analysis:
+//Exhaustive analysis of subtractive vs non-subtractive dithering, and noise shaping:
 //http://www.robertwannamaker.com/writings/rw_phd.pdf
 //
 //Useful discussion of common real-world practices:

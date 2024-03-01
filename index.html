@@ -716,6 +716,18 @@
             </div>
         </div>
         <div class="slider-container">
+            <label for="digitalBitDepth">Bit depth:</label>
+            <input type="range" id="digitalBitDepth" name="digitalBitDepth" min="2" max="25" step="1" value="25">
+            <output class="valueSpan" name="digitalBitDepth">off</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">
+                <p>Simulates the reduction of bit depth by rounding to values allow with given number of bits.</p>
+                <p>Ignores that negative values have one less possible value to allow for the zero value 
+                as that fact is kind of irrelevant to the theory behind quantisation and dithering.</p> 
+                <p>Similarly, doesn't model DAC clipping, either. Code for both was implemented but commented out as it was distracting.</p>    
+            </div>
+        </div>
+        <div class="slider-container">
             <label for="digitalDitherLevel">Dither Level:</label>
             <input type="range" id="digitalDitherLevel" name="digitalDitherLevel" min="0" max="4" step="0.1" value="0">
             <output class="valueSpan" name="digitalDitherLevel">off</output>
@@ -727,6 +739,13 @@
             </div>
         </div>
         <div class="slider-container">
+            <label for="digitalDitherType">Dither Type:</label>
+            <input type="range" id="digitalDitherType" name="digitalDitherType" min="0" max="2" step="1" value="1">
+            <output class="valueSpan" name="digitalDitherType">Triangular</output>
+            <span class="help-icon">?</span>
+            <div class="help-popup">Type of dither noise distribution across the range set by level, Rectangle, Triangular or Gaussian (normal).</div>
+        </div>
+        <div class="slider-container">
             <label for="digitalDitherSubtract">Subtractive Dither:</label>
             <input type="range" id="digitalDitherSubtract" name="digitalDitherSubtract" min="0" max="1" step="0.1" value="0">
             <output class="valueSpan" name="digitalDitherSubtract">0%</output>
@@ -735,20 +754,13 @@
                 <p>This is the theoretically best way to add dither but is impractical because a copy of the dither needs to be kept with the output.</p></div>
         </div>
         <div class="slider-container">
-            <label for="digitalDitherType">Dither Type:</label>
-            <input type="range" id="digitalDitherType" name="digitalDitherType" min="0" max="2" step="1" value="1">
-            <output class="valueSpan" name="digitalDitherType">Triangular</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">Type of dither noise distribution across the range set by level, Rectangle, Triangular or Gaussian (normal).</div>
-        </div>
-        <div class="slider-container">
             <label for="digitalDitherShaping">Dither Shaping:</label>
             <input type="range" id="digitalDitherShaping" name="digitalDitherShaping" min="0" max="1" step="0.1" value="0">
             <output class="valueSpan" name="digitalDitherShaping">0%</output>
             <span class="help-icon">?</span>
             <div class="help-popup">
                 <p>Amount of error feedback.</p>
-                <p>Results in a simple type of noise shaping where there is a gentle high-pass filtering.</p>                
+                <p>Results in box-car noise shaping with a gentle high-pass filter.</p>                
                 <p>Least sophisticated type of noise shaping but may be interesting.</p>                
             </div>
         </div>
@@ -757,19 +769,7 @@
             <input type="range" id="digitalDitherFakeness" name="digitalDitherFakeness" min="0" max="1" step="0.1" value="0">
             <output class="valueSpan" name="digitalDitherFakeness">0</output>
             <span class="help-icon">?</span>
-            <div class="help-popup">Applies give percentage of the noise AFTER the bit depth reduction, so at 100% is just added noise NOT dither. Uses Equal-Power-Law cross-fading and shaping to sound as close as possible to the real noise.</div>
-        </div>
-        <div class="slider-container">
-            <label for="digitalBitDepth">Bit depth:</label>
-            <input type="range" id="digitalBitDepth" name="digitalBitDepth" min="2" max="25" step="1" value="25">
-            <output class="valueSpan" name="digitalBitDepth">off</output>
-            <span class="help-icon">?</span>
-            <div class="help-popup">
-                <p>Simulates the reduction of bit depth by rounding to values allow with given number of bits.</p>
-                <p>Ignores that negative values have one less possible value to allow for the zero value 
-                as that fact is kind of irrelevant to the theory behind quantisation and dithering.</p> 
-                <p>Similarly, doesn't model DAC clipping, either. Code for both was implemented but commented out as it was distracting.</p>    
-            </div>
+            <div class="help-popup">Applies a percentage of the noise AFTER the bit depth reduction, so at 100% is just added noise NOT dither. Uses Equal-Power-Law cross-fading and shaping to sound as close as possible to the real noise.</div>
         </div>
 
 
