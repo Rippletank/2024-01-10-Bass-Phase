@@ -41,8 +41,11 @@ toLightMode(null, !isDarkMode)
 function getColor(r,g,b){
     return isDarkMode ?`rgb(${255-r},${255-g},${255-b})` : `rgb(${r},${g},${b})`;
 }
+function getColorA(r,g,b,alpha){
+    return isDarkMode ?`rgba(${255-r},${255-g},${255-b},${alpha})` : `rgba(${r},${g},${b},${alpha})`;
+}
 function getGreyColorA(shade, alpha){
-    return isDarkMode ? `rgb(${255-shade},${255-shade},${255-shade},${alpha})` : `rgb(${shade},${shade},${shade},${alpha})`;
+    return isDarkMode ? `rgba(${255-shade},${255-shade},${255-shade},${alpha})` : `rgba(${shade},${shade},${shade},${alpha})`;
 }
 
 let useFFT = true;
@@ -839,7 +842,7 @@ function paintDigitalPreview(data, canvasId){
     //Draw Dither Dynamic Range    
     const maxF =20000;
     const minF =50;
-    const dbMin = -120
+    const dbMin = -144
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.strokeStyle = getColor(0, 100, 0);
@@ -851,13 +854,30 @@ function paintDigitalPreview(data, canvasId){
 
     //Dither Dynamic Range axis lines
     ctx.lineWidth = 1;
-    ctx.strokeStyle = getColor(100, 100, 100);
+    ctx.strokeStyle = getColorA(100, 100, 100,0.8);
     ctx.moveTo(al, t);
     ctx.lineTo(al, ab);
     ctx.lineTo(al+itemW, ab);
     ctx.stroke();
     
 
+    ctx.strokeStyle = getColorA(100, 0, 0,0.8);
+    ctx.beginPath();   
+    for(let i = 0; i < data.ditherDRF.length; i++){
+        let f = data.ditherDRF[i];
+        let v = Math.max(dbMin, data.ditherDRFBase[i]);
+        let x = al + Math.log10(f/minF) * xScale;
+        let y = at + v * yScale;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        }
+        else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = getColorA(0, 100, 0,0.8);
     ctx.beginPath();   
     for(let i = 0; i < data.ditherDRF.length; i++){
         let f = data.ditherDRF[i];
@@ -872,6 +892,7 @@ function paintDigitalPreview(data, canvasId){
         }
     }
     ctx.stroke();
+
 
     
     //Draw Jitter    

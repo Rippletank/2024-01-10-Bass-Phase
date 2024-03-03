@@ -111,6 +111,7 @@ function doDigitalPreview(patch, sampleRate) {
         digitalPreview.ditherLinear.buffer, 
         digitalPreview.ditherDRF.buffer,
         digitalPreview.ditherDRdB.buffer,
+        digitalPreview.ditherDRFBase.buffer,
         digitalPreview.jitter.buffer
     ];
 

@@ -496,7 +496,15 @@ function getTHDGraph(referencePatch){
 
 
 function getDigitalPreview(patch, sampleRate){
-    var ditherDR = getDitherDynamicRange(patch, sampleRate);
+    let ditherDR = getDitherDynamicRange(patch, sampleRate);
+
+
+    let baseLinePatch = {...patch};
+    baseLinePatch.digitalDitherFakeness=0;
+    baseLinePatch.digitalDitherShaping=0;
+    baseLinePatch.digitalDitherLevel=0;
+
+    let baselineBitRedux = getDitherDynamicRange(baseLinePatch, sampleRate);
     return {
         sampleRate:sampleRate,
         //Linearity analysis - Range of average output for input values equally spaced from 0 to 1 inclusive
@@ -505,7 +513,7 @@ function getDigitalPreview(patch, sampleRate){
         //Average results for dynamic range across frequency range
         ditherDRF:ditherDR.f,
         ditherDRdB:ditherDR.db,
-
+        ditherDRFBase:baselineBitRedux.db,//should be same Freq dist as ditherDRF
         //odd number of sample values 
         jitter:new Float32Array([0,1,2,4,6,7,8,7,5,4,2,1,0])
     }
@@ -535,12 +543,13 @@ function getDitherLinearityData(patch, valueCount, repeatCount){
 
     x=0;
     let results = new Float32Array(valueCount); 
+    let scaling = 1/repeatCount;
     for (let i = 0; i < valueCount; i++) {
         let value = 0;
         for (let j = 0; j < repeatCount; j++) {
             value += b[x++];
         }
-        results[i] = value/repeatCount;
+        results[i] = value*scaling;
     }
     return results;
 }
@@ -604,7 +613,7 @@ function getDitherDynamicRange(patch, sampleRate){
     }
 
     for(let i=0;i<logValues.length;i++){
-        logValues[i] =Math.max(-144, 20 * Math.log10(logValues[i]));
+        logValues[i] =Math.max(-144, 20 * Math.log10(logValues[i]*fftSize2*0.125));
     }   
 
     return {
