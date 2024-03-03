@@ -24,7 +24,7 @@ import { distort } from './distortion.js';
 import { buildBlackmanHarrisWindow } from './oversampling.js';
 import { jitter } from './jitter.js';
 import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
-import { digitalSimulation } from './dither.js';
+import { ditherSimulation } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
 
 
@@ -125,7 +125,7 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
-    //Normalise here to provide just under full scale input to digitalSimulation functions
+    //Normalise here to provide just under full scale input to ditherSimulation functions
     if (!isNormToLoudest && scaleA != scaleB){
         if (scale==scaleA) 
         {
@@ -145,10 +145,10 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
         scaleBuffer(audioBufferB.buffer, scale);
     }
     
-    digitalSimulation(audioBufferA.buffer.data[0], patchList[0], audioBufferA.sampleRate);
-    if (audioBufferA.buffer.numberOfChannels>1) digitalSimulation(audioBufferA.buffer.data[1], patchList[1], audioBufferA.sampleRate);
-    digitalSimulation(audioBufferB.buffer.data[0], patchList[2], audioBufferB.sampleRate);
-    if (audioBufferB.buffer.numberOfChannels>1) digitalSimulation(audioBufferB.buffer.data[1], patchList[3], audioBufferB.sampleRate);
+    ditherSimulation(audioBufferA.buffer.data[0], patchList[0]);
+    if (audioBufferA.buffer.numberOfChannels>1) ditherSimulation(audioBufferA.buffer.data[1], patchList[1]);
+    ditherSimulation(audioBufferB.buffer.data[0], patchList[2]);
+    if (audioBufferB.buffer.numberOfChannels>1) ditherSimulation(audioBufferB.buffer.data[1], patchList[3]);
 
     let audioBufferNull = {
         buffer: buildNullTest(audioBufferA.buffer, audioBufferB.buffer)
@@ -345,7 +345,7 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
 
     if (includeInharmonicsAndDigital) {
         jitter(distorted, sampleRate, patch, true, Math.random());
-        digitalSimulation(distorted, patch, sampleRate);
+        ditherSimulation(distorted, patch, sampleRate);
     }
     
     return {
@@ -491,6 +491,126 @@ function getTHDGraph(referencePatch){
     }
 
     return THD;
+}
+
+
+
+function getDigitalPreview(patch, sampleRate){
+    var ditherDR = getDitherDynamicRange(patch, sampleRate);
+    return {
+        sampleRate:sampleRate,
+        //Linearity analysis - Range of average output for input values equally spaced from 0 to 1 inclusive
+        ditherLinear:getDitherLinearityData(patch, 40, 20000),
+
+        //Average results for dynamic range across frequency range
+        ditherDRF:ditherDR.f,
+        ditherDRdB:ditherDR.db,
+
+        //odd number of sample values 
+        jitter:new Float32Array([0,1,2,4,6,7,8,7,5,4,2,1,0])
+    }
+}
+
+function getDitherLinearityData(patch, valueCount, repeatCount){
+    //generate tests signal for dither linearity analysis - a buffer with values from 0 to 1 inclusive
+    //There are 'valueCount' number of steps between 0 and 1 and each value is repeated 'repeatCount' times
+    let bufferSize = valueCount*repeatCount;
+    let b = new Float32Array(bufferSize);
+    let step = 1/(valueCount-1);    
+    let x=0;
+    for (let i = 0; i < valueCount; i++) {
+        let value = i*step;
+        for (let j = 0; j < repeatCount; j++) {
+            b[x++] = value;
+        }
+    }
+
+    let ditherPatch = {...patch};
+    ditherPatch.digitalDitherFakeness=0;
+    ditherPatch.digitalDitherShaping=0;
+    ditherPatch.digitalBitDepth=1;
+
+
+    ditherSimulation(b, ditherPatch);//Do the dithering
+
+    x=0;
+    let results = new Float32Array(valueCount); 
+    for (let i = 0; i < valueCount; i++) {
+        let value = 0;
+        for (let j = 0; j < repeatCount; j++) {
+            value += b[x++];
+        }
+        results[i] = value/repeatCount;
+    }
+    return results;
+}
+
+
+function getDitherDynamicRange(patch, sampleRate){
+    //Prime numbers to give a range of levels in the 
+    //let harmonics = [2,3,5,7,11,13,17,19,23,29,31,37,41,43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101];
+    let fftSize =1024;
+    let fftSize2 = fftSize/2;
+    let outputCount =50;
+    let fCount =15;
+
+    let fftFunc = getFFTFunction(fftSize);
+    let accumulation = new Float32Array(fftSize2);
+    let b = new Float32Array(fftSize);
+    for(let i=0;i<fCount;i++){
+        //Fill buffer with a sine wave of the given harmonic 
+        const bin = i+1;
+        let w = 2* Math.PI * bin/fftSize;
+        for(var j=0;j<fftSize;j++){
+            b[j] = Math.sin(w*j);
+        }
+        ditherSimulation(b, patch);
+        let fft = fftFunc(b);
+        for (let i = 0; i < fftSize2; i++) {
+            if (i==bin)continue; //skip the bin of the given harmonic
+            accumulation[i] += fft.magnitude[i];
+        }
+    }
+    const scale = 1/fCount;
+    const scaleLow = 1/(fCount-1);
+    for (let i = 0; i < fftSize2; i++) {
+        accumulation[i] *= i<fCount? scaleLow : scale;
+    }
+    
+
+    let lastBin = 1;//lastBin will be skiped. bin 0 is DC
+    const maxF =20000;
+    const minF =10;
+    const power10Scale = Math.log10(maxF/minF)/outputCount;
+    const fScale =sampleRate/fftSize;
+    let logValues=[]
+    let logFreqs =[];
+    for(let i=0;i<outputCount;i++){
+        let f = minF*Math.pow(10,i*power10Scale);
+        let nextBin = Math.round(f/fScale);
+
+        if (nextBin<=lastBin) continue; //Check if there are any bins in the range
+
+        nextBin = Math.min(nextBin,fftSize2);
+        let value = 0;
+        for (let k = lastBin; k < nextBin; k++) {
+            value += accumulation[k];
+        }
+        value /= (nextBin-lastBin);
+        logValues.push(value);
+        logFreqs.push(f);
+        lastBin = nextBin;
+        if (nextBin>=fftSize2) break;
+    }
+
+    for(let i=0;i<logValues.length;i++){
+        logValues[i] =Math.max(-144, 20 * Math.log10(logValues[i]));
+    }   
+
+    return {
+        f:new Float32Array(logFreqs),
+        db:new Float32Array(logValues)
+    };
 }
 
 
@@ -737,7 +857,8 @@ export {
     scaleAndGetNullBuffer,
     preMaxCalcStartDelay,
 
-    getPreview,  
+    getPreview,
+    getDigitalPreview,  
 
     getDetailedFFT, 
     getTHDPercent, 

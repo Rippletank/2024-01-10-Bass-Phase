@@ -779,6 +779,127 @@ function adjustForPhase(magnitudes,phases, showPolarity){
 }
 
 
+function paintDigitalPreview(data, canvasId){
+    if (!data) return;
+    let canvas = document.getElementById(canvasId);
+    let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    let tW = canvas.width*0.06;
+    let l=tW;
+    let r = canvas.width-tW*0.5;
+    let t = 4;
+    let tH = canvas.height*0.15;
+    let b = canvas.height-tH;
+    let w=r-l;
+    let h=b-t;
+    let itemW = w/4;
+
+    
+    ctx.fillStyle = getColor(0,128,255); //Color to clear to
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    let al,ab, at, xScale, yScale;
+    
+
+    //Draw Dither Linearity
+
+    //Dither Dither Linearity axis lines
+    ctx.lineWidth = 1;
+    al = l;
+    ab= b;
+
+    ctx.strokeStyle = getGreyColorA(100,0.4);
+    ctx.beginPath(); 
+    ctx.moveTo(al, ab);   
+    ctx.lineTo(al+itemW, t);
+    ctx.lineTo(al, t);
+    ctx.lineTo(al, ab);
+    ctx.lineTo(al+itemW, ab);
+    ctx.stroke();
+
+    ctx.strokeStyle = getColor(100, 0, 0);
+    xScale = itemW / (data.ditherLinear.length-1);
+    yScale =  h;
+
+    ctx.beginPath();
+    for(let i = 0; i < data.ditherLinear.length; i++){
+        let x = al + i * xScale;
+        let y = ab - data.ditherLinear[i] * yScale;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+
+
+    
+    //Draw Dither Dynamic Range    
+    const maxF =20000;
+    const minF =50;
+    const dbMin = -120
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColor(0, 100, 0);
+    al = l+ itemW * 1.5;
+    ab= b;
+    at = t;
+    xScale =itemW / Math.log10(maxF/minF);
+    yScale =  h/dbMin;
+
+    //Dither Dynamic Range axis lines
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColor(100, 100, 100);
+    ctx.moveTo(al, t);
+    ctx.lineTo(al, ab);
+    ctx.lineTo(al+itemW, ab);
+    ctx.stroke();
+    
+
+    ctx.beginPath();   
+    for(let i = 0; i < data.ditherDRF.length; i++){
+        let f = data.ditherDRF[i];
+        let v = Math.max(dbMin, data.ditherDRdB[i]);
+        let x = al + Math.log10(f/minF) * xScale;
+        let y = at + v * yScale;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        }
+        else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+
+    
+    //Draw Jitter    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColor(0, 0, 100);
+    al = l + w * 6/8;
+    ab= b;
+    let m = Math.max(...data.jitter);
+    xScale = itemW/ (data.jitter.length-1);
+    yScale =  h/m;
+
+    ctx.beginPath();  
+    for(let i = 0; i < data.jitter.length; i++){
+        let x = al + i * xScale;
+        let y = ab - data.jitter[i] * yScale;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        }   
+        else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+
+
+
+
+}
 
 
 
@@ -907,6 +1028,7 @@ export {
 
     //Quick Preview
     paintPreview,
+    paintDigitalPreview,
 
     //THD Graph
     paintTHDGraph,

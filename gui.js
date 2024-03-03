@@ -41,7 +41,9 @@ import {disableGroups, setValueFromPatch } from './guiValues.js';
 import {
     playAudio,
     updateBuffersAndDisplay, updateDisplay,
-    updatePreview, doPaintPreview,
+
+    updateAllPreviews, 
+    doPaintAllPreviews,
     
     updateDetailedFFT, 
     repaintDetailedFFT,
@@ -235,7 +237,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 fh();
                 updatePreviewButtonState();
-                doPaintPreview();
+                doPaintAllPreviews();
             });
             button.isChecked =ch;
         break;
@@ -281,7 +283,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 fd();
                 updatePreviewButtonState();
-                doPaintPreview();
+                doPaintAllPreviews();
             });
             button.isChecked =cd;
         break;
@@ -322,7 +324,7 @@ previewButtons.forEach(function(button) {
 function DoFullPreviewUpdate(){
     updatePreviewButtonState();
     forcePreviewRegeneration();
-    updatePreview();
+    updateAllPreviews();
 }
 
 
@@ -443,7 +445,7 @@ function handleValueChange() {
     updateAllLabelsAndCachePatches();
     flags.changed = true;
     lastUpdate = Date.now();
-    updatePreview();
+    updateAllPreviews();
 }
 
 function loadSliderValuesFromContainer(id, patch) {
@@ -501,7 +503,7 @@ function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
     finally{
         endSuspendPreviewUpdates();
         updateAllLabelsAndCachePatches();
-        updatePreview();
+        updateAllPreviews();
         flags.changed = true;
     }
 }

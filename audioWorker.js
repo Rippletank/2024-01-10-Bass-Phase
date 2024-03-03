@@ -18,7 +18,8 @@ import {
     preMaxCalcStartDelay,
     scaleAndGetNullBuffer,
 
-    getPreview,    
+    getPreview,   
+    getDigitalPreview, 
 
     getDetailedFFT, 
     getTHDPercent,
@@ -48,6 +49,9 @@ self.onmessage = function(event) {
                 break;
             case 'getPreview':
                 doPreview(data.referencePatch, data.filterPreviewSubject , data.sampleRate);
+                break;
+            case 'getDigitalPreview':
+                doDigitalPreview(data.patch , data.sampleRate);
                 break;
             default:
                 throw new Error(`Unknown action: ${action}`);
@@ -100,7 +104,19 @@ function doPreview(referencePatch, filterPreviewSubject, sampleRate) {
     //console.log('Preview time:', performance.now()-t);
 }
 
+function doDigitalPreview(patch, sampleRate) {
+    //let t = performance.now();
+    let digitalPreview = getDigitalPreview( patch, sampleRate );
+    let transferList = [
+        digitalPreview.ditherLinear.buffer, 
+        digitalPreview.ditherDRF.buffer,
+        digitalPreview.ditherDRdB.buffer,
+        digitalPreview.jitter.buffer
+    ];
 
+    self.postMessage({ digitalPreview },transferList);
+    //console.log('Digital preview time:', performance.now()-t);
+}
 
 
 function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {

@@ -682,6 +682,9 @@
                 <div id="digitalPresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
                 <div class="help-popup">Controls for the simulation of the ADC and DAC. The ADC is applied before the distortion and the DAC after. The jitter is normally distributed white noise.</div>
+            </div>    
+            <div class="canvasBox">
+                <canvas id="digitalPreview"  width ="2000" height="500"></canvas>
             </div>
 
 
@@ -970,6 +973,9 @@
     <!-- <script src="distortion.js"></script> -->
     <!-- <script src="jitter.js"></script> -->
     <!-- <script src="audio.js"></script> -->
+
+    <!--Use this to debug audio.js side-->
+    <!-- <script type="module" src="audio.js"></script> -->
 
     <!--Painting buffers/FFTs onto Canvas-->
     <!-- <script src="painting.js"></script> -->

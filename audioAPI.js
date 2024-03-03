@@ -33,7 +33,12 @@
     calculateTHDPercent,
 
     setPreviewCallback,
+    calculateDigitalPreview,
+
+    
+    setDigitalPreviewCallback,
     calculatePreview,
+    
 
     setAudioBufferCallback,
     calculateAudioBuffer
@@ -53,6 +58,7 @@ import {
     paintBuffer, paintEnvelope, paintFilterEnvelope, 
     
     paintPreview,
+    paintDigitalPreview,
     paintDetailedFFT, 
     paintTHDGraph
 } from './painting.js';
@@ -338,17 +344,20 @@ function endTHDGraphUpdate() {
 
 
 function updateDisplay(){
-    doPaintBuffersAndNull();    
-    doPaintPreview();
+    doPaintBuffersAndNull();   
     doPaintTHDGraph();
 }
 
+function doPaintAllPreviews(){ 
+    doPaintPreview();
+    doPaintDigitalPreview();
+}
 
 
 let jitterReport = 'Jitter is off';
 let suspendPreviewUpdates = true;
 let previewPatchVersion = 0;
-function updatePreview(){
+function updateAllPreviews(){
     if (suspendPreviewUpdates) return;
 
     //Avoid duplicated processing - check if this version has already been previewed
@@ -361,7 +370,8 @@ function updatePreview(){
 
     const previewPatch = getPreviewSubjectCachedPatch(patchesToUse);
 
-    calculatePreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);        
+    calculatePreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);   
+    calculateDigitalPreview(previewPatch, audioContext.sampleRate);     
     getTHDReport(previewPatch);
     jitterReport = 
                     previewPatch.jitterADC==0 && previewPatch.jitterDAC==0  && previewPatch.jitterPeriodic==0 ? "Jitter is off" :
@@ -377,6 +387,12 @@ let previewResult = null;
 setPreviewCallback((preview)=>{
     previewResult = preview; 
     doPaintPreview();
+});
+
+let digitalPreviewResult = null;
+setDigitalPreviewCallback((preview)=>{
+    digitalPreviewResult = preview; 
+    doPaintDigitalPreview();
 });
 
 
@@ -499,6 +515,13 @@ function doPaintPreview(){
     
 }
 
+
+function doPaintDigitalPreview(){
+    if (!digitalPreviewResult) return;
+    paintDigitalPreview( digitalPreviewResult, "digitalPreview");
+}
+
+
 let THDReportElement = document.querySelectorAll('.THDReport');
 let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
 let jitterReportElements = document.querySelectorAll('.jitterReport');
@@ -539,29 +562,6 @@ function compareStringArrays(array1, array2) {
 
 
 
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Buffer manipulation
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-function getBufferMax(buffer){
-    let max = 0;
-    for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.data[chan];
-        let bufferSize = b.length;
-        for (let i = 0; i < bufferSize; i++) {
-            let val = Math.abs( b[i]);
-            if (val>max) max = val;
-        }
-    }
-    return max;
-}
-
-
-
-
-
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setters and getters for export
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -580,8 +580,8 @@ export {
 
     updateBuffersAndDisplay,
     updateDisplay,
-    updatePreview,
-    doPaintPreview,
+    updateAllPreviews,
+    doPaintAllPreviews,
     
     updateDetailedFFT, 
     repaintDetailedFFT,

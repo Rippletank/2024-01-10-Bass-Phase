@@ -31,7 +31,7 @@ import { SeededSplitMix32Random } from './gaussianRandom.js';
 
 
 //Assume buffer has been normalised to not exceed +/-1.0
-export function digitalSimulation(buffer, patch, samplerate){
+export function ditherSimulation(buffer, patch){
     const maxInt =Math.pow(2, Math.round(patch.digitalBitDepth)-1);//-1 to allow for + & - values
     const ditherType = Math.round(patch.digitalDitherType);
     const level = patch.digitalDitherLevel / maxInt;
