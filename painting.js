@@ -897,29 +897,43 @@ function paintDigitalPreview(data, canvasId){
     
     //Draw Jitter    
     ctx.lineWidth = 1;
-    ctx.strokeStyle = getColor(0, 0, 100);
     al = l + w * 6/8;
-    ab= b;
-    let m = Math.max(...data.jitter);
+    ab= b-h/7;
+    at=t+h/7;
     xScale = itemW/ (data.jitter.length-1);
-    yScale =  h/m;
+    let expectedYScale = 1/data.jitter.length;//straight line from zero at start to 1 at end
+    yScale = (at-ab)/(2*expectedYScale);
 
-    ctx.beginPath();  
-    for(let i = 0; i < data.jitter.length; i++){
-        let x = al + i * xScale;
-        let y = ab - data.jitter[i] * yScale;
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        }   
-        else {
-            ctx.lineTo(x, y);
-        }
-    }
+
+    //Jitter axis lines
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+    ctx.moveTo(al+itemW, ab);
+    ctx.lineTo(al, ab);
+    ctx.moveTo(al, at);
+    ctx.lineTo(al+itemW, at);
+    ctx.lineTo(al, ab);
     ctx.stroke();
 
 
-
-
+    let x0 = al;
+    let x1 = al+itemW/2;
+    let x2 = al+itemW;
+    let ey0 = ab;
+    let ey2 = at;
+    let ey1 = ey0 + 0.5*(ey2-ey0);
+    ctx.strokeStyle = getColorA(0, 0, 100,0.01);
+    ctx.beginPath();  
+    for(let i = 1; i < data.jitter.length-1; i++){
+        let e =i*expectedYScale
+        let y0 = ey0 + (data.jitter[i-1] - (e-expectedYScale))*yScale;
+        let y1 = ey1 + (data.jitter[i] - e)*yScale;
+        let y2 = ey2 + (data.jitter[i+1] - (e+expectedYScale))*yScale;
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+    }
+    ctx.stroke();
 }
 
 

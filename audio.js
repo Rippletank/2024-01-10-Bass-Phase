@@ -22,9 +22,9 @@
 
 import { distort } from './distortion.js';
 import { buildBlackmanHarrisWindow } from './oversampling.js';
-import { jitter } from './jitter.js';
+import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
-import { ditherSimulation } from './dither.js';
+import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
 
 
@@ -515,111 +515,8 @@ function getDigitalPreview(patch, sampleRate){
         ditherDRdB:ditherDR.db,
         ditherDRFBase:baselineBitRedux.db,//should be same Freq dist as ditherDRF
         //odd number of sample values 
-        jitter:new Float32Array([0,1,2,4,6,7,8,7,5,4,2,1,0])
+        jitter:getJitterPreview(patch, sampleRate)
     }
-}
-
-function getDitherLinearityData(patch, valueCount, repeatCount){
-    //generate tests signal for dither linearity analysis - a buffer with values from 0 to 1 inclusive
-    //There are 'valueCount' number of steps between 0 and 1 and each value is repeated 'repeatCount' times
-    let bufferSize = valueCount*repeatCount;
-    let b = new Float32Array(bufferSize);
-    let step = 1/(valueCount-1);    
-    let x=0;
-    for (let i = 0; i < valueCount; i++) {
-        let value = i*step;
-        for (let j = 0; j < repeatCount; j++) {
-            b[x++] = value;
-        }
-    }
-
-    let ditherPatch = {...patch};
-    ditherPatch.digitalDitherFakeness=0;
-    ditherPatch.digitalDitherShaping=0;
-    ditherPatch.digitalBitDepth=1;
-
-
-    ditherSimulation(b, ditherPatch);//Do the dithering
-
-    x=0;
-    let results = new Float32Array(valueCount); 
-    let scaling = 1/repeatCount;
-    for (let i = 0; i < valueCount; i++) {
-        let value = 0;
-        for (let j = 0; j < repeatCount; j++) {
-            value += b[x++];
-        }
-        results[i] = value*scaling;
-    }
-    return results;
-}
-
-
-function getDitherDynamicRange(patch, sampleRate){
-    //Prime numbers to give a range of levels in the 
-    //let harmonics = [2,3,5,7,11,13,17,19,23,29,31,37,41,43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101];
-    let fftSize =1024;
-    let fftSize2 = fftSize/2;
-    let outputCount =50;
-    let fCount =15;
-
-    let fftFunc = getFFTFunction(fftSize);
-    let accumulation = new Float32Array(fftSize2);
-    let b = new Float32Array(fftSize);
-    for(let i=0;i<fCount;i++){
-        //Fill buffer with a sine wave of the given harmonic 
-        const bin = i+1;
-        let w = 2* Math.PI * bin/fftSize;
-        for(var j=0;j<fftSize;j++){
-            b[j] = Math.sin(w*j);
-        }
-        ditherSimulation(b, patch);
-        let fft = fftFunc(b);
-        for (let i = 0; i < fftSize2; i++) {
-            if (i==bin)continue; //skip the bin of the given harmonic
-            accumulation[i] += fft.magnitude[i];
-        }
-    }
-    const scale = 1/fCount;
-    const scaleLow = 1/(fCount-1);
-    for (let i = 0; i < fftSize2; i++) {
-        accumulation[i] *= i<fCount? scaleLow : scale;
-    }
-    
-
-    let lastBin = 1;//lastBin will be skiped. bin 0 is DC
-    const maxF =20000;
-    const minF =10;
-    const power10Scale = Math.log10(maxF/minF)/outputCount;
-    const fScale =sampleRate/fftSize;
-    let logValues=[]
-    let logFreqs =[];
-    for(let i=0;i<outputCount;i++){
-        let f = minF*Math.pow(10,i*power10Scale);
-        let nextBin = Math.round(f/fScale);
-
-        if (nextBin<=lastBin) continue; //Check if there are any bins in the range
-
-        nextBin = Math.min(nextBin,fftSize2);
-        let value = 0;
-        for (let k = lastBin; k < nextBin; k++) {
-            value += accumulation[k];
-        }
-        value /= (nextBin-lastBin);
-        logValues.push(value);
-        logFreqs.push(f);
-        lastBin = nextBin;
-        if (nextBin>=fftSize2) break;
-    }
-
-    for(let i=0;i<logValues.length;i++){
-        logValues[i] =Math.max(-144, 20 * Math.log10(logValues[i]*fftSize2*0.125));
-    }   
-
-    return {
-        f:new Float32Array(logFreqs),
-        db:new Float32Array(logValues)
-    };
 }
 
 

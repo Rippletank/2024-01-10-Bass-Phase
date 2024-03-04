@@ -63,7 +63,7 @@ import {
     paintTHDGraph
 } from './painting.js';
 
-import { getJitterFactor } from './jitter.js';
+import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from './jitter.js';
 
 
 let flags = {
@@ -376,9 +376,9 @@ function updateAllPreviews(){
     jitterReport = 
                     previewPatch.jitterADC==0 && previewPatch.jitterDAC==0  && previewPatch.jitterPeriodic==0 ? "Jitter is off" :
                     ("Jitter (rms): " +
-                        "ADC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterADC) + ', ' +
-                        "Periodic : " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterPeriodic) + ', ' +
-                        "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC) +
+                        "ADC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterADC, ADCFactor) + ', ' +
+                        "Periodic : " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterPeriodic, periodicFactor) + ', ' +
+                        "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC, DACFactor) +
                         ", Sample period: " + (1000000/audioContext.sampleRate).toFixed(2) + "µs")
 }
 
@@ -415,9 +415,13 @@ setTHDPercentCallback((THDPercent)=>{
 });
 
 
+const DACFactor = getDACJitterFactor();
+const ADCFactor = getADCJitterFactor();
+const periodicFactor = getPeriodicJitterFactor();
 
-function getJitterTimeReport(sampleRate, amount){
-    return (getJitterFactor() * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
+function getJitterTimeReport(sampleRate, amount, factor){
+    //return (factor * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
+    return (factor * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //I think the root 2 is wrong - standard deviation of normal distribution is rms when mean is zero
 }
 
 

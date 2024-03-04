@@ -310,7 +310,7 @@ function setValueFromPatch(ve, patch){
             }
             else
             {
-                let rms = patch.digitalDitherLevel * 0.5 * rmsFactor;
+                let rms = patch.digitalDitherLevel * 0.5 * rmsFactor;//0.5 since level is 0..2 meaning -1..1
                 //Show only rms for gaussian dither because it is technically unbounded. Include rms in brackets for the others
                 ve.textContent = (includeBits? patch.digitalDitherLevel.toFixed(1)+" bit" + (patch.digitalDitherLevel==1? "" :"s") + " [": "")
                     + rms.toFixed(2) + "rms"
