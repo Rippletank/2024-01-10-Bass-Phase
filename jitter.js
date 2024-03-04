@@ -173,9 +173,12 @@ function getJitterPreview(patch, sampleRate){
     const length = 1000;
     const margin=10;//Allow space for curve fitting at start and end
     const inBuffer = new Float32Array(length+margin+margin);
-    const scale = 1/length;
+    const scale = 2/(length);
+    for (let i=0;i<margin;i++){
+        inBuffer[i] = -1;
+    }
     for (let i=0;i<length;i++){
-        inBuffer[margin+i] = i * scale;
+        inBuffer[margin+i] = i * scale-1;
     }
     for(let i=length+margin;i<inBuffer.length;i++){
         inBuffer[i] = 1;

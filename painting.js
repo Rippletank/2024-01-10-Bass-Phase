@@ -803,13 +803,63 @@ function paintDigitalPreview(data, canvasId){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     let al,ab, at, xScale, yScale;
+        //Draw Jitter    
+        al = l ;
+        ab= b-h/7;
+        at=t+h/7;
+        xScale = itemW/ (data.jitter.length-1);
+        let expectedYScale = 2/data.jitter.length;//straight line from -1 at start to +1 at end
+        yScale = (at-ab)/(2*expectedYScale);//fit 2 steps into the height
     
+        let eym1 = ab;
+        let eyp1 = at;
+        let ey0 = eym1 + 0.5*(eyp1-eym1);   
+        let jitterW = (eym1-ey0); 
+        let eym2 = eym1 + jitterW;
+        let eyp2 = eyp1 - jitterW;
+        let x0 = al+itemW/2;    
+        let xm1 = x0-jitterW;
+        let xm2 = xm1-jitterW;
+        let xp1 = x0+jitterW;
+        let xp2 = xp1+jitterW;
+    
+        //Jitter axis lines
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+        ctx.beginPath();  
+        ctx.moveTo(xm1+2*jitterW, ab);
+        ctx.lineTo(xm1, ab);
+        ctx.moveTo(xm1, at);
+        ctx.lineTo(xm1+2*jitterW, at);
+        ctx.lineTo(xm1, ab);
+        ctx.stroke();
+    
+    
+        ctx.strokeStyle = getColorA(0, 0, 100,0.01);
+        ctx.beginPath();  
+        for(let i = 2; i < data.jitter.length-2; i++){
+            let e =i*expectedYScale-1
+            let ym2 = eym2 + (data.jitter[i-2] - (e-2*expectedYScale))*yScale;
+            let ym1 = eym1 + (data.jitter[i-1] - (e-expectedYScale))*yScale;
+            let y0 = ey0 + (data.jitter[i] - e)*yScale;
+            let yp1 = eyp1 + (data.jitter[i+1] - (e+expectedYScale))*yScale;
+            let yp2 = eyp2 + (data.jitter[i+2] - (e+2*expectedYScale))*yScale;
+            
+            let cpsm1 = getControlPoints(xm2, ym2, xm1, ym1, x0, y0, 0.3);
+            let cps0 = getControlPoints(xm1, ym1, x0, y0, xp1, yp1, 0.3);
+            let cpsp1 = getControlPoints(x0, y0, xp1, yp1, xp2, yp2, 0.3);
+
+            ctx.moveTo(xm1, ym1);
+            ctx.bezierCurveTo(cpsm1[2], cpsm1[3], cps0[0], cps0[1], x0, y0);
+            ctx.bezierCurveTo(cps0[2], cps0[3], cpsp1[0], cpsp1[1], xp1, yp1);
+        }
+        ctx.stroke();
 
     //Draw Dither Linearity
 
     //Dither Dither Linearity axis lines
     ctx.lineWidth = 1;
-    al = l;
+    al = l+ itemW * 1.5;
     ab= b;
 
     ctx.strokeStyle = getGreyColorA(100,0.4);
@@ -846,7 +896,7 @@ function paintDigitalPreview(data, canvasId){
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.strokeStyle = getColor(0, 100, 0);
-    al = l+ itemW * 1.5;
+    al = l+ w * 6/8;
     ab= b;
     at = t;
     xScale =itemW / Math.log10(maxF/minF);
@@ -893,49 +943,24 @@ function paintDigitalPreview(data, canvasId){
     }
     ctx.stroke();
 
-
-    
-    //Draw Jitter    
-    ctx.lineWidth = 1;
-    al = l + w * 6/8;
-    ab= b-h/7;
-    at=t+h/7;
-    xScale = itemW/ (data.jitter.length-1);
-    let expectedYScale = 1/data.jitter.length;//straight line from zero at start to 1 at end
-    yScale = (at-ab)/(2*expectedYScale);
-
-
-    //Jitter axis lines
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = getColorA(100, 100, 100,0.8);
-    ctx.moveTo(al+itemW, ab);
-    ctx.lineTo(al, ab);
-    ctx.moveTo(al, at);
-    ctx.lineTo(al+itemW, at);
-    ctx.lineTo(al, ab);
-    ctx.stroke();
-
-
-    let x0 = al;
-    let x1 = al+itemW/2;
-    let x2 = al+itemW;
-    let ey0 = ab;
-    let ey2 = at;
-    let ey1 = ey0 + 0.5*(ey2-ey0);
-    ctx.strokeStyle = getColorA(0, 0, 100,0.01);
-    ctx.beginPath();  
-    for(let i = 1; i < data.jitter.length-1; i++){
-        let e =i*expectedYScale
-        let y0 = ey0 + (data.jitter[i-1] - (e-expectedYScale))*yScale;
-        let y1 = ey1 + (data.jitter[i] - e)*yScale;
-        let y2 = ey2 + (data.jitter[i+1] - (e+expectedYScale))*yScale;
-        ctx.moveTo(x0, y0);
-        ctx.lineTo(x1, y1);
-        ctx.lineTo(x2, y2);
-    }
-    ctx.stroke();
 }
 
+
+//Getting spline which passes through 3 points: Rob Spencer, July 2010
+//http://scaledinnovation.com/analytics/splines/aboutSplines.html
+//Demo of above: https://output.jsbin.com/ApitIxo/2/
+//Nice!
+function getControlPoints(x0,y0,x1,y1,x2,y2,t){
+    var d01=Math.sqrt(Math.pow(x1-x0,2)+Math.pow(y1-y0,2));
+    var d12=Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2));
+    var fa=t*d01/(d01+d12);   // scaling factor for triangle Ta
+    var fb=t*d12/(d01+d12);   // ditto for Tb, simplifies to fb=t-fa
+    var p1x=x1-fa*(x2-x0);    // x2-x0 is the width of triangle T
+    var p1y=y1-fa*(y2-y0);    // y2-y0 is the height of T
+    var p2x=x1+fb*(x2-x0);
+    var p2y=y1+fb*(y2-y0);  
+    return [p1x,p1y,p2x,p2y];
+}
 
 
 function paintTHDGraph(data, canvasId){
