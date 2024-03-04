@@ -791,9 +791,8 @@ function paintDigitalPreview(data, canvasId){
     let tW = canvas.width*0.06;
     let l=tW;
     let r = canvas.width-tW*0.5;
-    let t = 4;
-    let tH = canvas.height*0.15;
-    let b = canvas.height-tH;
+    let t = 9;
+    let b = canvas.height-33;
     let w=r-l;
     let h=b-t;
     let itemW = w/4;
@@ -803,76 +802,127 @@ function paintDigitalPreview(data, canvasId){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     let al,ab, at, xScale, yScale;
-        //Draw Jitter    
-        al = l ;
-        ab= b-h/7;
-        at=t+h/7;
-        xScale = itemW/ (data.jitter.length-1);
-        let expectedYScale = 2/data.jitter.length;//straight line from -1 at start to +1 at end
-        yScale = (at-ab)/(2*expectedYScale);//fit 2 steps into the height
-    
-        let eym1 = ab;
-        let eyp1 = at;
-        let ey0 = eym1 + 0.5*(eyp1-eym1);   
-        let jitterW = (eym1-ey0); 
-        let eym2 = eym1 + jitterW;
-        let eyp2 = eyp1 - jitterW;
-        let x0 = al+itemW/2;    
-        let xm1 = x0-jitterW;
-        let xm2 = xm1-jitterW;
-        let xp1 = x0+jitterW;
-        let xp2 = xp1+jitterW;
-    
-        //Jitter axis lines
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
-        ctx.beginPath();  
-        ctx.moveTo(xm1+2*jitterW, ab);
-        ctx.lineTo(xm1, ab);
-        ctx.moveTo(xm1, at);
-        ctx.lineTo(xm1+2*jitterW, at);
-        ctx.lineTo(xm1, ab);
-        ctx.stroke();
-    
-    
-        ctx.strokeStyle = getColorA(0, 0, 100,0.01);
-        ctx.beginPath();  
-        for(let i = 2; i < data.jitter.length-2; i++){
-            let e =i*expectedYScale-1
-            let ym2 = eym2 + (data.jitter[i-2] - (e-2*expectedYScale))*yScale;
-            let ym1 = eym1 + (data.jitter[i-1] - (e-expectedYScale))*yScale;
-            let y0 = ey0 + (data.jitter[i] - e)*yScale;
-            let yp1 = eyp1 + (data.jitter[i+1] - (e+expectedYScale))*yScale;
-            let yp2 = eyp2 + (data.jitter[i+2] - (e+2*expectedYScale))*yScale;
-            
-            let cpsm1 = getControlPoints(xm2, ym2, xm1, ym1, x0, y0, 0.3);
-            let cps0 = getControlPoints(xm1, ym1, x0, y0, xp1, yp1, 0.3);
-            let cpsp1 = getControlPoints(x0, y0, xp1, yp1, xp2, yp2, 0.3);
 
-            ctx.moveTo(xm1, ym1);
-            ctx.bezierCurveTo(cpsm1[2], cpsm1[3], cps0[0], cps0[1], x0, y0);
-            ctx.bezierCurveTo(cps0[2], cps0[3], cpsp1[0], cpsp1[1], xp1, yp1);
-        }
-        ctx.stroke();
 
+    
+    //Draw Jitter    
+    al = l ;
+    ab= b-h/7;
+    at=t+h/7;
+    xScale = itemW/ (data.jitter.length-1);
+    let expectedYScale = 2/data.jitter.length;//straight line from -1 at start to +1 at end
+    yScale = (at-ab)/(2*expectedYScale);//fit 2 steps into the height
+
+    let eym1 = ab;
+    let eyp1 = at;
+    let ey0 = eym1 + 0.5*(eyp1-eym1);   
+    let jitterW = (eym1-ey0); 
+    let eym2 = eym1 + jitterW;
+    let eyp2 = eyp1 - jitterW;
+    let x0 = al+itemW/2;    
+    let xm1 = x0-jitterW;
+    let xm2 = xm1-jitterW;
+    let xp1 = x0+jitterW;
+    let xp2 = xp1+jitterW;
+
+    //Jitter axis lines
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+    ctx.beginPath();  
+    ctx.moveTo(xm1+2*jitterW, ab);
+    ctx.lineTo(xm1, ab);
+    ctx.moveTo(xm1, at);
+    ctx.lineTo(xm1+2*jitterW, at);
+    ctx.lineTo(xm1, ab);
+    ctx.stroke();
+
+    ctx.fillStyle = getColor(0, 0, 0);
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("+0.1%", xm1-20, eyp1+6);
+    ctx.fillText("0", xm1-20, ey0+6);
+    ctx.fillText("-0.1%", xm1-20, eym1+6);
+    
+
+    ctx.save();
+    ctx.translate(xm1-65, ey0+6);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("Jitter", 0,0);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(xm1-45, ey0+6);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("Deflection from expected", 0,0);
+    ctx.restore();
+
+    ctx.strokeStyle = getColorA(0, 0, 100,0.01);
+    ctx.beginPath();  
+    for(let i = 2; i < data.jitter.length-2; i++){
+        let e =i*expectedYScale-1
+        let ym2 = eym2 + (data.jitter[i-2] - (e-2*expectedYScale))*yScale;
+        let ym1 = eym1 + (data.jitter[i-1] - (e-expectedYScale))*yScale;
+        let y0 = ey0 + (data.jitter[i] - e)*yScale;
+        let yp1 = eyp1 + (data.jitter[i+1] - (e+expectedYScale))*yScale;
+        let yp2 = eyp2 + (data.jitter[i+2] - (e+2*expectedYScale))*yScale;
+        
+        let cpsm1 = getControlPoints(xm2, ym2, xm1, ym1, x0, y0, 0.3);
+        let cps0 = getControlPoints(xm1, ym1, x0, y0, xp1, yp1, 0.3);
+        let cpsp1 = getControlPoints(x0, y0, xp1, yp1, xp2, yp2, 0.3);
+
+        ctx.moveTo(xm1, ym1);
+        ctx.bezierCurveTo(cpsm1[2], cpsm1[3], cps0[0], cps0[1], x0, y0);
+        ctx.bezierCurveTo(cps0[2], cps0[3], cpsp1[0], cpsp1[1], xp1, yp1);
+    }
+    ctx.stroke();
+
+
+
+        
     //Draw Dither Linearity
 
     //Dither Dither Linearity axis lines
     ctx.lineWidth = 1;
-    al = l+ itemW * 1.5;
     ab= b;
+    let ditherW =(ab-t)
+    al = l+ itemW * 1.5 + itemW/2-ditherW/2;
 
+
+    //Dither Linearity axis lines and expected line
     ctx.strokeStyle = getGreyColorA(100,0.4);
     ctx.beginPath(); 
     ctx.moveTo(al, ab);   
-    ctx.lineTo(al+itemW, t);
-    ctx.lineTo(al, t);
+    ctx.lineTo(al+ditherW, t);
+    ctx.moveTo(al, t);
     ctx.lineTo(al, ab);
-    ctx.lineTo(al+itemW, ab);
+    ctx.lineTo(al+ditherW, ab);
     ctx.stroke();
 
+    //Dither Linearity labels
+    ctx.fillStyle = getColor(0, 0, 0);
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("0.0", al, ab+15);
+    ctx.fillText("0.5", al+ditherW/2, ab+15);
+    ctx.fillText("1.0", al+ditherW, ab+15);
+    ctx.fillText("0.0", al-15, ab+6);
+    ctx.fillText("0.5", al-15, ab+6-ditherW/2);
+    ctx.fillText("1.0", al-15, t+6);
+    ctx.fillText("Input values", al+ditherW/2, ab+28);
+    ctx.fillText("Dither", al+ditherW,ab-ditherW/4);
+    ctx.fillText("Linearity", al+ditherW,ab-ditherW/4 + 15);
+
+    ctx.save();
+    ctx.translate(al-35, ab+6-ditherW/2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("Average Output after dither", 0,0);
+    ctx.restore();
+
+    ctx.fillText("Dither Linearity", 0,0);
+
+
     ctx.strokeStyle = getColor(100, 0, 0);
-    xScale = itemW / (data.ditherLinear.length-1);
+    xScale = ditherW / (data.ditherLinear.length-1);
     yScale =  h;
 
     ctx.beginPath();
@@ -910,6 +960,34 @@ function paintDigitalPreview(data, canvasId){
     ctx.lineTo(al+itemW, ab);
     ctx.stroke();
     
+
+    //Dither Linearity labels
+    ctx.fillStyle = getColor(0, 0, 0);
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    
+    ctx.fillText("100", al + Math.log10(100/minF) * xScale, ab+15);
+    ctx.fillText("300", al + Math.log10(300/minF) * xScale, ab+15);
+    ctx.fillText("1k", al + Math.log10(1000/minF) * xScale, ab+15);
+    ctx.fillText("3k", al + Math.log10(3000/minF) * xScale, ab+15);
+    ctx.fillText("10k", al + Math.log10(10000/minF) * xScale, ab+15);
+    ctx.fillText("20k", al + Math.log10(20000/minF) * xScale, ab+15);
+    ctx.fillText("db", al-15, t+6);
+    ctx.fillText("-30", al-15, at + -30 * yScale);
+    ctx.fillText("-60", al-15, at + -60 * yScale);
+    ctx.fillText("-90", al-15, at + -90 * yScale);
+    ctx.fillText("-120", al-15, at + -120 * yScale);
+    //ctx.fillText("Dynamic Range", al+itemW/2, ab+28);
+
+    ctx.save();
+    ctx.translate(al-35, ab+6-ditherW/2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("Dynamic Range", 0,0);
+    ctx.restore();
+
+
+
+
 
     ctx.strokeStyle = getColorA(100, 0, 0,0.8);
     ctx.beginPath();   
@@ -1010,12 +1088,12 @@ function paintTHDGraph(data, canvasId){
         let x =l+ Math.log2(f/20) * xScale;
         ctx.moveTo(x, t);
         ctx.lineTo(x, b);
-        ctx.fillText(f.toString(), x, b + tH); // draw the frequency label 15 pixels below the line
+        ctx.fillText(f.toString()+(f==500?"Hz":""), x, b + tH); // draw the frequency label 15 pixels below the line
     });
     ctx.stroke();
 
     const percents = [0.001,0.01,0.1,1,10,100];
-    //THD freq grid lines
+    //THD db grid lines
     ctx.beginPath();    
     ctx.lineWidth = 1;
     ctx.strokeStyle = getColor(210, 210, 210);
@@ -1025,10 +1103,18 @@ function paintTHDGraph(data, canvasId){
     percents.forEach(p=>{
         let y = b - Math.log10(p/0.001) * yScale;
         ctx.moveTo(l, y);
-        ctx.lineTo(r, y);
-        ctx.fillText(p.toString(), l-tW*0.1, y+6); // draw the frequency label 15 pixels below the line
+        ctx.lineTo(r, y);        
+        ctx.fillText(p.toString() +(p==1?"%":""), l-tW*0.1, y+6); // draw the frequency label 15 pixels below the line
     });
     ctx.stroke();
+
+
+    ctx.save();
+    ctx.translate(12, t+tH*0.5);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("THD Freq. Response", 0,0);
+    ctx.restore();
+
 
 
     if (data.thd)
