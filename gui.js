@@ -88,7 +88,7 @@ previewButtons.forEach(function(button) {
     switch(button.name[0]){    
         case 'e'://Expand All/Collapse All
             button.addEventListener('click', function() {
-                toggleGlobalExapnder();
+                toggleGlobalExpander();
             });
             button.isChecked =()=>false;
             break;
@@ -614,7 +614,7 @@ headers.forEach(header => {
     });
 });
 
-function toggleGlobalExapnder(){
+function toggleGlobalExpander(){
     const shouldExpand = globalToggle.textContent.includes('Expand');
     headers.forEach(header => {
         const content = header.nextElementSibling;
@@ -640,7 +640,8 @@ const updateGlobalToggleText = () => {
     }
 };
 
-toggleGlobalExapnder();
+setTimeout(toggleGlobalExpander, 10);
+// toggleGlobalExpander();
 //updateGlobalToggleText();
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
