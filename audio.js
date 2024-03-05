@@ -430,7 +430,7 @@ function getTHDPercent(referencePatch){
 }
 
 
-let THDStepsPerOctave = 4;
+let THDStepsPerOctave = 2;
 let THDEfficiencyFactor = 2; //must be power of 2 Adjust the resolution and FFT Size to be more efficient with calculation times
 let THDfftResolution = 10;//Hz Nominal resolution - will be adjusted by Efficiency factor
 let THDfftSize = 16384; //will be adjusted by Efficiency factor

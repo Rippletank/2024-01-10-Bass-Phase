@@ -1121,21 +1121,67 @@ function paintTHDGraph(data, canvasId){
 
 
 
-    if (data.thd)
+    if (data.thd && data.thd.length>0)
     {
-        ctx.beginPath();    
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = getColor(0, 0, 0);
-        for (let i = 0; i < data.thd.length; i++) {
+        let xs =[];
+        let ys =[];
+        for(let i = 0; i < data.thd.length; i++){
             let frequency = data.frequencies[i];
             let thd = data.thd[i];
             let y = b - Math.log10(thd/0.001) * yScale;
             if (y>b) y=b;
             let x = l + Math.log2(frequency/THDGraphMinF) * xScale;
+            xs.push(x);
+            ys.push(y);
+        }
+
+        let cps=[]
+        for(let i = 0; i < data.thd.length; i++){
+            if (i === 0) {
+                let x=xs[i];
+                let y=ys[i];
+                let x1=xs[i+1];
+                let y1=ys[i+1];
+                cps.push([0,0,x+0.3*(x1-x),y+0.3*(y1-y)]);
+            }
+            else 
+            if (i === data.thd.length-1) {
+                let x=xs[i];
+                let y=ys[i];
+                let x1=xs[i-1];
+                let y1=ys[i-1];
+                cps.push([x+0.3*(x1-x),y+0.3*(y1-y),0,0]);
+            }
+            else{
+                cps.push(getControlPoints(xs[i-1],ys[i-1],xs[i],ys[i],xs[i+1],ys[i+1],0.3));
+            }
+        }
+
+
+        // ctx.beginPath();    
+        // ctx.lineWidth = 1;
+        // ctx.strokeStyle = getColor(0, 0, 0);
+        // for (let i = 0; i < data.thd.length; i++) {
+        //     let x =xs[i];
+        //     let y =ys[i];
+        //     if (i === 0) {
+        //         ctx.moveTo(x, y);
+        //     } else {
+        //         ctx.lineTo(x, y);
+        //     }
+        // }
+        // ctx.stroke();
+
+        ctx.beginPath();    
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColor(0, 0, 0);
+        for (let i = 0; i < data.thd.length; i++) {
+            let x =xs[i];
+            let y =ys[i];
             if (i === 0) {
                 ctx.moveTo(x, y);
             } else {
-                ctx.lineTo(x, y);
+                ctx.bezierCurveTo(cps[i-1][2], cps[i-1][3], cps[i][0], cps[i][1], x, y);
             }
         }
         ctx.stroke();
