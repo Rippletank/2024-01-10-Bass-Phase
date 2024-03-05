@@ -681,7 +681,16 @@
                 <h3>Digital conversion</h3>
                 <div id="digitalPresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
-                <div class="help-popup">Controls for the simulation of the ADC and DAC. The ADC is applied before the distortion and the DAC after. The jitter is normally distributed white noise.</div>
+                <div class="help-popup">C
+                    <p>Simulation of Jitter and bit depth reduction with dithering.</p>
+                    <p>See individual sections for more details.</p>
+                    <p>Graphs are as follows:</p>
+                    <ul>
+                        <li>Jitter: shows how the jitter settings affect the output values of a small (+/-0.1%) linear change. Samples and displays 1000 of these transitions.</li>
+                        <li>Dither Linearity: Shows how, on average, intermediate values are transformed to the reduced bit depth. Ideally this should be linear. Again, graph is based on sampling of the system, not theoretical calculations.</li>
+                        <li>Dynamic Range: Sampled frequency distribution of averaged noise floor without dithering (red) and with the current dithering settings (green). The levels shown are indications only, the display is intended to show how the controls affect relative levels of noise floor.</li>
+                    </ul>
+                </div>
             </div>    
             <div class="canvasBox">
                 <canvas id="digitalPreview"  width ="2000" height="500"></canvas>
@@ -809,11 +818,13 @@
                 <output class="valueSpan" name="attenuation">0db</output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
-                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if desired.</p>
+                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed.</p>
                 </div>
+                <br>
+                <br>
+                <br>
             </div>
         </div>
-
     </div>
 
     <div class="bordered">

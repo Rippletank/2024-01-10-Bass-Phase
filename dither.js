@@ -233,11 +233,10 @@ export function getDitherLinearityData(patch, valueCount, repeatCount){
 }
 
 
-export function getDitherDynamicRange(patch, sampleRate){
+export function getDitherDynamicRange(patch, sampleRate, fCount){
     let fftSize =1024;
     let fftSize2 = fftSize/2;
     let outputCount =50;
-    let fCount =15;
 
     //Generate a sine wave of a given frequency, apply bit depth reduction and dithering according to the patch
     //Do an FFT of the result, remove the bin of the given frequency and accumulate the other bins
@@ -297,7 +296,7 @@ export function getDitherDynamicRange(patch, sampleRate){
     //The fft spreads out the power over the whole range, but in this case, that makes it a bit meaningless, maybe?
     //Either way, its just a guide and works well as a comparison with the graph for the un-dithered signal
     for(let i=0;i<logValues.length;i++){
-        logValues[i] =Math.max(-144, 20 * Math.log10(logValues[i]*fftSize2*0.125));
+        logValues[i] =Math.max(-144, 20 * Math.log10(logValues[i]*fftSize2*0.5));
     }   
 
     return {

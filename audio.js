@@ -496,7 +496,7 @@ function getTHDGraph(referencePatch){
 
 
 function getDigitalPreview(patch, sampleRate){
-    let ditherDR = getDitherDynamicRange(patch, sampleRate);
+    let ditherDR = getDitherDynamicRange(patch, sampleRate, 50);
 
 
     let baseLinePatch = {...patch};
@@ -504,7 +504,7 @@ function getDigitalPreview(patch, sampleRate){
     baseLinePatch.digitalDitherShaping=0;
     baseLinePatch.digitalDitherLevel=0;
 
-    let baselineBitRedux = getDitherDynamicRange(baseLinePatch, sampleRate);
+    let baselineBitRedux = getDitherDynamicRange(baseLinePatch, sampleRate, 50);
     return {
         sampleRate:sampleRate,
         //Linearity analysis - Range of average output for input values equally spaced from 0 to 1 inclusive

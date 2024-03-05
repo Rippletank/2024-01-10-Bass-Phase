@@ -942,6 +942,7 @@ function paintDigitalPreview(data, canvasId){
     //Draw Dither Dynamic Range    
     const maxF =20000;
     const minF =50;
+    const dbMax =12;
     const dbMin = -144
     ctx.beginPath();
     ctx.lineWidth = 1;
@@ -950,7 +951,7 @@ function paintDigitalPreview(data, canvasId){
     ab= b;
     at = t;
     xScale =itemW / Math.log10(maxF/minF);
-    yScale =  h/dbMin;
+    yScale =  h/(dbMin -dbMax);
 
     //Dither Dynamic Range axis lines
     ctx.lineWidth = 1;
@@ -972,11 +973,12 @@ function paintDigitalPreview(data, canvasId){
     ctx.fillText("3k", al + Math.log10(3000/minF) * xScale, ab+15);
     ctx.fillText("10k", al + Math.log10(10000/minF) * xScale, ab+15);
     ctx.fillText("20k", al + Math.log10(20000/minF) * xScale, ab+15);
-    ctx.fillText("db", al-15, t+6);
-    ctx.fillText("-30", al-15, at + -30 * yScale);
-    ctx.fillText("-60", al-15, at + -60 * yScale);
-    ctx.fillText("-90", al-15, at + -90 * yScale);
-    ctx.fillText("-120", al-15, at + -120 * yScale);
+    //ctx.fillText("db", al-15, t+6);
+    ctx.fillText("0db", al-15, at + (0 -dbMax)* yScale);
+    ctx.fillText("-30", al-15, at + (-30 -dbMax)* yScale);
+    ctx.fillText("-60", al-15, at + (-60 -dbMax)* yScale);
+    ctx.fillText("-90", al-15, at + (-90 -dbMax)* yScale);
+    ctx.fillText("-120", al-15, at + (-120 -dbMax)* yScale);
     //ctx.fillText("Dynamic Range", al+itemW/2, ab+28);
 
     ctx.save();
@@ -995,7 +997,7 @@ function paintDigitalPreview(data, canvasId){
         let f = data.ditherDRF[i];
         let v = Math.max(dbMin, data.ditherDRFBase[i]);
         let x = al + Math.log10(f/minF) * xScale;
-        let y = at + v * yScale;
+        let y = at + (v -dbMax) * yScale;
         if (i === 0) {
             ctx.moveTo(x, y);
         }
@@ -1011,7 +1013,7 @@ function paintDigitalPreview(data, canvasId){
         let f = data.ditherDRF[i];
         let v = Math.max(dbMin, data.ditherDRdB[i]);
         let x = al + Math.log10(f/minF) * xScale;
-        let y = at + v * yScale;
+        let y = at + (v -dbMax) * yScale;
         if (i === 0) {
             ctx.moveTo(x, y);
         }
