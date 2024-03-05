@@ -426,6 +426,28 @@ input[type="range"]:focus {
     margin: 10px;
     padding: 10px;
 }
+
+.sticky{
+    position: sticky;
+    bottom: 5px;
+    z-index: 2;
+    background-color: var(--background-color);
+}
+.pin {
+    display: flex;
+    justify-content: flex-end; 
+    align-items: start;
+    align-self: flex-start;
+    height: 30px; 
+    margin-right: 5px;
+    margin-top:-2px;
+    cursor: pointer;
+}
+
+.sticky .pin svg path{
+    fill: var(--text-color);
+}
+
 .testSoundControls {
 
     margin: 0px;
@@ -495,3 +517,4 @@ input[type="range"]:focus {
 .rotate {
     transform: rotate(180deg);
 }
+

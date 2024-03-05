@@ -349,8 +349,16 @@ function updateCanvas() {
     });
     updateDisplay();
     doPaintAllPreviews();
+    repaintDetailedFFT();
 }
 updateCanvas();
+
+//Allow pinning of certain sections eg detailed FFT
+document.querySelector('.pin').addEventListener('click', function() {
+    var stickyElement = this.closest('.canBeSticky');
+    stickyElement.classList.toggle('sticky');
+  });
+
 
 
   function setModeText(button, isDarMode){
