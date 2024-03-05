@@ -503,9 +503,9 @@
             <div class="canvasBox  topSpaced bottomSpacedSlight">
                 <canvas id="THDGraphCanvas" class ="canvasHalfHeight thdGraphElement" width ="2000" height="200"></canvas>
             </div>
-            <div class="THDReport paragraphReport bottomSpaced"></div>
+            <div class="THDReport paragraphReport"></div>
 
-            <div class="slider-container">
+            <div class="slider-container bottomSpaced">
                 <label for="distortion"><b>Distortion Level:</b></label>
                 <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
                 <output class="valueSpan" name="distortion">0%</output>
@@ -514,6 +514,14 @@
                     <p>Turns distortion on and off and controls the overall amount</p>
                     <p>Total Harmonic Distortion is measured (using 10 harmonics) for the distortion applied (not including jitter or inharmonics).</p>
                 </div>
+            </div>
+
+            <div class="presetHeader">
+                <h3>Saturation</h3>
+                <div  class="PresetButtons"></div>
+                <span class="help-icon">?</span>
+                <div class="help-popup"><p>Common saturation functions. </p>
+                    <p>Actual level of each controlled by main Distortion level.</p> </div>
             </div>
             <div class="slider-container">
                 <label for="hyperbolicDistortion">Hyperbolic Asym:</label>
@@ -694,6 +702,21 @@
             </div>    
             <div class="canvasBox">
                 <canvas id="digitalPreview"  width ="2000" height="500"></canvas>
+            </div>            <div class ="previewButtons bottomSpaced">
+                <div class="previewButtons previewL">
+                    <button name="PD" class = "previewButton">def</button>
+                    <button name="PA" class = "previewButton hideForStereo">A</button>
+                    <button name="PB" class = "previewButton hideForStereo">B</button>
+                    <button name="PA" class = "previewButton hideForMono">A-L</button>
+                    <button name="PAR" class = "previewButton hideForMono">A-R</button>
+                    <button name="PB" class = "previewButton hideForMono">B-L</button>
+                    <button name="PBR" class = "previewButton hideForMono">B-R</button>
+                </div>
+                <div class="previewButtons previewC">
+                </div>
+
+                <div class="previewButtons">
+                </div>
             </div>
 
 

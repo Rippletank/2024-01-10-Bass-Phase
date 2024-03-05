@@ -432,8 +432,9 @@ function getTHDPercent(referencePatch){
 
 let THDStepsPerOctave = 4;
 let THDEfficiencyFactor = 2; //must be power of 2 Adjust the resolution and FFT Size to be more efficient with calculation times
-let THDfftResolution = 2.5;//Hz Nominal resolution - will be adjusted by Efficiency factor
+let THDfftResolution = 10;//Hz Nominal resolution - will be adjusted by Efficiency factor
 let THDfftSize = 16384; //will be adjusted by Efficiency factor
+let THDStartFrequency = 40;//Hz
 function getTHDGraph(referencePatch){
     if (referencePatch.distortion==0) return {
         frequencies:new Float32Array(0),
@@ -453,9 +454,9 @@ function getTHDGraph(referencePatch){
     let fftFunc = getFFTFunction(bufferSize);
     let sampleRate = bufferSize * freqStepSize;
     let frequencies = [];
-    let f = 20;
+    let f = THDStartFrequency;
     let factor = Math.pow(2,1/THDStepsPerOctave);//Geometric increase to cover given number of steps per octave
-    while (f<=20000 && f<=sampleRate/2){
+    while (f<=10000 && f<=sampleRate/2){
         frequencies.push(Math.round(f/freqStepSize)*freqStepSize);//To nearest frequency step
         f*=factor;
     }
@@ -465,6 +466,7 @@ function getTHDGraph(referencePatch){
     }
 
     let harmonicsToInclude = 10;
+    let minimumToInclude =2;//Don't report if not enough harmonics to count
     let maxBin = bufferSize/2-1;
     let THD ={
         frequencies:new Float32Array(frequencies.length),
@@ -482,10 +484,13 @@ function getTHDGraph(referencePatch){
         let fundamentalBin = Math.round(patch.frequency/freqStepSize)
         if (fundamentalBin>maxBin) break;
         let lastBin = Math.min(Math.round((harmonicsToInclude+1)*fundamentalBin),maxBin);
+        let count = 0;
         for (let i = fundamentalBin*2; i <= lastBin; i+=fundamentalBin) {
             let vn = fft.magnitude[i];
             total += vn * vn;
+            count++;
         }
+        if (count<minimumToInclude) break;
         THD.frequencies[i] = patch.frequency;
         THD.thd[i] = Math.sqrt(total) / fft.magnitude[fundamentalBin] *100;
     }

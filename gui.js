@@ -348,6 +348,7 @@ function updateCanvas() {
         canvas.height = canvas.clientHeight;
     });
     updateDisplay();
+    doPaintAllPreviews();
 }
 updateCanvas();
 
@@ -640,9 +641,7 @@ const updateGlobalToggleText = () => {
     }
 };
 
-setTimeout(toggleGlobalExpander, 10);
-// toggleGlobalExpander();
-//updateGlobalToggleText();
+//setTimeout(toggleGlobalExpander, 10);
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Import/Export Patch

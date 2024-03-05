@@ -1043,6 +1043,8 @@ function getControlPoints(x0,y0,x1,y1,x2,y2,t){
 }
 
 
+let THDGraphMaxF = 10000;
+let THDGraphMinF = 30;
 function paintTHDGraph(data, canvasId){
     if (!data) return;
 
@@ -1062,7 +1064,7 @@ function paintTHDGraph(data, canvasId){
     let w=r-l;
     let h=b-t;
     let yScale = h / 5;
-    let xScale = w / Math.log2(20000/20); //range 20-20000
+    let xScale = w / Math.log2(THDGraphMaxF/THDGraphMinF); //range 20-20000
 
 
     ctx.fillStyle = getColor(255,255,255); //Color to clear to
@@ -1078,7 +1080,7 @@ function paintTHDGraph(data, canvasId){
     ctx.stroke();
 
 
-    const freqs = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+    const freqs = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
     //THD freq grid lines
     ctx.beginPath();    
     ctx.lineWidth = 1;
@@ -1087,7 +1089,7 @@ function paintTHDGraph(data, canvasId){
     ctx.font = "12px Arial"; // font of the text
     ctx.textAlign = "center"; // horizontal alignment
     freqs.forEach(f=>{
-        let x =l+ Math.log2(f/20) * xScale;
+        let x =l+ Math.log2(f/THDGraphMinF) * xScale;
         ctx.moveTo(x, t);
         ctx.lineTo(x, b);
         ctx.fillText(f.toString()+(f==500?"Hz":""), x, b + tH); // draw the frequency label 15 pixels below the line
@@ -1129,7 +1131,7 @@ function paintTHDGraph(data, canvasId){
             let thd = data.thd[i];
             let y = b - Math.log10(thd/0.001) * yScale;
             if (y>b) y=b;
-            let x = l + Math.log2(frequency/20) * xScale;
+            let x = l + Math.log2(frequency/THDGraphMinF) * xScale;
             if (i === 0) {
                 ctx.moveTo(x, y);
             } else {

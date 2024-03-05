@@ -252,29 +252,27 @@ function setValueFromPatch(ve, patch){
             }
             else
             {
-                ve.textContent = toPercent(patch.distortion);
+                ve.innerHTML = toPercent(patch.distortion);
             }
             break;
         case "oddDistortion":
-            ve.textContent =toPercent(patch.oddDistortion);break;
-        case "asymDistortion":
-            ve.textContent =toPercent(patch.asymDistortion);break;
+            ve.innerHTML =toPatchDistortion(patch.oddDistortion, patch.distortion);break;
         case "clipDistortion":
-            ve.textContent =toPercent(patch.clipDistortion);break;
+            ve.innerHTML =toPatchDistortion(patch.clipDistortion, patch.distortion);break;
         case "hyperbolicDistortion":
-            ve.textContent =toPercent(patch.hyperbolicDistortion);break;
+            ve.innerHTML =toPatchDistortion(patch.hyperbolicDistortion, patch.distortion);break;
         case "tanhDistortion":
-            ve.textContent =toPercent(patch.tanhDistortion);break;
+            ve.innerHTML =toPatchDistortion(patch.tanhDistortion, patch.distortion);break;
         case "speakerAmount":
-            ve.textContent =toPercent(patch.speakerAmount);break;
+            ve.innerHTML =toPatchDistortion(patch.speakerAmount, patch.distortion);break;
         case "speakerMass":
-            ve.textContent =toPercent(patch.speakerMass);break;
+            ve.textContent =(100 * patch.speakerMass).toFixed(1);break;
         case "speakerDamping":
-            ve.textContent =toPercent(patch.speakerDamping);break;
+            ve.textContent =(patch.speakerDamping).toFixed(2);break;
         case "speakerStiffness":
-            ve.textContent =toPercent(patch.speakerStiffness);break;
+            ve.textContent =(0.5 +4 *patch.speakerStiffness).toFixed(2);break;
         case "speakerNonLinearity":
-            ve.textContent =toPercent(patch.speakerNonLinearity);break;
+            ve.textContent =(10*patch.speakerNonLinearity).toFixed(1);break;
 
 
         case "jitterADC": 
@@ -425,6 +423,12 @@ function toFilterFreq(x){
     return (20 * Math.pow(2,x)).toFixed(0) + "Hz";
 }
 
+
+function toPatchDistortion(value, distortion){
+    if (distortion==0) return "off";
+    return '<div class="tinyLabelDiv">'+(value*100).toFixed(0) +'% <span class="tinyLabel">x level</span></div>';
+    //return '<small>'+ (value*100).toFixed(0) +' ('+(value * distortion).toFixed(Math.max(2,Math.min(4,-Math.round(Math.log(distortion)*2)))) +')</small>';
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setup canvas tooltips
