@@ -22,9 +22,9 @@
 
 import { distort } from './distortion.js';
 import { buildBlackmanHarrisWindow } from './oversampling.js';
-import { jitter } from './jitter.js';
+import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
-import { digitalSimulation } from './dither.js';
+import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
 
 
@@ -125,7 +125,7 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
-    //Normalise here to provide just under full scale input to digitalSimulation functions
+    //Normalise here to provide just under full scale input to ditherSimulation functions
     if (!isNormToLoudest && scaleA != scaleB){
         if (scale==scaleA) 
         {
@@ -145,10 +145,10 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
         scaleBuffer(audioBufferB.buffer, scale);
     }
     
-    digitalSimulation(audioBufferA.buffer.data[0], patchList[0], audioBufferA.sampleRate);
-    if (audioBufferA.buffer.numberOfChannels>1) digitalSimulation(audioBufferA.buffer.data[1], patchList[1], audioBufferA.sampleRate);
-    digitalSimulation(audioBufferB.buffer.data[0], patchList[2], audioBufferB.sampleRate);
-    if (audioBufferB.buffer.numberOfChannels>1) digitalSimulation(audioBufferB.buffer.data[1], patchList[3], audioBufferB.sampleRate);
+    ditherSimulation(audioBufferA.buffer.data[0], patchList[0]);
+    if (audioBufferA.buffer.numberOfChannels>1) ditherSimulation(audioBufferA.buffer.data[1], patchList[1]);
+    ditherSimulation(audioBufferB.buffer.data[0], patchList[2]);
+    if (audioBufferB.buffer.numberOfChannels>1) ditherSimulation(audioBufferB.buffer.data[1], patchList[3]);
 
     let audioBufferNull = {
         buffer: buildNullTest(audioBufferA.buffer, audioBufferB.buffer)
@@ -345,7 +345,7 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
 
     if (includeInharmonicsAndDigital) {
         jitter(distorted, sampleRate, patch, true, Math.random());
-        digitalSimulation(distorted, patch, sampleRate);
+        ditherSimulation(distorted, patch, sampleRate);
     }
     
     return {
@@ -430,10 +430,11 @@ function getTHDPercent(referencePatch){
 }
 
 
-let THDStepsPerOctave = 4;
+let THDStepsPerOctave = 2;
 let THDEfficiencyFactor = 2; //must be power of 2 Adjust the resolution and FFT Size to be more efficient with calculation times
-let THDfftResolution = 2.5;//Hz Nominal resolution - will be adjusted by Efficiency factor
+let THDfftResolution = 10;//Hz Nominal resolution - will be adjusted by Efficiency factor
 let THDfftSize = 16384; //will be adjusted by Efficiency factor
+let THDStartFrequency = 40;//Hz
 function getTHDGraph(referencePatch){
     if (referencePatch.distortion==0) return {
         frequencies:new Float32Array(0),
@@ -453,9 +454,9 @@ function getTHDGraph(referencePatch){
     let fftFunc = getFFTFunction(bufferSize);
     let sampleRate = bufferSize * freqStepSize;
     let frequencies = [];
-    let f = 20;
+    let f = THDStartFrequency;
     let factor = Math.pow(2,1/THDStepsPerOctave);//Geometric increase to cover given number of steps per octave
-    while (f<=20000 && f<=sampleRate/2){
+    while (f<=10000 && f<=sampleRate/2){
         frequencies.push(Math.round(f/freqStepSize)*freqStepSize);//To nearest frequency step
         f*=factor;
     }
@@ -465,6 +466,7 @@ function getTHDGraph(referencePatch){
     }
 
     let harmonicsToInclude = 10;
+    let minimumToInclude =2;//Don't report if not enough harmonics to count
     let maxBin = bufferSize/2-1;
     let THD ={
         frequencies:new Float32Array(frequencies.length),
@@ -482,15 +484,44 @@ function getTHDGraph(referencePatch){
         let fundamentalBin = Math.round(patch.frequency/freqStepSize)
         if (fundamentalBin>maxBin) break;
         let lastBin = Math.min(Math.round((harmonicsToInclude+1)*fundamentalBin),maxBin);
+        let count = 0;
         for (let i = fundamentalBin*2; i <= lastBin; i+=fundamentalBin) {
             let vn = fft.magnitude[i];
             total += vn * vn;
+            count++;
         }
+        if (count<minimumToInclude) break;
         THD.frequencies[i] = patch.frequency;
         THD.thd[i] = Math.sqrt(total) / fft.magnitude[fundamentalBin] *100;
     }
 
     return THD;
+}
+
+
+
+function getDigitalPreview(patch, sampleRate){
+    let ditherDR = getDitherDynamicRange(patch, sampleRate, 50);
+
+
+    let baseLinePatch = {...patch};
+    baseLinePatch.digitalDitherFakeness=0;
+    baseLinePatch.digitalDitherShaping=0;
+    baseLinePatch.digitalDitherLevel=0;
+
+    let baselineBitRedux = getDitherDynamicRange(baseLinePatch, sampleRate, 50);
+    return {
+        sampleRate:sampleRate,
+        //Linearity analysis - Range of average output for input values equally spaced from 0 to 1 inclusive
+        ditherLinear:getDitherLinearityData(patch, 40, 20000),
+
+        //Average results for dynamic range across frequency range
+        ditherDRF:ditherDR.f,
+        ditherDRdB:ditherDR.db,
+        ditherDRFBase:baselineBitRedux.db,//should be same Freq dist as ditherDRF
+        //odd number of sample values 
+        jitter:getJitterPreview(patch, sampleRate)
+    }
 }
 
 
@@ -737,7 +768,8 @@ export {
     scaleAndGetNullBuffer,
     preMaxCalcStartDelay,
 
-    getPreview,  
+    getPreview,
+    getDigitalPreview,  
 
     getDetailedFFT, 
     getTHDPercent, 

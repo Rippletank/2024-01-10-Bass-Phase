@@ -33,7 +33,12 @@
     calculateTHDPercent,
 
     setPreviewCallback,
+    calculateDigitalPreview,
+
+    
+    setDigitalPreviewCallback,
     calculatePreview,
+    
 
     setAudioBufferCallback,
     calculateAudioBuffer
@@ -53,11 +58,12 @@ import {
     paintBuffer, paintEnvelope, paintFilterEnvelope, 
     
     paintPreview,
+    paintDigitalPreview,
     paintDetailedFFT, 
     paintTHDGraph
 } from './painting.js';
 
-import { getJitterFactor } from './jitter.js';
+import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from './jitter.js';
 
 
 let flags = {
@@ -338,17 +344,20 @@ function endTHDGraphUpdate() {
 
 
 function updateDisplay(){
-    doPaintBuffersAndNull();    
-    doPaintPreview();
+    doPaintBuffersAndNull();   
     doPaintTHDGraph();
 }
 
+function doPaintAllPreviews(){ 
+    doPaintPreview();
+    doPaintDigitalPreview();
+}
 
 
 let jitterReport = 'Jitter is off';
 let suspendPreviewUpdates = true;
 let previewPatchVersion = 0;
-function updatePreview(){
+function updateAllPreviews(){
     if (suspendPreviewUpdates) return;
 
     //Avoid duplicated processing - check if this version has already been previewed
@@ -361,14 +370,15 @@ function updatePreview(){
 
     const previewPatch = getPreviewSubjectCachedPatch(patchesToUse);
 
-    calculatePreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);        
+    calculatePreview(previewPatch, flags.filterPreviewSubject, audioContext.sampleRate);   
+    calculateDigitalPreview(previewPatch, audioContext.sampleRate);     
     getTHDReport(previewPatch);
     jitterReport = 
                     previewPatch.jitterADC==0 && previewPatch.jitterDAC==0  && previewPatch.jitterPeriodic==0 ? "Jitter is off" :
                     ("Jitter (rms): " +
-                        "ADC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterADC) + ', ' +
-                        "Periodic : " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterPeriodic) + ', ' +
-                        "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC) +
+                        "ADC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterADC, ADCFactor) + ', ' +
+                        "Periodic : " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterPeriodic, periodicFactor) + ', ' +
+                        "DAC: " + getJitterTimeReport(audioContext.sampleRate, previewPatch.jitterDAC, DACFactor) +
                         ", Sample period: " + (1000000/audioContext.sampleRate).toFixed(2) + "µs")
 }
 
@@ -377,6 +387,12 @@ let previewResult = null;
 setPreviewCallback((preview)=>{
     previewResult = preview; 
     doPaintPreview();
+});
+
+let digitalPreviewResult = null;
+setDigitalPreviewCallback((preview)=>{
+    digitalPreviewResult = preview; 
+    doPaintDigitalPreview();
 });
 
 
@@ -399,9 +415,13 @@ setTHDPercentCallback((THDPercent)=>{
 });
 
 
+const DACFactor = getDACJitterFactor();
+const ADCFactor = getADCJitterFactor();
+const periodicFactor = getPeriodicJitterFactor();
 
-function getJitterTimeReport(sampleRate, amount){
-    return (getJitterFactor() * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
+function getJitterTimeReport(sampleRate, amount, factor){
+    //return (factor * Math.sqrt(2) * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //root 2 for standard deviation to rms
+    return (factor * amount * 1000000 / sampleRate).toFixed(2)+"µs "; //I think the root 2 is wrong - standard deviation of normal distribution is rms when mean is zero
 }
 
 
@@ -499,6 +519,13 @@ function doPaintPreview(){
     
 }
 
+
+function doPaintDigitalPreview(){
+    if (!digitalPreviewResult) return;
+    paintDigitalPreview( digitalPreviewResult, "digitalPreview");
+}
+
+
 let THDReportElement = document.querySelectorAll('.THDReport');
 let oversamplingReportElements = document.querySelectorAll('.oversamplingReport');
 let jitterReportElements = document.querySelectorAll('.jitterReport');
@@ -539,29 +566,6 @@ function compareStringArrays(array1, array2) {
 
 
 
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Buffer manipulation
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-function getBufferMax(buffer){
-    let max = 0;
-    for(let chan=0;chan<buffer.numberOfChannels;chan++){
-        let b = buffer.data[chan];
-        let bufferSize = b.length;
-        for (let i = 0; i < bufferSize; i++) {
-            let val = Math.abs( b[i]);
-            if (val>max) max = val;
-        }
-    }
-    return max;
-}
-
-
-
-
-
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setters and getters for export
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -580,8 +584,8 @@ export {
 
     updateBuffersAndDisplay,
     updateDisplay,
-    updatePreview,
-    doPaintPreview,
+    updateAllPreviews,
+    doPaintAllPreviews,
     
     updateDetailedFFT, 
     repaintDetailedFFT,

@@ -145,6 +145,15 @@ input[type="range"]:focus {
    margin-left: 1em; 
 }
 
+.slider-container .tinyLabel {
+    font-size: small;
+    font-family: sans-serif;
+    opacity: 0.4;
+ }
+ .slider-container .tinyLabelDiv {
+     text-align: right   ;
+  }
+
 .slider-container .flipLabel {
    flex-basis: 15%;
    margin-right: 1em;

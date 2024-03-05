@@ -332,7 +332,7 @@ const speakerPresets = [
     {
         name:"Tubby",
         patch:{
-            speakerAmount:0.79,
+            speakerAmount:0.32,
             speakerMass:0.89,
             speakerDamping:0.98,
             speakerStiffness:0.98,
@@ -342,7 +342,7 @@ const speakerPresets = [
     {
         name:"Ugly",
         patch:{
-            speakerAmount:0.16,
+            speakerAmount:0.83,
             speakerMass:0.93,
             speakerDamping:0.78,
             speakerStiffness:0.02,

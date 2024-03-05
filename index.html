@@ -273,7 +273,7 @@
                 <input type="range" id="aliasing" name="aliasing" min="0" max="2" step="0.1" value="0.0" class="longish-slider" list="ticksPlus1Zero">
                 <output class="valueSpan longOut" name="aliasing">0</output>
                 <span class="help-icon">?</span>
-                <div class="help-popup">Continue to add harmonics past the Nyquist limit to create deliberate aliasing. The level of the harmonic takes into account the filter section. It's as if the ADC is after the filter</div>
+                <div class="help-popup">Continue to add harmonics past the Nyquist limit to create deliberate aliasing. The level of the harmonic takes into account the settings in the Additive Filter section. It's as if the ADC is after this filter</div>
             </div>      
             <div class="canvasBox">
                 <canvas id="wavePreview"  width ="2000" height="500"></canvas>
@@ -503,9 +503,9 @@
             <div class="canvasBox  topSpaced bottomSpacedSlight">
                 <canvas id="THDGraphCanvas" class ="canvasHalfHeight thdGraphElement" width ="2000" height="200"></canvas>
             </div>
-            <div class="THDReport paragraphReport bottomSpaced"></div>
+            <div class="THDReport paragraphReport"></div>
 
-            <div class="slider-container">
+            <div class="slider-container bottomSpaced">
                 <label for="distortion"><b>Distortion Level:</b></label>
                 <input type="range" id="distortion" name="distortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
                 <output class="valueSpan" name="distortion">0%</output>
@@ -514,6 +514,14 @@
                     <p>Turns distortion on and off and controls the overall amount</p>
                     <p>Total Harmonic Distortion is measured (using 10 harmonics) for the distortion applied (not including jitter or inharmonics).</p>
                 </div>
+            </div>
+
+            <div class="presetHeader">
+                <h3>Saturation</h3>
+                <div  class="PresetButtons"></div>
+                <span class="help-icon">?</span>
+                <div class="help-popup"><p>Common saturation functions. </p>
+                    <p>Actual level of each controlled by main Distortion level.</p> </div>
             </div>
             <div class="slider-container">
                 <label for="hyperbolicDistortion">Hyperbolic Asym:</label>
@@ -681,7 +689,34 @@
                 <h3>Digital conversion</h3>
                 <div id="digitalPresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
-                <div class="help-popup">Controls for the simulation of the ADC and DAC. The ADC is applied before the distortion and the DAC after. The jitter is normally distributed white noise.</div>
+                <div class="help-popup">C
+                    <p>Simulation of Jitter and bit depth reduction with dithering.</p>
+                    <p>See individual sections for more details.</p>
+                    <p>Graphs are as follows:</p>
+                    <ul>
+                        <li>Jitter: shows how the jitter settings affect the output values of a small (+/-0.1%) linear change. Samples and displays 1000 of these transitions.</li>
+                        <li>Dither Linearity: Shows how, on average, intermediate values are transformed to the reduced bit depth. Ideally this should be linear. Again, graph is based on sampling of the system, not theoretical calculations.</li>
+                        <li>Dynamic Range: Sampled frequency distribution of averaged noise floor without dithering (red) and with the current dithering settings (green). The levels shown are indications only, the display is intended to show how the controls affect relative levels of noise floor.</li>
+                    </ul>
+                </div>
+            </div>    
+            <div class="canvasBox">
+                <canvas id="digitalPreview"  width ="2000" height="500"></canvas>
+            </div>            <div class ="previewButtons bottomSpaced">
+                <div class="previewButtons previewL">
+                    <button name="PD" class = "previewButton">def</button>
+                    <button name="PA" class = "previewButton hideForStereo">A</button>
+                    <button name="PB" class = "previewButton hideForStereo">B</button>
+                    <button name="PA" class = "previewButton hideForMono">A-L</button>
+                    <button name="PAR" class = "previewButton hideForMono">A-R</button>
+                    <button name="PB" class = "previewButton hideForMono">B-L</button>
+                    <button name="PBR" class = "previewButton hideForMono">B-R</button>
+                </div>
+                <div class="previewButtons previewC">
+                </div>
+
+                <div class="previewButtons">
+                </div>
             </div>
 
 
@@ -766,7 +801,7 @@
             </div>
             <div class="slider-container">
                 <label for="digitalDitherSubtract">Subtractive Dither:</label>
-                <input type="range" id="digitalDitherSubtract" name="digitalDitherSubtract" min="0" max="1" step="0.1" value="0">
+                <input type="range" id="digitalDitherSubtract" name="digitalDitherSubtract" min="0" max="1" step="0.01" value="0">
                 <output class="valueSpan" name="digitalDitherSubtract">0%</output>
                 <span class="help-icon">?</span>
                 <div class="help-popup"><p>Amount of the added dither subtracted after the bit reduction (Subtractive Dither). </p>
@@ -774,7 +809,7 @@
             </div>
             <div class="slider-container">
                 <label for="digitalDitherShaping">Dither Shaping:</label>
-                <input type="range" id="digitalDitherShaping" name="digitalDitherShaping" min="0" max="1" step="0.1" value="0">
+                <input type="range" id="digitalDitherShaping" name="digitalDitherShaping" min="0" max="1" step="0.01" value="0">
                 <output class="valueSpan" name="digitalDitherShaping">0%</output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
@@ -785,7 +820,7 @@
             </div>
             <div class="slider-container">
                 <label for="digitalDitherFakeness">Fake Dither:</label>
-                <input type="range" id="digitalDitherFakeness" name="digitalDitherFakeness" min="0" max="1" step="0.1" value="0">
+                <input type="range" id="digitalDitherFakeness" name="digitalDitherFakeness" min="0" max="1" step="0.01" value="0">
                 <output class="valueSpan" name="digitalDitherFakeness">0</output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">Applies a percentage of the noise AFTER the bit depth reduction, so at 100% is just added noise NOT dither. Uses Equal-Power-Law cross-fading and shaping to sound as close as possible to the real noise.</div>
@@ -806,11 +841,13 @@
                 <output class="valueSpan" name="attenuation">0db</output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
-                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if desired.</p>
+                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed.</p>
                 </div>
+                <br>
+                <br>
+                <br>
             </div>
         </div>
-
     </div>
 
     <div class="bordered">
@@ -970,6 +1007,9 @@
     <!-- <script src="distortion.js"></script> -->
     <!-- <script src="jitter.js"></script> -->
     <!-- <script src="audio.js"></script> -->
+
+    <!--Use this to debug audio.js side-->
+    <!-- <script type="module" src="audio.js"></script> -->
 
     <!--Painting buffers/FFTs onto Canvas-->
     <!-- <script src="painting.js"></script> -->

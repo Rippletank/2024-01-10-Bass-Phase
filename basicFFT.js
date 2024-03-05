@@ -36,18 +36,23 @@ import { zeroLevel } from "./defaults.js";
 let getFFT1024 = initFFT(1024);
 let getFFT64k = initFFT(65536);
 
-let fftFunctions=[]
+let fftFunctions=[null,null,null,null,null,null,null,null]
 function getFFTFunction(bufferSize){
-    switch(bufferSize){
-        case 1024: return getFFT1024(buffer);   
-        case 2048: return fftFunctions[0] ??  (fftFunctions[0] = initFFT(bufferSize));    
-        case 4096: return fftFunctions[1] ??  (fftFunctions[1] = initFFT(bufferSize));    
-        case 8192: return fftFunctions[2] ??  (fftFunctions[2] = initFFT(bufferSize));    
-        case 16384: return fftFunctions[3] ??  (fftFunctions[3] = initFFT(bufferSize));    
-        case 32768  : return fftFunctions[4] ??  (fftFunctions[4] = initFFT(bufferSize));    
-        case 65536: return getFFT64k(buffer); 
+    let index =0;
+    switch(bufferSize){ 
+        case 128: index = 0; break;   
+        case 256: index = 1; break;   
+        case 512: index = 2; break;   
+        case 1024: return (buffer)=>getFFT1024(buffer);   
+        case 2048: index = 3; break;   
+        case 4096: index = 4; break;   
+        case 8192: index = 5; break;    
+        case 16384: index = 6; break;   
+        case 32768: index = 7; break;   
+        case 65536: return (buffer)=>getFFT64k(buffer); 
         default: return null;
     }
+    return fftFunctions[index] ??  (fftFunctions[index] = initFFT(bufferSize))
 }
 
 

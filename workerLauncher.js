@@ -266,3 +266,49 @@ function checkForCachedPreview(){
 
 
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//digitalPreview worker calls - dither and jitter visualisations
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const digitalPreviewWorker = new Worker('audioWorker.js', { type: 'module' });
+let digitalPreviewWorkerBusy = false;
+digitalPreviewWorker.onmessage = function(event) {
+    const { data } = event;
+    digitalPreviewWorkerBusy = false;    
+    if (data.error) {
+      console.error(`There was an error calling the digitalPreview function: ${data.error}`);
+    } else {
+        digitalPreviewCallback(data.digitalPreview);
+    }
+    checkForCachedDigitalPreview();
+  }; 
+digitalPreviewWorker.onerror = function(error) {
+    digitalPreviewWorkerBusy=false;
+    console.error(`An error occurred in the digitalPreview worker: ${error.message}`);
+    checkForCachedDigitalPreview()
+  }
+let digitalPreviewCallback = (digitalPreviewData)=>{};
+export function setDigitalPreviewCallback( callback ) {
+    digitalPreviewCallback = callback;
+}
+let digitalPreviewCached = null;
+export function calculateDigitalPreview( referencePatch, sampleRate ) {
+    if (digitalPreviewWorkerBusy){
+        digitalPreviewCached = {referencePatch, sampleRate};
+        return;
+    }
+    digitalPreviewCached=null;
+    digitalPreviewWorkerBusy=true;
+    digitalPreviewWorker.postMessage({
+        action: 'getDigitalPreview',
+        patch:referencePatch,
+        sampleRate:sampleRate
+      });
+}
+function checkForCachedDigitalPreview(){
+    if (digitalPreviewCached){
+        calculateDigitalPreview(
+            digitalPreviewCached.referencePatch,digitalPreviewCached.sampleRate);
+    }
+}
+
+

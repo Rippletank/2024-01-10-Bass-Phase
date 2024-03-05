@@ -41,7 +41,9 @@ import {disableGroups, setValueFromPatch } from './guiValues.js';
 import {
     playAudio,
     updateBuffersAndDisplay, updateDisplay,
-    updatePreview, doPaintPreview,
+
+    updateAllPreviews, 
+    doPaintAllPreviews,
     
     updateDetailedFFT, 
     repaintDetailedFFT,
@@ -86,7 +88,7 @@ previewButtons.forEach(function(button) {
     switch(button.name[0]){    
         case 'e'://Expand All/Collapse All
             button.addEventListener('click', function() {
-                toggleGlobalExapnder();
+                toggleGlobalExpander();
             });
             button.isChecked =()=>false;
             break;
@@ -235,7 +237,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 fh();
                 updatePreviewButtonState();
-                doPaintPreview();
+                doPaintAllPreviews();
             });
             button.isChecked =ch;
         break;
@@ -281,7 +283,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 fd();
                 updatePreviewButtonState();
-                doPaintPreview();
+                doPaintAllPreviews();
             });
             button.isChecked =cd;
         break;
@@ -322,7 +324,7 @@ previewButtons.forEach(function(button) {
 function DoFullPreviewUpdate(){
     updatePreviewButtonState();
     forcePreviewRegeneration();
-    updatePreview();
+    updateAllPreviews();
 }
 
 
@@ -346,6 +348,7 @@ function updateCanvas() {
         canvas.height = canvas.clientHeight;
     });
     updateDisplay();
+    doPaintAllPreviews();
 }
 updateCanvas();
 
@@ -443,7 +446,7 @@ function handleValueChange() {
     updateAllLabelsAndCachePatches();
     flags.changed = true;
     lastUpdate = Date.now();
-    updatePreview();
+    updateAllPreviews();
 }
 
 function loadSliderValuesFromContainer(id, patch) {
@@ -501,7 +504,7 @@ function loadPatches(patch, patchA, patchB, patchAR, patchBR, testSubjectList) {
     finally{
         endSuspendPreviewUpdates();
         updateAllLabelsAndCachePatches();
-        updatePreview();
+        updateAllPreviews();
         flags.changed = true;
     }
 }
@@ -612,7 +615,7 @@ headers.forEach(header => {
     });
 });
 
-function toggleGlobalExapnder(){
+function toggleGlobalExpander(){
     const shouldExpand = globalToggle.textContent.includes('Expand');
     headers.forEach(header => {
         const content = header.nextElementSibling;
@@ -638,8 +641,7 @@ const updateGlobalToggleText = () => {
     }
 };
 
-toggleGlobalExapnder();
-//updateGlobalToggleText();
+//setTimeout(toggleGlobalExpander, 10);
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Import/Export Patch
@@ -912,7 +914,7 @@ document.querySelectorAll('.slider-container').forEach((div) => {
     div.insertBefore(checkbox, div.firstChild);
     sliderContainers.push(
         {
-            parentId:div.parentNode.id,
+            parentId:div.parentNode.parentNode.id,
             name:name,
             div:div,
             checkbox:checkbox,
@@ -998,10 +1000,10 @@ function handleDisableGroups(id, patch){
         const action =  allNamesValid && (matchAlls || matchAnys) && hasKeys ?
             (slider)=>slider.classList.add("blurredDisabled")
             : (slider)=>slider.classList.remove("blurredDisabled");
-        const testSliders =SoundSetups.reduce((setup,prev) => 
-        { 
+        // const testSliders =SoundSetups.reduce((setup,prev) => 
+        // { 
 
-        },[]);
+        // },[]);
         const slidersForId =
             [ ...sliderContainers.filter((container)=>container.parentId ==id),
               ...SoundSetups.reduce((prev, setup) =>[...prev,setup.container,setup.containerR],[])
