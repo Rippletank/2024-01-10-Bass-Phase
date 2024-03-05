@@ -915,7 +915,7 @@ document.querySelectorAll('.slider-container').forEach((div) => {
     div.insertBefore(checkbox, div.firstChild);
     sliderContainers.push(
         {
-            parentId:div.parentNode.id,
+            parentId:div.parentNode.parentNode.id,
             name:name,
             div:div,
             checkbox:checkbox,
@@ -1001,10 +1001,10 @@ function handleDisableGroups(id, patch){
         const action =  allNamesValid && (matchAlls || matchAnys) && hasKeys ?
             (slider)=>slider.classList.add("blurredDisabled")
             : (slider)=>slider.classList.remove("blurredDisabled");
-        const testSliders =SoundSetups.reduce((setup,prev) => 
-        { 
+        // const testSliders =SoundSetups.reduce((setup,prev) => 
+        // { 
 
-        },[]);
+        // },[]);
         const slidersForId =
             [ ...sliderContainers.filter((container)=>container.parentId ==id),
               ...SoundSetups.reduce((prev, setup) =>[...prev,setup.container,setup.containerR],[])
