@@ -494,6 +494,9 @@ function getTrueDefaultPatch(){
         filterSlope:12,//db/octave, 0=off
         filterPeak:0,//0..1 0 = no peak, 1 = 24db peak
 
+        sampleMix:0,//0..1 0 = off, 0.5=50:50 1 = max mix
+        sampleTrim:0,//-12..12 db applied to the sample
+
         distortion:0,//0..1 0 = off, 1 = max distortion
         oddDistortion:0,//Third order Chebyshev polynomial distortion
         hyperbolicDistortion:0,//+/-1 Hyperbolic distortion - mild asymmetry

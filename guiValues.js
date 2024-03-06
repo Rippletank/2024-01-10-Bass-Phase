@@ -245,6 +245,12 @@ function setValueFromPatch(ve, patch){
         case "rootPhaseDelay": 
             ve.innerHTML =getPhaseLabel(patch);break;
         
+        case "sampleMix":
+            ve.textContent =toPercent(patch.sampleMix);break;
+        case "sampleTrim":
+            ve.textContent =patch.sampleTrim.toFixed(1)+'db';break;   
+
+
         case "distortion":
             if (patch.distortion==0)
             {

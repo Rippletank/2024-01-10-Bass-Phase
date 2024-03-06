@@ -41,7 +41,8 @@
     
 
     setAudioBufferCallback,
-    calculateAudioBuffer
+    calculateAudioBuffer,
+    setAudioEngineSampleBuffers
  } from './workerLauncher.js'
 
 
@@ -64,6 +65,8 @@ import {
 } from './painting.js';
 
 import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from './jitter.js';
+
+import {fetchWaveByName, setAudioContext} from './waves.js';
 
 
 let flags = {
@@ -115,6 +118,8 @@ function ensureAudioContext(){
         analyserNode.smoothingTimeConstant = 0.0;
         analyserNode.minDecibels = -90;
         analyserNode.maxDecibels = 0;
+
+        setAudioContext(audioContext);
     }
 }
 
@@ -261,7 +266,7 @@ function updateBuffers(patchesToUse) {
     startBufferUpdate();
     //Allow the UI to update
     setTimeout(function() {
-        calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest );
+        calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest, "Drums" );
     },0);
 }
 
@@ -564,6 +569,25 @@ function compareStringArrays(array1, array2) {
     return allStringsSame ? [array1[0]] : [...array1, ...array2];
 }
 
+//UpdateBuffereEvenIfInstant=false allows to avoid extra updates if the wave is returned instantly without a fetch
+//When loading a patch, prevents recalculating the buffer twice if not needed
+function setSampledWave(name, updateBufferEvenIfInstant = true){
+    let callback = (wave, wasInstant)=>{
+        setAudioEngineSampleBuffers(wave);
+        if (updateBufferEvenIfInstant || !wasInstant){
+            forceBufferRegeneration();
+            flags.changed = true;
+        }
+    };
+    if (!name || name=="" || name==null){
+        callback(null, true);
+    }
+    fetchWaveByName(name, callback);
+
+
+}
+
+
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -580,6 +604,7 @@ function getFlags(){
 
 export {
     playAudio,
+    stop,
     getTrueSampleRate,
 
     updateBuffersAndDisplay,
@@ -595,8 +620,9 @@ export {
     forceBufferRegeneration,
     forcePreviewRegeneration,
 
-    //Common variables
     getFlags,
+
+    setSampledWave,
 
     startSuspendPreviewUpdates,
     endSuspendPreviewUpdates
