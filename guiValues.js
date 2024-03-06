@@ -281,6 +281,12 @@ function setValueFromPatch(ve, patch){
             ve.textContent =(10*patch.speakerNonLinearity).toFixed(1);break;
 
 
+        case "naughtFilterOrder": 
+            ve.textContent =toPercent(patch.naughtFilterOrder);break;
+
+        case "naughtFilterCutOff": 
+            ve.textContent =toPercent(patch.naughtFilterCutOff);break;
+
         case "jitterADC": 
             ve.textContent =toPercent(patch.jitterADC);break;
         case "jitterDAC": 

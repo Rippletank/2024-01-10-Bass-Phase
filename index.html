@@ -894,6 +894,30 @@
                 <br>
                 <br>
             </div>
+            <div class="slider-container">
+                <label for="naughtFilterCutOff">naughtFilterCutoff:</label>
+                <input type="range" id="naughtFilterCutOff" name="naughtFilterCutOff" min="0" max="1" step="0.001" value="0">
+                <output class="valueSpan" name="naughtFilterCutOff">0db</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed.</p>
+                </div>
+                <br>
+                <br>
+                <br>
+            </div>
+            <div class="slider-container">
+                <label for="naughtFilterOrder">naughtFilterOrder:</label>
+                <input type="range" id="naughtFilterOrder" name="naughtFilterOrder" min="0" max="1" step="0.001" value="0">
+                <output class="valueSpan" name="naughtFilterOrder">0db</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed.</p>
+                </div>
+                <br>
+                <br>
+                <br>
+            </div>
         </div>
     </div>
 
@@ -1069,7 +1093,7 @@
 
     <!--Use this to debug audio.js side-->
     <!-- <script type="module" src="audioWorker.js"></script> -->
-    <!-- <script type="module" src="audio.js"></script> -->
+    <script type="module" src="audio.js"></script>
 
     <!--Painting buffers/FFTs onto Canvas-->
     <!-- <script src="painting.js"></script> -->

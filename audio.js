@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-
+import {doLowPassFilter} from './naughtFilter.js';
 
 
 let sampleBuffers =null;
@@ -136,7 +136,14 @@ function getAudioBuffer(
 
             let oversamplingReport = distort(b, patch, sampleRate, false, true);
             oversamplingReports.push(oversamplingReport);
+
+            //Need to Reassign since the size is changed
+            audioBuffer.data[i]= doLowPassFilter(b,sampleRate,patch);
+            b=audioBuffer.data[i];
+
             jitter(b, sampleRate, patch, false, randSeed);
+
+            
             envelopeBuffers.push(envelopeBuffer);
             filters.push(filter);
         }
