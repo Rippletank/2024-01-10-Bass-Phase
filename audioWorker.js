@@ -14,6 +14,7 @@
 
 
 import {
+    setSampleBuffers,
     getAudioBuffer, 
     preMaxCalcStartDelay,
     scaleAndGetNullBuffer,
@@ -26,6 +27,7 @@ import {
     getTHDGraph, 
 }
 from './audio.js';
+
 
 
 // If you need to load external scripts, you can do so with importScripts
@@ -52,6 +54,9 @@ self.onmessage = function(event) {
                 break;
             case 'getDigitalPreview':
                 doDigitalPreview(data.patch , data.sampleRate);
+                break;
+            case 'setSampleBuffers':
+                setSampleBuffers(data.buffers);
                 break;
             default:
                 throw new Error(`Unknown action: ${action}`);

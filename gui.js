@@ -54,6 +54,8 @@ import {
     forcePreviewRegeneration,
     getFlags,
 
+    setSampledWave,
+
     startSuspendPreviewUpdates, endSuspendPreviewUpdates
 } from './audioAPI.js';
 
@@ -354,10 +356,12 @@ function updateCanvas() {
 updateCanvas();
 
 //Allow pinning of certain sections eg detailed FFT
-document.querySelector('.pin').addEventListener('click', function() {
+document.querySelectorAll('.pin').forEach((pin) => {
+    pin.addEventListener('click', function() {
     var stickyElement = this.closest('.canBeSticky');
     stickyElement.classList.toggle('sticky');
   });
+});
 
 
 
@@ -378,6 +382,7 @@ const commonSectionNames = [
     'CommonSettings', 
     'FilterSetup', 
     'TestSetup', 
+    'SampleSetup',
     'DistortionSetup',
     'DigitalSetup'
 ];
@@ -668,8 +673,8 @@ function exportCombinedPatchToJSON(){
         testSubjects: getTestSubjectList(),
         isStereo: flags.isStereo,
         isNormToLoudest: flags.isNormToLoudest,
-        notes: notesEdit? notesEdit.value : ""
-
+        notes: notesEdit? notesEdit.value : "",
+        sampleWave: lastSetWave
     };
     return JSON.stringify(patch);
 }
@@ -702,6 +707,8 @@ function importCombinedPatchFromPatch(patch){
 
     const notesEdit = document.getElementById('notesEdit');
     notesEdit.value = patch.notes ?? "";
+    
+    setSampledWave(patch.sampleWave, false);//If already loaded, will be instant so updateBufferEvenIfInstant=false - allows to avoid calculation but will do calc if fetch is needed since it will be delayed
 
     loadPatches(patchC, patchA, patchB, patchAR, patchBR, patch.testSubjects ?? defaultTestSubjectList);
     updatePreviewButtonState();
@@ -792,21 +799,21 @@ function n_loadFromClipboard(loadProc) {
 let serverPresetList = [];
 fetch('/presets/presetList.json')
     .then(response => response.json())
-    .then(manifest => {
-        if (!Array.isArray(manifest)) throw new Error('Manifest is not an array');
-        manifest.forEach(file => {
+    .then(list => {
+        if (!Array.isArray(list)) throw new Error('Preset list is not an array');
+        list.forEach(file => {
             if (file.name && file.path && file.path.endsWith('.json')) {
                 serverPresetList.push(file);
             }
     })})
     .then(() => {
-        loadIntoDropdown('serverPresetList', serverPresetList);
+        loadPresetListIntoDropdown('serverPresetList', serverPresetList);
     })
     .catch((error) => {
         console.error('Error:', error);
     });
 
-function loadIntoDropdown(id, list) {
+function loadPresetListIntoDropdown(id, list) {
     let select = document.getElementById(id);
     select.innerHTML = '';
 
@@ -832,11 +839,63 @@ function loadIntoDropdown(id, list) {
                 console.log(patch);  
             })
             .catch((error) => {
-                console.error('Error:', error);
+                console.error('Error fetching Preset List:', error);
             });
     });
 
 }
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Wave file import 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+let serverWaveList = [];
+fetch('/waves/waveList.json')
+    .then(response => response.json())
+    .then(list => {
+        if (!Array.isArray(list)) throw new Error('Wave List is not an array');
+        list.forEach(fileName => {
+            if (fileName) {
+                serverWaveList.push(fileName);
+            }
+    })})
+    .then(() => {
+        loadWaveListIntoDropdown('serverWaveList', serverWaveList);
+    })
+    .catch((error) => {
+        console.error('Error fetching Wave List:', error);
+    });
+
+
+    function loadWaveListIntoDropdown(id, list) {
+        let select = document.getElementById(id);
+        select.innerHTML = '';
+    
+        let defOption = document.createElement('option');
+        defOption.textContent = "Select Sample wave";
+        defOption.value = "";
+        select.appendChild(defOption);
+    
+        list.forEach(item => {
+            let option = document.createElement('option');
+            option.textContent = item;
+            option.value = item;
+            select.appendChild(option);
+        });
+    
+    
+        select.addEventListener('change', () => {
+            doSetSampledWave(select.value);
+        });
+    
+    }
+
+    let lastSetWave = null;
+    function doSetSampledWave(waveName){
+        lastSetWave = waveName;
+        setSampledWave(waveName);
+    }   
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Setup which variables are going to be changeable individually for sounds

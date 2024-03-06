@@ -184,9 +184,9 @@ export function setAudioBufferCallback( callback ) {
     audioBufferCallback = callback;
 }
 let audioBufferCached = null;
-export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest ) {
+export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest, sampleName ) {
     if (audioBufferWorkerBusy){
-        audioBufferCached = {patchesToUse, sampleRate, isStereo, isNormToLoudest};
+        audioBufferCached = {patchesToUse, sampleRate, isStereo, isNormToLoudest, sampleName};
         return;
     }
     audioBufferCached=null;
@@ -196,7 +196,8 @@ export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNorm
         patchesToUse:patchesToUse,
         sampleRate:sampleRate,
         isStereo:isStereo,
-        isNormToLoudest:isNormToLoudest
+        isNormToLoudest:isNormToLoudest,
+        sampleName:sampleName
       });
 }
 
@@ -206,10 +207,21 @@ function checkForCachedAudioBuffer(){
             audioBufferCached.patchesToUse, 
             audioBufferCached.sampleRate, 
             audioBufferCached.isStereo,
-            audioBufferCached.isNormToLoudest);
+            audioBufferCached.isNormToLoudest,
+            audioBufferCached.sampleName);
     }
 }
 
+
+export function setAudioEngineSampleBuffers(buffers){
+    let transferList = [];
+    if (buffers) buffers.forEach((buffer)=>transferList.push(buffer.buffer));
+    audioBufferWorker.postMessage({
+        action: 'setSampleBuffers',
+        buffers:buffers
+      },
+      transferList);
+}
 
 
 

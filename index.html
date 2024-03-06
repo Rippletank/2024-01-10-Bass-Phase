@@ -455,9 +455,52 @@
                 <div class="help-popup">Controls how much the higher harmonics (if present) are delayed. It is relative to amount of phase delay on the first harmonic. 0 means no delay and 1 means same phase delay as first harmonic.</div>
             </div>
         </div>
-
     </div>
 
+
+    <div class="bordered" id="SampleSetup">
+        <div class="collapsible-header"><span class="header-text">Sampled Waveforms</span><span class="chevron">&#x25BC;</span></div>
+        <div class="collapsible-content">
+            <div class="presetHeader">
+                <h3>Sampled Waveforms</h3>
+                <div id="samplePresets" class="PresetButtons"></div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Selection of sampled waveforms which can be used instead of or mixed in with the additive waveform.</p>
+                    <p>The waveform is mixed in after the additive process synthesis stage. So all stages below this, including distortion and digital processing affect the sample, too.</p>
+                    <p>Waveforms were created in Cubase using included samples together with various plugin instruments and effects.</p>
+                </div>
+            </div>
+            <div class ="previewButtons bottomSpaced">
+                <div class="previewButtons previewL">
+                </div>
+                <div class="previewButtons previewC">
+                    <select id="serverWaveList" title="Select Sample wave"></select>
+                </div>
+                <div class="previewButtons">
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="sampleMix"><b>Additive-Sample Mix:</b></label>
+                <input type="range" id="sampleMix" name="sampleMix" min="0" max="1" step="0.01" value="0" list="ticks0half1">
+                <output class="valueSpan" name="sampleMix">0%</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Mix of generated Additive Waveform and the specified sample.</p>
+                </div>
+            </div>
+            <div class="slider-container bottomSpaced">
+                <label for="sampleTrim"><b>Sample Trim:</b></label>
+                <input type="range" id="sampleTrim" name="sampleTrim" min="-12" max="12" step="0.1" value="0"  list="ticksZero">
+                <output class="valueSpan" name="sampleTrim">0db</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Adjust the level of the sample.</p>
+                    <p>The final output is normalised according to the normalisation settings to prevent unintended clipping.</p>
+                </div>
+            </div>
+        </div>
+    </div>
  
  
 
@@ -644,7 +687,11 @@
                 <h3>Inharmonics</h3>
                 <div id="inharmonicPresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
-                <div class="help-popup">Controls to add audio range sine-wave tones which can be added to investigate intermodulation distortion. The frequency can be unrelated to the main tone or a ratio defined by the different scales.</div>
+                <div class="help-popup">
+                    <p>Controls to add audio range sine-wave tones which can be added to investigate intermodulation distortion. </p>
+                    <p>The frequency can be unrelated to the main tone or a ratio defined by the different scales.</p>
+                    <p>The envelope is the same as used for the additive synthesis, even if a sampled waveform is used.</p>
+                </div>
             </div>
             <div class="slider-container">
                 <label for="inharmonicAFrequency">A (Frequency):</label>
@@ -850,8 +897,17 @@
         </div>
     </div>
 
+    <div class="canBeSticky">
     <div class="bordered">
         <div class="presetHeader">
+            <div class="pin">
+                <!-- Drawn in Affinity Designer -->
+                <svg width="100%" height="100%" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+                    <g transform="matrix(1.13128,0.691335,-0.633265,1.03625,7.5859,-7.16049)">
+                        <path d="M13.82,5.101L13.841,5.101L13.841,11.217L13.82,11.217L15.28,12.042L11.196,12.042L11.196,20.444L9.947,23.005L8.698,20.444L8.698,12.042L4.614,12.042L6.074,11.217L6.053,11.217L6.053,5.101L6.074,5.101L4.614,4.275L15.28,4.275L13.82,5.101Z" fill="#AAAAAA"/>
+                    </g>
+                </svg>
+            </div>
             <h3>Playback FFT</h3>
             <div class="PresetButtons"></div>
             <span class="help-icon">?</span>
@@ -876,11 +932,10 @@
             </div>
         </div>
     </div>
+    </div>
 
     <div class="canBeSticky">
         <div class="bordered">
-            <div class="pinnable-header">
-            </div>
             <div class="presetHeader">
                 <div class="pin">
                     <!-- Drawn in Affinity Designer -->
@@ -896,8 +951,10 @@
                 <div class="help-popup">
                     <p>Static FFT, updated automatically when waveforms are updated or when update is tapped. </p>
                     <p>Tap the pin icon to keep this section in view. </p>
-                    <p>The FFT is of a specially built preview which uses the same sound settings as above but is tuned to give a whole number of cycles within the 64k sample frame, hence the spectrum is particularly sharp.</p> 
-                    <p>Inharmonic tones are added using a windowing function to keep the spectrum as clean as possible.</p></div>
+                    <p>It doesn't show sampled waveforms. This is because it is specifically setup to show sharp details for analysis of distortion and other effects.</p>
+                    <p>To achieve this, it uses the same sound settings as above but tuned to give a whole number of cycles within the 64k sample frame, hence the spectrum is very sharp for harmonics.</p> 
+                    <p>Inharmonic tones are added using a windowing function to keep the spectrum as clean as possible.</p>
+                </div>
             </div>
             <div class="canvasBox">
                 <canvas id="staticFFTCanvas" width ="2000" height="500"></canvas>
@@ -1029,6 +1086,7 @@
     <!-- <script src="audio.js"></script> -->
 
     <!--Use this to debug audio.js side-->
+    <!-- <script type="module" src="audioWorker.js"></script> -->
     <!-- <script type="module" src="audio.js"></script> -->
 
     <!--Painting buffers/FFTs onto Canvas-->

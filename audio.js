@@ -28,6 +28,13 @@ import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from 
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
 
 
+
+let sampleBuffers =null;
+function setSampleBuffers(buffer){
+    sampleBuffers = buffer;
+}
+
+
 let harmonics = 2000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
 // Update method to create a buffer
@@ -69,14 +76,38 @@ function getAudioBuffer(
         c.phaseShift0=phaseShift0;
     });
 
+    const maxAdditiveBufferSize =channels.length>1 ? Math.max(channels[0].bufferSize,channels[1].bufferSize) : channels[0].bufferSize;
 
-    const maxBufferSize = channels.length>1 ? Math.max(channels[0].bufferSize,channels[1].bufferSize) : channels[0].bufferSize;
+    //Check if sample is to be mixed in
+    let useSampleBuffer = sampleBuffers && sampleBuffers.length && sampleBuffers.length>=channels.length 
+                    && patch.sampleMix>0 && (patchR? patchR.sampleMix>0 : true);
 
-    //Create buffer
+    let maxSampleBufferSize = 0;
+    if (useSampleBuffer){
+        maxSampleBufferSize = channels.length>1 ? Math.max(sampleBuffers[0].length,sampleBuffers[1].length) : sampleBuffers[0].length;
+    }
+
+    let maxBufferSize =Math.max(maxAdditiveBufferSize, maxSampleBufferSize);
+
+    //Create buffers for each channel
     let data = [];
     for(let i=0;i<channels.length;i++){
         data.push(new Float32Array(maxBufferSize));
     }
+
+    if (useSampleBuffer){        
+        for(let i=0;i<channels.length;i++){
+            let c = channels[i];
+            let b = data[i];
+            let s = sampleBuffers[i];
+            let l = s.length;
+            let a = Math.sin(0.5*Math.PI *c.patch.sampleMix) * Math.pow(10, c.patch.sampleTrim/20);
+            for (let j=0;j<l;j++){
+                b[j] = a * s[j];
+            }
+        }
+    }
+
     let audioBuffer = {
         length: maxBufferSize,
         sampleRate: sampleRate,
@@ -93,13 +124,13 @@ function getAudioBuffer(
             let c = channels[i];
             let patch = c.patch;
             let b = audioBuffer.data[i];
-            let envelopeBuffer =buildEnvelopeBuffer(sampleRate, maxBufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
+            let envelopeBuffer =buildEnvelopeBuffer(sampleRate, maxAdditiveBufferSize, patch.attack, patch.hold, patch.decay, patch.envelopeFilter);
             let filter =null;
             if (patch.filterSlope!=0) 
             {
-                filter = buildFilter(sampleRate, maxBufferSize, patch);
+                filter = buildFilter(sampleRate, maxAdditiveBufferSize, patch);
             }
-            buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0, null, 1);
+            buildHarmonicSeries(patch, sampleRate, b, filter, envelopeBuffer, c.delay0, c.delayN, c.phaseShift0, null, 1, useSampleBuffer);
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
@@ -287,7 +318,10 @@ function getDetailedFFT(samplerate, referencePatch, filterPreviewSubject){
 
 let window65k =buildBlackmanHarrisWindow(65536); //or kaiserWindow(65536, alpha) low alpha looks bad (side lobes show), high alpha is not as narrow as Blackman-Harris
 //relativeSampleRates = is the ratio of the actual sample rate to the virtual sample rate - how much lower the real one is - don't include harmonics above the real Nyquist limit
-function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonicsAndDigital= false, relativeSampleRates=1){
+function _buildPreview(referencePatch, filterPreviewSubject,sampleRate, bufferSize, includeInharmonicsAndDigital= false, relativeSampleRates=1){
+    let patch = {
+        ...referencePatch
+    }
     let envelopeBuffer =new Float32Array(bufferSize).fill(1);
     let b = new Float32Array(bufferSize);
 
@@ -310,6 +344,9 @@ function _buildPreview(patch, filterPreviewSubject,sampleRate, bufferSize, inclu
         patch.filterF3=f;
         filter = buildFilter(sampleRate, bufferSize, patch);
     }
+
+    patch.sampleMix=0;//No sample mixed in previews
+
     let magnitude = [];
     let phase = [];
     let postProcessor = (n, w, level, phaseShift)=>{
@@ -400,16 +437,13 @@ function getTHDPercent(referencePatch){
     //phase ignored - delay and phaseshift passed as zero
     patch.frequency=1000;//1khz signal
     patch.frequencyFine=0;//1khz signal
+    patch.sampleMix=0;//No sample mixed in thd, only sine
 
 
     let bufferSize = 1024; //Number of samples
     let sampleRate = bufferSize * (patch.frequency);
-    let envelopeBuffer =[];
-    let b = [];
-    for (let i = 0; i < bufferSize; i++) {
-        envelopeBuffer.push(1);
-        b.push(0);
-    }
+    let envelopeBuffer =new Float32Array(bufferSize).fill(1);
+    let b = new Float32Array(bufferSize);
 
     buildHarmonicSeries(patch, sampleRate, b, null, envelopeBuffer, 0, 0, 0);
     
@@ -447,6 +481,7 @@ function getTHDGraph(referencePatch){
        ...THDSinePatch //Harmonic series set to sine wave
     };
     patch.frequencyFine=0;
+    patch.sampleMix=0;//No sample mixed in thd, only sine
 
     //calculate equally distributed frequencies on a log2 scale, from 20Hz to 20KHz with half octave steps
     let freqStepSize = THDfftResolution*THDEfficiencyFactor;//Hz for the eventual FFT and therefore use for the test sine waves ()
@@ -460,10 +495,7 @@ function getTHDGraph(referencePatch){
         frequencies.push(Math.round(f/freqStepSize)*freqStepSize);//To nearest frequency step
         f*=factor;
     }
-    let envelopeBuffer =[];
-    for (let i = 0; i < bufferSize; i++) {
-        envelopeBuffer.push(1);
-    }
+    let envelopeBuffer =new Float32Array(bufferSize).fill(1);
 
     let harmonicsToInclude = 10;
     let minimumToInclude =2;//Don't report if not enough harmonics to count
@@ -508,6 +540,7 @@ function getDigitalPreview(patch, sampleRate){
     baseLinePatch.digitalDitherFakeness=0;
     baseLinePatch.digitalDitherShaping=0;
     baseLinePatch.digitalDitherLevel=0;
+    baseLinePatch.sampleMix=0;//No sample mixed in thd, only sine
 
     let baselineBitRedux = getDitherDynamicRange(baseLinePatch, sampleRate, 50);
     return {
@@ -660,16 +693,18 @@ function buildFilter(
 
 
 //Generate the harmonic series
-function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor, relativeSampleRates) {
+function buildHarmonicSeries(patch,  sampleRate, b, filter, envelopeBuffer, delay0, delayN, phaseShift0, postProcessor, relativeSampleRates, useSampleBuffer=false) {
     const nyquistW = relativeSampleRates * (0.49 * 2 * Math.PI) * (1+patch.aliasing);//Nyquist limit in radians per sample
     const rootW = (patch.frequency+patch.frequencyFine)  * 2 * Math.PI  / sampleRate;
     const sinCos = patch.sinCos*Math.PI/2;
     if (postProcessor) postProcessor(0, 0, 0, 0, 0);//process for DC, n=0
-    const bufferSize=b.length;
+
+    const sampleMix =useSampleBuffer? Math.cos(0.5*Math.PI*patch.sampleMix) : 1;//Equal power mixing
+    if (sampleMix<zeroLevel) return;//No point in processing if sampleMix is zero (or close to it)
 
     //Balance settings
-    const firstLevel = patch.balance<=0 ? 1 : (patch.balance==1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance)); //-75db
-    const higherLevel = patch.balance>=0 ? 1 : (patch.balance==-1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance)); //-75db
+    const firstLevel =sampleMix *( patch.balance<=0 ? 1 : (patch.balance==1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance))); //-75db
+    const higherLevel =sampleMix *( patch.balance>=0 ? 1 : (patch.balance==-1 ? 0 : Math.pow(10,-3.5*patch.balance*patch.balance))); //-75db
 
     //Alt needed for triangle wave causing polarity to flip for each successive harmonic
     const altW = patch.altW * Math.PI;   
@@ -737,7 +772,9 @@ function mixInSine(
     let theta = phaseOffset //Phase accumulator 
             + (((Math.floor(delay) + 1 - delay) % 1) -1) * w; //correction for fractional delay and also -1 to allow theta to be incremented at start of loop
     let env = -1;
-    const bufferSize = buffer.length;
+    
+    const bufferSize=envelopeBuffer.length;//The actually buffer, b, may be longer because of the sample loading buffer.length;
+
     for (let i = 0; i < bufferSize; i++) {
         if (i >= delay)   {
             env++;//call here to advance even if level is zero
@@ -764,6 +801,7 @@ function mixInSine(
 
 
 export { 
+    setSampleBuffers,
     getAudioBuffer, 
     scaleAndGetNullBuffer,
     preMaxCalcStartDelay,
