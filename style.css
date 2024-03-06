@@ -408,12 +408,13 @@ input[type="range"]:focus {
 }
 
 .fftPlayButtons {
+    flex-basis: 80%;
     display: flex;
     justify-content: space-evenly;
-    margin-top: 0em;
-    margin-bottom: 1em;
-    margin-left: 20%;
-    margin-right: 20%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: auto;
+    margin-right: auto;
 }
 .fftPlayButton{
     margin-top: 0em !important;
@@ -427,11 +428,30 @@ input[type="range"]:focus {
     padding: 10px;
 }
 
-.sticky{
+:is(.stickyTop, .stickyBottom){
     position: sticky;
-    bottom: 5px;
     z-index: 2;
     background-color: var(--background-color);
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+.stickyTop .bordered{
+    margin-top: -5px;
+    margin-bottom: 5px;
+}
+.stickyBottom .bordered{
+    margin-bottom: -5px;
+}
+.stickyTop{
+    top: 0px;
+    padding-top:5px;
+    padding-bottom:5px;
+    
+}
+.stickyBottom{
+    padding-top:0px;
+    padding-bottom:5px;
+    bottom: 0px;
 }
 .pin {
     display: flex;
@@ -439,14 +459,25 @@ input[type="range"]:focus {
     align-items: start;
     align-self: flex-start;
     height: 30px; 
+    width: 30px; 
     margin-right: 5px;
-    margin-top:-2px;
+    margin-top:5px;
     cursor: pointer;
 }
-
-.sticky .pin svg path{
+.flexHeader .pin{
+    flex-basis: 10%;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+:is(.stickyTop, .stickyBottom) .pin svg path{
     fill: var(--text-color);
 }
+
+.flexHeader{
+    display: flex;
+    justify-content: left;
+}
+
 
 .testSoundControls {
 

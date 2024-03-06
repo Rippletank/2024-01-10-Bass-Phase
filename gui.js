@@ -40,6 +40,7 @@ import {disableGroups, setValueFromPatch } from './guiValues.js';
 
 import {
     playAudio,
+    stop,
     updateBuffersAndDisplay, updateDisplay,
 
     updateAllPreviews, 
@@ -76,6 +77,9 @@ document.querySelectorAll('.PlayB').forEach(el=>el.addEventListener('click', fun
 }));
 document.querySelectorAll('.PlayN').forEach(el=>el.addEventListener('click', function() {
     play(2);
+}));
+document.querySelectorAll('.PlayS').forEach(el=>el.addEventListener('click', function() {
+    stop();
 }));
 
 
@@ -355,15 +359,49 @@ function updateCanvas() {
 }
 updateCanvas();
 
+const pinSVG = '<svg width="100%" height="100%" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">'
+                +'<g transform="matrix(1.13128,0.691335,-0.633265,1.03625,7.5859,-7.16049)">'
+                +'<path d="M13.82,5.101L13.841,5.101L13.841,11.217L13.82,11.217L15.28,12.042L11.196,12.042L11.196,20.444L9.947,23.005L8.698,20.444L8.698,12.042L4.614,12.042L6.074,11.217L6.053,11.217L6.053,5.101L6.074,5.101L4.614,4.275L15.28,4.275L13.82,5.101Z" fill="#AAAAAA"/>'
+                +'</g></svg>';
+
+
 //Allow pinning of certain sections eg detailed FFT
 document.querySelectorAll('.pin').forEach((pin) => {
     pin.addEventListener('click', function() {
-    var stickyElement = this.closest('.canBeSticky');
-    stickyElement.classList.toggle('sticky');
+    let stickyElement = this.closest('.canBeSticky');
+    if (stickyElement){
+        stickyElement.classList.toggle('stickyBottom');
+    }
+    else{        
+        stickyElement = this.closest('.canBeStickyTop');
+        if (stickyElement){
+            stickyElement.classList.toggle('stickyTop');
+        }
+    }
+    adjustStickySpacing();
   });
+  pin.innerHTML = pinSVG;
 });
 
-
+function adjustStickySpacing(){
+    let stickyElements = 
+        [
+            ...document.querySelectorAll('.stickyTop'),
+            ...document.querySelectorAll('.stickyBottom')
+        ];
+    let top=0;
+    for(let i=0;i<stickyElements.length;i++){
+        let stickyElement = stickyElements[i];
+        stickyElement.style.top = top + 'px';
+        top += stickyElement.clientHeight+5;
+    }
+    let bottom=0;
+    for(let i=stickyElements.length-1;i>=0;i--){
+        let stickyElement = stickyElements[i];
+        stickyElement.style.bottom = bottom + 'px';
+        bottom += stickyElement.clientHeight+5;
+    }
+}
 
   function setModeText(button, isDarMode){
     button.textContent = isDarMode? 'Light Mode' :'Dark Mode';

@@ -604,6 +604,7 @@ function getFlags(){
 
 export {
     playAudio,
+    stop,
     getTrueSampleRate,
 
     updateBuffersAndDisplay,
