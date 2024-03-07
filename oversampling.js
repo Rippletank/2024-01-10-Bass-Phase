@@ -460,6 +460,8 @@ function filterOnly(inBuffer, outBuffer, filterKernel)
     }
 }
 
+
+//Returns new buffer of length inputBuffer.length + filterKernel.length - 1
 function convolve(inputBuffer, filterKernel) {
     const inputLength = inputBuffer.length;
     const filterLength = filterKernel.length;
@@ -474,19 +476,26 @@ function convolve(inputBuffer, filterKernel) {
     return outputBuffer;
 }
 
+//cyclic version of convolution, where input is a circular buffer
+//Returns the middle section of the convolution, from half the filter length to half the filter length from the end
+//Returns the original buffer with the right values in place
 function convolveWrapped(inputBuffer, filterKernel) {
     const inputLength = inputBuffer.length;
     const filterLength = filterKernel.length;
-    const outputLength = inputLength + filterLength - 1;
+    const outputLength = inputLength;
+    const offset = (filterLength - 1) / 2;
     const outputBuffer = new Float32Array(outputLength);
 
     for (let i = 0; i < outputLength; i++) {
         for (let j =0; j <filterLength; j++) {
-            outputBuffer[i] += inputBuffer[(inputLength + i - j)%inputLength] * filterKernel[j];
+            outputBuffer[i] += inputBuffer[(inputLength*2 + i - j + offset)%inputLength] * filterKernel[j];
         }
     }
 
-    return outputBuffer;
+    for (let i = 0; i < outputLength; i++) {
+        inputBuffer[i] = outputBuffer[i];
+    }
+    return inputBuffer;
 }
 
 
@@ -499,5 +508,7 @@ export {
     generateBlackmanHarrisFilterKernel,
     generateUpsamplingPolyphaseKernels,
     upsample,
-    downsample
+    downsample,
+    convolve,
+    convolveWrapped
 };

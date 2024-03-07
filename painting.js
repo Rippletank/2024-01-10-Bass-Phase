@@ -246,7 +246,7 @@ function paintDetailedFFT(magnitudes, sampleRate, canvasId){
                 max = Math.max(max,magnitudes[j]);
             }
             let y = fftB - ( (Math.log10(max) -dbOffset) * hScale);// (20*Math.log10(max) -detailedMinDb)/(detailedMaxDb-detailedMinDb) * fftH;
-            if (!y || y>fftB) y=fftB-2;
+            if (!y || y>fftB) y=fftB;
             const x = fftL+i;
             let midX = x;
             if (lastX<x-1){
@@ -1043,6 +1043,114 @@ function getControlPoints(x0,y0,x1,y1,x2,y2,t){
 }
 
 
+
+let fixedScale = false;
+function paintFilterPreview(buffer, canvasId){
+    const maxBufferLength = 2000;//Can be bigger but will use this as scale for smaller
+    if (!buffer) return;
+    let canvas = document.getElementById(canvasId);
+    let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    let w=canvas.width;
+    let h=canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+
+
+
+
+    let b = buffer;
+    const bufferMidPoint = (maxBufferLength-buffer.length-1)/2 ;//Centre the middle sample of the buffer (assume buffer.length is odd)
+
+    let impW = w*0.5 -20;
+    let impH2 = h*0.5 -20;
+    const impB = h-10;
+    const impT = 10;
+    const impL =10;
+    const impR =impL+impW;
+    const impMidX = impL + impW/2;
+    const impMidY = h/2;
+
+
+    if (fixedScale){
+        //Draw fixed scale - height =/-1 and width max of maxBufferLength
+        const step = impW / Math.max(maxBufferLength,buffer.length);
+        let x = impL + step * bufferMidPoint;
+
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+        ctx.moveTo(impMidX, impB);
+        ctx.lineTo(impMidX, impT);
+        ctx.moveTo(impL, impMidY);
+        ctx.lineTo(impR, impMidY);
+        ctx.stroke();
+    
+    
+    
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColor(0, 0, 0);
+        const start = Math.max(0,(buffer.length-maxBufferLength)/2);
+        const end = Math.min(buffer.length,maxBufferLength);
+        for (let i = start; i < end; i++) {
+            let y = impMidY - b[i] * impH2;
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            x += step;
+        }
+        if (buffer.length ==1){
+            ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
+        }
+        ctx.stroke();
+    }
+    else{
+        //Scaled to fit
+        const step = impW / buffer.length;
+        let max = 0;
+        for (let i = 0; i < buffer.length; i++) {
+            max=Math.max(max,Math.abs(b[i]));
+        }
+        let x = impL;
+        let scale = impH2 / max;
+
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+        ctx.moveTo(impMidX, impB);
+        ctx.lineTo(impMidX, impT);
+        ctx.moveTo(impL, impMidY);
+        ctx.lineTo(impR, impMidY);
+        ctx.stroke();
+    
+    
+    
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColor(0, 0, 0);
+        for (let i = 0; i < buffer.length; i++) {
+            let y = impMidY - b[i] * scale;
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            x += step;
+        }
+        if (buffer.length ==1){
+            ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
+        }
+        ctx.stroke();
+    }
+
+}
+
+
+
 let THDGraphMaxF = 10000;
 let THDGraphMinF = 30;
 function paintTHDGraph(data, canvasId){
@@ -1225,6 +1333,7 @@ export {
     //Quick Preview
     paintPreview,
     paintDigitalPreview,
+    paintFilterPreview,
 
     //THD Graph
     paintTHDGraph,

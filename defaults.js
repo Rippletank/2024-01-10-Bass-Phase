@@ -522,8 +522,9 @@ function getTrueDefaultPatch(){
         inharmonicBSemitones:1,//semitones above root
         inharmonicCSemitones:1,//semitones above root
 
-        naughtFilterCutOff:0.5,//0..1 0 = off, 1 = max cutoff frequency
-        naughtFilterOrder:0.5,//0..1 0 = off, 1 = max order
+        naughtFilterFreq:0.5,// 0..1 0 = off, 1 = max frequency log scale
+        naughtFilterQ:0.5,//0..1 0 = off, 1 = max order linear scale from 1 to 2000
+        naughtFilterGain:0,//-24..24 db 0 = off
 
         jitterADC:0,//0..1 0 = off, 1 = max jitter applied as if ADC was jittering
         jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering

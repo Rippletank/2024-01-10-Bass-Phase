@@ -894,29 +894,64 @@
                 <br>
                 <br>
             </div>
-            <div class="slider-container">
-                <label for="naughtFilterCutOff">naughtFilterCutoff:</label>
-                <input type="range" id="naughtFilterCutOff" name="naughtFilterCutOff" min="0" max="1" step="0.001" value="0">
-                <output class="valueSpan" name="naughtFilterCutOff">0db</output>
+        </div>
+    </div>
+    <div class="bordered"  id="NaughtFilter">   
+        <div class="collapsible-header"><span class="header-text">Naughty Filter</span><span class="chevron">&#x25BC;</span></div>
+        <div class="collapsible-content">     
+            <div class="presetHeader">
+                <h3>Naughty Filter</h3>
+                <div id="digitalPresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
-                <div class="help-popup">
-                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed.</p>
+                <div class="help-popup">C
+                    <p>FIR filter which is tuned to show exaggerated pre-ringing.</p>
                 </div>
-                <br>
-                <br>
-                <br>
+            </div>     
+            <div class="canvasBox">
+                <canvas id="filterPreview"  width ="2000" height="500"></canvas>
+            </div>            
+            <div class ="previewButtons bottomSpaced">
+                <div class="previewButtons previewL">
+                    <button name="PD" class = "previewButton">def</button>
+                    <button name="PA" class = "previewButton hideForStereo">A</button>
+                    <button name="PB" class = "previewButton hideForStereo">B</button>
+                    <button name="PA" class = "previewButton hideForMono">A-L</button>
+                    <button name="PAR" class = "previewButton hideForMono">A-R</button>
+                    <button name="PB" class = "previewButton hideForMono">B-L</button>
+                    <button name="PBR" class = "previewButton hideForMono">B-R</button>
+                </div>
+                <div class="previewButtons previewC">
+                </div>
+
+                <div class="previewButtons">
+                </div>
             </div>
             <div class="slider-container">
-                <label for="naughtFilterOrder">naughtFilterOrder:</label>
-                <input type="range" id="naughtFilterOrder" name="naughtFilterOrder" min="0" max="1" step="0.001" value="0">
-                <output class="valueSpan" name="naughtFilterOrder">0db</output>
+                <label for="naughtFilterFreq">Frequency:</label>
+                <input type="range" id="naughtFilterFreq" name="naughtFilterFreq" min="0" max="1" step="0.001" value="0.5">
+                <output class="valueSpan" name="naughtFilterFreq"></output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
-                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed.</p>
+                    <p>Cut off frequency of the filter.</p>
                 </div>
-                <br>
-                <br>
-                <br>
+            </div>
+            <div class="slider-container">
+                <label for="naughtFilterGain">Gain:</label>
+                <input type="range" id="naughtFilterGain" name="naughtFilterGain" min="-24" max="24" step="0.1" value="0">
+                <output class="valueSpan" name="naughtFilterGain"></output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Gain of the eq.</p>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="naughtFilterQ">Q:</label>
+                <input type="range" id="naughtFilterQ" name="naughtFilterQ" min="0" max="1" step="0.01" value="0.5">
+                <output class="valueSpan" name="naughtFilterQ"></output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Width of affected band.</p>
+                </div>
             </div>
         </div>
     </div>
