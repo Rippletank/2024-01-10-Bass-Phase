@@ -37,7 +37,20 @@ import { zeroLevel } from "./defaults.js";
 let fftFunctions=new Array(10).fill(null)
 function getFFTFunction(bufferSize){
     let index =getIndex(bufferSize);
-    return fftFunctions[index] ??  (fftFunctions[index] = initFFT(bufferSize))
+    return fftFunctions[index] ??  (fftFunctions[index] = initFFT(bufferSize, true, false))
+}
+
+//cache functions to avoid reinitialising
+let fftFunctionsNoPhase=new Array(10).fill(null)
+function getFFTFunctionNoPhase(bufferSize){
+    let index =getIndex(bufferSize);
+    return fftFunctionsNoPhase[index] ??  (fftFunctionsNoPhase[index] = initFFT(bufferSize, false, true))
+}
+//cache functions to avoid reinitialising
+let fftFunctionsRealAndImag=new Array(10).fill(null)
+function getFFTFunctionRealAndImag(bufferSize){
+    let index =getIndex(bufferSize);
+    return fftFunctionsRealAndImag[index] ??  (fftFunctionsRealAndImag[index] = initFFT(bufferSize, false, false))
 }
 
 //cache functions to avoid reinitialising
@@ -47,18 +60,18 @@ function getInverseFFTFunction(bufferSize){
     return ifftFunctions[index] ??  (ifftFunctions[index] = initInverseFFT(bufferSize))
 }
 
-function initFFT(N)
+function initFFT(N, returnMagnitudeAndPhase, returnMagnitudeOnly)
 {
-    return buildFFT(N, false, true);
+    return buildFFT(N, false, returnMagnitudeAndPhase, returnMagnitudeOnly);
 }
 
 function initInverseFFT(N)
 {
-    return buildFFT(N, true, false);
+    return buildFFT(N, true, false, false);
 }
 
 
-function buildFFT(N, isInverse, returnMagnitudeAndPhase){
+function buildFFT(N, isInverse, returnMagnitudeAndPhase, returnMagnitudeOnly){
     //FFT will always be of length N so bit reversals and sin lUT can be precalculated
     const N_1 =N-1;
     const N_2 =N/2;
@@ -90,12 +103,12 @@ function buildFFT(N, isInverse, returnMagnitudeAndPhase){
 
     let bitReversalOperation = isInverse? inverseBitReversal : forwardBitReversal;
     let coreOperation = isInverse? inverseCoreOperation : forwardCoreOperation;
-    let returnOperation = returnMagnitudeAndPhase? returnOperationToMagAndPhase : (fr,fi,N_2)=>{return {real:fr,imag:fi}};
+    let returnOperation = returnMagnitudeAndPhase? returnOperationToMagAndPhase :(returnMagnitudeOnly ? returnOperationToMagOnly : (fr,fi,N_2)=>{return {real:fr,imag:fi}});
 
-    return (buffer)=>{  
-        if (buffer.length!=N)  return null;        
-        const fr = new Float32Array(buffer);
-        const fi = new Float32Array(N);//already initialised to 0
+    return (real, imag)=>{  
+        if (real.length!=N)  return null;        
+        const fr = new Float32Array(real);
+        const fi = new Float32Array(imag? imag : N);//Intialise with imaginary if present, else set to length N
         bitReversalOperation(fr,fi, bitReversals);
         coreOperation(fr,fi,N,N_4,logN,sinLUT);
         return returnOperation(fr,fi,N_2);
@@ -229,6 +242,19 @@ let returnOperationToMagAndPhase= (fr,fi,N_2)=>{
     }
 }
 
+let returnOperationToMagOnly= (fr,fi,N_2)=>{
+    let mag=new Float32Array(N_2);
+    let phase=new Float32Array(N_2);
+    for(let i=0;i<N_2;i++){
+        const x=fr[i];
+        const y=fi[i];
+        mag[i]= Math.sqrt(x*x+y*y);
+    }
+    return {
+        magnitude: mag
+    }
+}
+
 
 let convertMagnitudeAndPhaseToRealAndImaginary = (real, img)=>{  
         let N = real.length*2;
@@ -251,8 +277,5 @@ let convertMagnitudeAndPhaseToRealAndImaginary = (real, img)=>{
         return {real:fr,imag:fi};
     }
 
-//Used immediately and constantly - cache here
-let getFFT1024 = getFFTFunction(1024);
-let getFFT64k = getFFTFunction(65536);
 
-export { getFFTFunction, getInverseFFTFunction, getFFT1024, getFFT64k };
+export { getFFTFunction, getFFTFunctionNoPhase, getInverseFFTFunction, getFFTFunctionRealAndImag };

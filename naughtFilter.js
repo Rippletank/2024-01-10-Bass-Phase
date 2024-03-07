@@ -14,7 +14,7 @@
 
 
 import {convolve, convolveWrapped} from './oversampling.js'
-import {getFFTFunction, getInverseFFTFunction } from './basicFFT.js';
+import {getFFTFunctionRealAndImag, getInverseFFTFunction } from './basicFFT.js';
 
 
 //Note: non-cyclic input buffers return a new buffer with length = buffer.length + impulseResponse.length - 1
@@ -38,26 +38,29 @@ export function doFilter(buffer, sampleRate, patch, isCyclic) {
 export function getImpulseResponse(sampleRate, patch) {
   if (patch.naughtFilterGain === 0) return new Float32Array([1]); // No filtering
   const coeffs =getIIRCoefficients(sampleRate, patch);
-  let impulseResponse = new Float32Array(16384);
+  let impulseResponse = new Float32Array(FIRFFTLength);
   impulseResponse[0] = 1;
   applyIIRFilter(impulseResponse, coeffs);
   impulseResponse[0] = 0; // Remove impulse
-  return impulseResponse;
+  return getMatchingFIRFilter(impulseResponse);
 }
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //FIR filter
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const FFTFunc = getFFTFunction(16384);
-const iFFTFunc = getInverseFFTFunction(16384);
+const FIRFFTLength = 16384;
+const FFTFunc = getFFTFunctionRealAndImag(FIRFFTLength);
+const iFFTFunc = getInverseFFTFunction(FIRFFTLength);
 function getMatchingFIRFilter(impulseResponse) {
-  const fft = FFTFunc(impulseResponse.length);
-  for (let i = 0; i < impulseResponse.length; i++) {
-    fft[i] = ffr.phase[i];
+  const fft = FFTFunc(impulseResponse);
+  for (let i = 0; i < FIRFFTLength; i++) {
+    const r = fft.real[i];
+    const img = fft.imag[i];
+    //Linearise the FFT
+    fft.real[i] = Math.sqrt(r * r + img * img);
   }
-  return fft;
-
+  return  iFFTFunc(fft.real).real;//imaginary will be set to zero anyway
 }
 
 

@@ -23,7 +23,7 @@
 import { distort } from './distortion.js';
 import { buildBlackmanHarrisWindow } from './oversampling.js';
 import { jitter, getJitterPreview } from './jitter.js';
-import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
+import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
 import {doFilter, getImpulseResponse} from './naughtFilter.js';
@@ -34,6 +34,8 @@ function setSampleBuffers(buffer){
     sampleBuffers = buffer;
 }
 
+const getFFT1024=getFFTFunction(1024);
+const getFFT64k=getFFTFunctionNoPhase(65536);
 
 let harmonics = 2000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
@@ -322,6 +324,7 @@ function getDetailedFFT(samplerate, referencePatch, filterPreviewSubject){
         true,
         samplerate/adjustedSampleRate);
 
+    //Measure time of this function
     result.fft = getFFT64k(result.distortedSamples);
     return result;
 }
