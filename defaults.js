@@ -525,6 +525,7 @@ function getTrueDefaultPatch(){
         naughtyFilterFreq:0.5,// 0..1 0 = off, 1 = max frequency log scale
         naughtyFilterQ:0.5,//0..1 0 = off, 1 = max order linear scale from 1 to 2000
         naughtyFilterGain:0,//-24..24 db 0 = off
+        naughtyFilterMix:0,//0..1, 0=IIR, 1=FIR
 
         jitterADC:0,//0..1 0 = off, 1 = max jitter applied as if ADC was jittering
         jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering

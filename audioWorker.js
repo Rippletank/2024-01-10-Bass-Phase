@@ -118,7 +118,9 @@ function doDigitalPreview(patch, sampleRate) {
         digitalPreview.ditherDRdB.buffer,
         digitalPreview.ditherDRFBase.buffer,
         digitalPreview.jitter.buffer,
-        digitalPreview.filterImpulseResponse.buffer,
+        digitalPreview.filterImpulseResponse.fftImpulse.buffer,
+        digitalPreview.filterImpulseResponse.iirImpulse.buffer,
+        digitalPreview.filterImpulseResponse.fft.buffer,
     ];
 
     self.postMessage({ digitalPreview },transferList);

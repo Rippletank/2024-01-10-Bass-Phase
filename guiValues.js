@@ -285,12 +285,12 @@ function setValueFromPatch(ve, patch){
             const f_20 = Math.min(250,Math.pow(10,3*patch.naughtyFilterFreq)); // Frequency/ 20 
             const Q =1 + (f_20-1) *patch.naughtyFilterQ; //See naughtyFilter.js for the formula
             ve.textContent =Q.toFixed(3-Math.log10(f_20));break;
-
         case "naughtyFilterGain": 
             ve.textContent =(patch.naughtyFilterGain).toFixed(1)+'db';break;
-
         case "naughtyFilterFreq": 
             ve.textContent =(20*Math.pow(10,3*patch.naughtyFilterFreq)).toFixed(0)+'Hz';break;
+        case "naughtyFilterMix": 
+            ve.textContent =toPercent(patch.naughtyFilterMix);break;
 
         case "jitterADC": 
             ve.textContent =toPercent(patch.jitterADC);break;

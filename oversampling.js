@@ -461,6 +461,7 @@ function filterOnly(inBuffer, outBuffer, filterKernel)
 }
 
 
+//Testing - not optimised for performance
 //Returns new buffer of length inputBuffer.length + filterKernel.length - 1
 function convolve(inputBuffer, filterKernel) {
     const inputLength = inputBuffer.length;
@@ -476,6 +477,8 @@ function convolve(inputBuffer, filterKernel) {
     return outputBuffer;
 }
 
+
+//Testing - not optimised for performance
 //cyclic version of convolution, where input is a circular buffer
 //Returns the middle section of the convolution, from half the filter length to half the filter length from the end
 //Returns the original buffer with the right values in place
@@ -508,7 +511,5 @@ export {
     generateBlackmanHarrisFilterKernel,
     generateUpsamplingPolyphaseKernels,
     upsample,
-    downsample,
-    convolve,
-    convolveWrapped
+    downsample
 };

@@ -1059,93 +1059,95 @@ function paintFilterPreview(buffer, canvasId){
 
 
 
+    let index = 0;
+    [buffer.fftImpulse,buffer.iirImpulse].forEach(b=>{
+        const bufferMidPoint = (maxBufferLength-b.length-1)/2 ;//Centre the middle sample of the buffer (assume buffer.length is odd)
 
-    let b = buffer;
-    const bufferMidPoint = (maxBufferLength-buffer.length-1)/2 ;//Centre the middle sample of the buffer (assume buffer.length is odd)
-
-    let impW = w*0.5 -20;
-    let impH2 = h*0.5 -20;
-    const impB = h-10;
-    const impT = 10;
-    const impL =10;
-    const impR =impL+impW;
-    const impMidX = impL + impW/2;
-    const impMidY = h/2;
+        let impW = w*0.5 -20;
+        let impH2 = h*0.5 -20;
+        const impB = h-10;
+        const impT = 10;
+        const impL =10 + index*(impW+20);
+        const impR =impL+impW;
+        const impMidX = impL + (impW/2)*(1-index);
+        const impMidY = h/2;
 
 
-    if (fixedScale){
-        //Draw fixed scale - height =/-1 and width max of maxBufferLength
-        const step = impW / Math.max(maxBufferLength,buffer.length);
-        let x = impL + step * bufferMidPoint;
+        if (fixedScale){
+            //Draw fixed scale - height =/-1 and width max of maxBufferLength
+            const step = impW / Math.max(maxBufferLength,b.length);
+            let x = impL + step * bufferMidPoint;
 
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
-        ctx.moveTo(impMidX, impB);
-        ctx.lineTo(impMidX, impT);
-        ctx.moveTo(impL, impMidY);
-        ctx.lineTo(impR, impMidY);
-        ctx.stroke();
-    
-    
-    
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = getColor(0, 0, 0);
-        const start = Math.max(0,(buffer.length-maxBufferLength)/2);
-        const end = Math.min(buffer.length,maxBufferLength);
-        for (let i = start; i < end; i++) {
-            let y = impMidY - b[i] * impH2;
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+            ctx.moveTo(impMidX, impB);
+            ctx.lineTo(impMidX, impT);
+            ctx.moveTo(impL, impMidY);
+            ctx.lineTo(impR, impMidY);
+            ctx.stroke();
+        
+        
+        
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = getColor(0, 0, 0);
+            const start = Math.max(0,(b.length-maxBufferLength)/2);
+            const end = Math.min(b.length,maxBufferLength);
+            for (let i = start; i < end; i++) {
+                let y = impMidY - b[i] * impH2;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                x += step;
             }
-            x += step;
+            // if (b.length ==1){
+            //     ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
+            // }
+            ctx.stroke();
         }
-        if (buffer.length ==1){
-            ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
-        }
-        ctx.stroke();
-    }
-    else{
-        //Scaled to fit
-        const step = impW / buffer.length;
-        let max = 0;
-        for (let i = 0; i < buffer.length; i++) {
-            max=Math.max(max,Math.abs(b[i]));
-        }
-        let x = impL;
-        let scale = impH2 / max;
-
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
-        ctx.moveTo(impMidX, impB);
-        ctx.lineTo(impMidX, impT);
-        ctx.moveTo(impL, impMidY);
-        ctx.lineTo(impR, impMidY);
-        ctx.stroke();
-    
-    
-    
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = getColor(0, 0, 0);
-        for (let i = 0; i < buffer.length; i++) {
-            let y = impMidY - b[i] * scale;
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+        else{
+            //Scaled to fit
+            const step = impW / b.length;
+            let max = 0;
+            for (let i = 0; i < b.length; i++) {
+                max=Math.max(max,Math.abs(b[i]));
             }
-            x += step;
+            let x = impL;
+            let scale = impH2 / max;
+
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+            ctx.moveTo(impMidX, impB);
+            ctx.lineTo(impMidX, impT);
+            ctx.moveTo(impL, impMidY);
+            ctx.lineTo(impR, impMidY);
+            ctx.stroke();
+        
+        
+        
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = getColor(0, 0, 0);
+            for (let i = 0; i < b.length; i++) {
+                let y = impMidY - b[i] * scale;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                x += step;
+            }
+            // if (b.length ==1){
+            //     ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
+            // }
+            ctx.stroke();
         }
-        if (buffer.length ==1){
-            ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
-        }
-        ctx.stroke();
-    }
+        index++;
+    });
 
 }
 
