@@ -423,7 +423,7 @@ const commonSectionNames = [
     'SampleSetup',
     'DistortionSetup',
     'DigitalSetup',
-    'NaughtFilter'
+    'naughtyFilter'
 ];
 
 

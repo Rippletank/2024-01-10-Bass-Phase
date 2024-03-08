@@ -13,7 +13,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-import {convolve, convolveWrapped} from './oversampling.js'
+import {convolve, convolveWrapped,buildBlackmanHarrisWindow} from './oversampling.js'
 import {getFFTFunctionRealAndImag, getInverseFFTFunction } from './basicFFT.js';
 
 
@@ -21,7 +21,7 @@ import {getFFTFunctionRealAndImag, getInverseFFTFunction } from './basicFFT.js';
 //Cyclic buffer return themselves with the convolution result in the same buffer
 let isFIR=false;
 export function doFilter(buffer, sampleRate, patch, isCyclic) {
-  if (patch.naughtFilterGain === 0) return buffer; // No filtering
+  if (patch.naughtyFilterGain === 0) return buffer; // No filtering
   if (isFIR){
     const impulseResponse = getImpulseResponse(sampleRate, patch);
     return isCyclic? convolveWrapped(buffer, impulseResponse) : convolve(buffer, impulseResponse);
@@ -36,7 +36,7 @@ export function doFilter(buffer, sampleRate, patch, isCyclic) {
 
 
 export function getImpulseResponse(sampleRate, patch) {
-  if (patch.naughtFilterGain === 0) return new Float32Array([1]); // No filtering
+  if (patch.naughtyFilterGain === 0) return new Float32Array([1]); // No filtering
   const coeffs =getIIRCoefficients(sampleRate, patch);
   let impulseResponse = new Float32Array(FIRFFTLength);
   impulseResponse[0] = 1;
@@ -52,15 +52,31 @@ export function getImpulseResponse(sampleRate, patch) {
 const FIRFFTLength = 16384;
 const FFTFunc = getFFTFunctionRealAndImag(FIRFFTLength);
 const iFFTFunc = getInverseFFTFunction(FIRFFTLength);
+const FIRWindow = buildBlackmanHarrisWindow(FIRFFTLength);
+
+//https://www.kvraudio.com/forum/viewtopic.php?t=474962
 function getMatchingFIRFilter(impulseResponse) {
-  const fft = FFTFunc(impulseResponse);
+  const imp = new Float32Array(FIRFFTLength);
+  const offset = 0;//FIRFFTLength / 2;//firlength must be even, but the filter will be odd
+  const length = Math.min(offset+ impulseResponse.length, FIRFFTLength);
+  for (let i = offset; i < length; i++) {
+    imp[i] = impulseResponse[i] * FIRWindow[i];
+  }
+  const fft = FFTFunc(imp);
+  let sign=1;
   for (let i = 0; i < FIRFFTLength; i++) {
     const r = fft.real[i];
     const img = fft.imag[i];
     //Linearise the FFT
-    fft.real[i] = Math.sqrt(r * r + img * img);
+    fft.real[i] = sign*Math.sqrt(r * r + img * img);
+    sign=-sign;
   }
-  return  iFFTFunc(fft.real).real;//imaginary will be set to zero anyway
+  let ifft= iFFTFunc(fft.real);
+  let result = ifft.real;
+  for (let i = 0; i < FIRFFTLength; i++) {
+    result[i] *= FIRWindow[i];
+  }
+  return result;//imaginary will be set to zero anyway
 }
 
 
@@ -69,10 +85,10 @@ function getMatchingFIRFilter(impulseResponse) {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 function getIIRCoefficients(sampleRate, patch) {
-  const f_20 = Math.pow(10,3*patch.naughtFilterFreq); // Frequency/ 20 
+  const f_20 = Math.pow(10,3*patch.naughtyFilterFreq); // Frequency/ 20 
   const normalisedF = 20*f_20/sampleRate; // Normalized cutoff frequency
-  const Q =1 + (Math.min(250,f_20)-1) *patch.naughtFilterQ; //Scale MaxQ with frequency, roughly linear, to keep the impulse less than 16k samples, but top out a 250, it gets non-linear above that
-  const gainDB = patch.naughtFilterGain;
+  const Q =1 + (Math.min(250,f_20)-1) *patch.naughtyFilterQ; //Scale MaxQ with frequency, roughly linear, to keep the impulse less than 16k samples, but top out a 250, it gets non-linear above that
+  const gainDB = patch.naughtyFilterGain;
 
   return createParametricEQFilter(normalisedF, gainDB, Q);
 }

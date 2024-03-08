@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-import {doFilter, getImpulseResponse} from './naughtFilter.js';
+import {doFilter, getImpulseResponse} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -139,7 +139,7 @@ function getAudioBuffer(
             let oversamplingReport = distort(b, patch, sampleRate, false, true);
             oversamplingReports.push(oversamplingReport);
 
-            if (patch.naughtFilterGain!=0) 
+            if (patch.naughtyFilterGain!=0) 
             {
                 //Need to Reassign since the size is changed
                 audioBuffer.data[i]= doFilter(b,sampleRate,patch, false);
@@ -394,7 +394,7 @@ function _buildPreview(referencePatch, filterPreviewSubject,sampleRate, bufferSi
     distort(distorted, patch, sampleRate, true, includeInharmonicsAndDigital);
 
     if (includeInharmonicsAndDigital) {
-        if (patch.naughtFilterGain!=0)doFilter(distorted, sampleRate, patch, true);
+        if (patch.naughtyFilterGain!=0)doFilter(distorted, sampleRate, patch, true);
         jitter(distorted, sampleRate, patch, true, Math.random());
         ditherSimulation(distorted, patch, sampleRate);
     }
