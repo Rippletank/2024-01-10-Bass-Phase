@@ -1060,16 +1060,16 @@ function paintFilterPreview(buffer, canvasId){
 
 
     let index = 0;
-    [buffer.fftImpulse,buffer.iirImpulse].forEach(b=>{
+    [buffer.iirImpulse, buffer.fftImpulse].forEach(b=>{
         const bufferMidPoint = (maxBufferLength-b.length-1)/2 ;//Centre the middle sample of the buffer (assume buffer.length is odd)
 
         let impW = w*0.5 -20;
         let impH2 = h*0.5 -20;
         const impB = h-10;
         const impT = 10;
-        const impL =10 + index*(impW+20);
+        const impL =10 + (1-index)*(impW+20);
         const impR =impL+impW;
-        const impMidX = impL + (impW/2)*(1-index);
+        const impMidX = impL + (impW/2)*index;
         const impMidY = h/2;
 
 

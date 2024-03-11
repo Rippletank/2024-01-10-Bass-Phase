@@ -541,61 +541,51 @@ function getTrueDefaultPatch(){
     }
 }
 
-const defaultTestSubjectList = 
-[
-    "rootPhaseDelay"
-];
-function getDefaultPatch(){
-    return getTrueDefaultPatch();
-}
-
-
-function getDefaultAPatch(){
-    let patch = getDefaultPatch();
-    patch.rootPhaseDelay=0;
-    return patch;
-}
-function getDefaultBPatch(){
-    let patch = getDefaultPatch();
-    patch.rootPhaseDelay=0.25;
-    return patch;
-}
-
-
 // const defaultTestSubjectList = 
 // [
-//     "speakerAmount"
+//     "rootPhaseDelay"
 // ];
-
 // function getDefaultPatch(){
-//     let patch =
-//     { 
-//         ...getTrueDefaultPatch(),
-//         ...wavePresets[6].patch//sine
-//     }
-//     patch.frequency=400;
-//     patch.distortion=1;
-//     patch.tanhDistortion=0;
-//     patch.speakerAmount=1;
-//     patch.speakerMass=0.14;
-//     patch.speakerDamping=0.82;
-//     patch.speakerStiffness=0.24;
-//     patch.speakerNonLinearity=0.5;
-//     return patch;
+//     return getTrueDefaultPatch();
 // }
+
 
 // function getDefaultAPatch(){
 //     let patch = getDefaultPatch();
-//     patch.speakerAmount=0;
-//     patch.frequency=400;
+//     patch.rootPhaseDelay=0;
 //     return patch;
 // }
 // function getDefaultBPatch(){
 //     let patch = getDefaultPatch();
-//     patch.speakerAmount=1;
-//     patch.frequency=400;
+//     patch.rootPhaseDelay=0.25;
 //     return patch;
 // }
+
+
+const defaultTestSubjectList = 
+[
+    "naughtyFilterMix"
+];
+
+function getDefaultPatch(){
+    let patch =
+    { 
+        ...getTrueDefaultPatch(),
+    }
+    patch.naughtyFilterGain=6;
+    return patch;
+}
+
+function getDefaultAPatch(){
+    let patch = getDefaultPatch();
+    patch.naughtyFilterMix=0;
+    return patch;
+}
+function getDefaultBPatch(){
+    let patch = getDefaultPatch();
+    patch.naughtyFilterMix=1;
+    return patch;
+}
 
 
 const miniPresets ={
