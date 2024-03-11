@@ -573,6 +573,7 @@ function getDefaultPatch(){
         ...getTrueDefaultPatch(),
     }
     patch.naughtyFilterGain=6;
+    patch.naughtyFilterFreq=0.466;
     return patch;
 }
 

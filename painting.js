@@ -1059,7 +1059,7 @@ function paintFilterPreview(buffer, canvasId){
 
 
 
-    let border = 10;
+    let border = 25;
     let impW = w*0.33 -2*border;
     let impH2 = h*0.5 -2*border;
     const impB = h-10;

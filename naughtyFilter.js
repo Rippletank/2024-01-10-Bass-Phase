@@ -32,7 +32,7 @@ export function doFilter(buffer, sampleRate, patch, isCyclic) {
 
   //Otherwise, a mix of IIR and FIR
   //const FIRImpulse = getImpulseResponse(sampleRate, patch, iirParams.coeffs).fftImpulse;
-  const FIRImpulse = getMatchingFIRFilterViaSinc(iirParams.fcn, iirParams.Q, iirParams.sqrtGain);
+  const FIRImpulse = getMatchingFIRFilterViaSinc(iirParams.fcn, iirParams.Q, iirParams.gain);
 
   if (isCyclic){
     const outputBuffer = new Float32Array(buffer.length);
@@ -70,7 +70,7 @@ export function getImpulseResponse(sampleRate, patch, preCalcedCoeffs=null) {
   applyIIRFilter(impulseResponse, iirParams.coeffs);
 
   //impulseResponse[0] = 0; // Remove impulse
-  return getMatchingFIRFilter(impulseResponse, sampleRate, iirParams.fcn, iirParams.Q, iirParams.sqrtGain);
+  return getMatchingFIRFilter(impulseResponse, sampleRate, iirParams.fcn, iirParams.Q, iirParams.gain);
 }
 
 
@@ -147,15 +147,24 @@ function getScaledFFT(imp, sampleRate) {
 //FIR filter
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-function getMatchingFIRFilterViaSinc(fcn, Q, sqrtGain){
-  const lpf1FIR= createLowPassFilterKernel(fcn * (1-0.5/Q), Math.round(Q*100/2)*2+1); 
-  const lpf2FIR= createLowPassFilterKernel(fcn * (1+0.5/Q), Math.round(Q*100/2)*2+1); 
+function getMatchingFIRFilterViaSinc(fcn, Q, gain){
+  // const lpf1FIR= createLowPassFilterKernel(fcn * (1-0.5/Q), Math.round(Q*100/2)*2+1); 
+  // const lpf2FIR= createLowPassFilterKernel(fcn * (1+0.5/Q), Math.round(Q*100/2)*2+1); 
+  const lpf1FIR= createLowPassFilterKernel(fcn * (1-0.5/Q), Math.round(Q*250/2)*2+1); 
+  const lpf2FIR= createLowPassFilterKernel(fcn * (1+0.5/Q), Math.round(Q*250/2)*2+1); 
+  let sum=0;
   for (let i = 0; i < lpf1FIR.length; i++) {
-    //lpf2FIR[i] -= lpf1FIR[i];
+    lpf2FIR[i] -= lpf1FIR[i];
+    sum+=lpf2FIR[i];
+  }
+  let scale = 2*gain;///sum;
+  for (let i = 0; i < lpf2FIR.length; i++) {
+    lpf2FIR[i] *= scale;
   }
 
+  lpf2FIR[(lpf2FIR.length-1)/2] += 1;
   //return lpf1FIR;
-  invertFIRFilterInPlace(lpf2FIR)
+  //invertFIRFilterInPlace(lpf2FIR)
   return lpf2FIR;
 }
 
@@ -166,7 +175,6 @@ function createLowPassFilterKernel(fcn, order) { //fcn is the normalised cutoff 
   let coefficients = new Float32Array(order);
   let M = order - 1;
   let halfM = M / 2;
-  let piM = 2*Math.PI / M;
   let w0_pi = 2 * fcn;
 
   function sinc(x) {
@@ -176,9 +184,10 @@ function createLowPassFilterKernel(fcn, order) { //fcn is the normalised cutoff 
       let piX = x*Math.PI;
       return Math.sin(piX) / piX;
   }
+  let window = buildBlackmanHarrisWindow(order);
 
   for (let n = 0; n <= M; n++) {
-      coefficients[n] = w0_pi *sinc(w0_pi * (n - halfM)) * (0.54 - 0.46 * Math.cos(piM * n));//hammingWindow(n);
+    coefficients[n] = w0_pi *sinc(w0_pi * (n - halfM)) * window[n];
   }
 
   //Skip normalisation, should be close enought to one with correct application of pi throughout
@@ -259,7 +268,7 @@ function getIIRCoefficients(sampleRate, patch) {
     coeffs:createParametricEQFilter(normalisedF, sqrtGain, Q),
     fcn:normalisedF,
     Q:Q,
-    sqrtGain:sqrtGain,
+    gain:gainDB===0?0 : Math.sign(gainDB)* Math.pow(10,Math.abs(gainDB) / 20)
   }
 }
 
