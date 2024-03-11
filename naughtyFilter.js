@@ -14,7 +14,10 @@
 
 
 import {buildBlackmanHarrisWindow} from './oversampling.js'
-import {getFFTFunctionRealAndImag, getInverseFFTFunction } from './basicFFT.js';
+import {getFFTFunctionNoPhase, getFFTFunctionRealAndImag, getInverseFFTFunction } from './basicFFT.js';
+
+
+const FIRFFTLength = 4096;//16384;
 
 
 //Note: non-cyclic input buffers return a new buffer with length = buffer.length + impulseResponse.length - 1
@@ -51,41 +54,93 @@ export function doFilter(buffer, sampleRate, patch, isCyclic) {
 
 
 export function getImpulseResponse(sampleRate, patch, preCalcedCoeffs=null) {
-  if (patch.naughtyFilterGain === 0) return {
+  if (patch.naughtyFilterGain === 0) return {// No filtering
     fftImpulse: new Float32Array(1).fill(1),
     iirImpulse: new Float32Array(1).fill(1),
-    fft: new Float32Array(FIRFFTLength).fill(1),
-  }; // No filtering
+    fft: 
+      {
+        f:new Float32Array([50,20000]),
+        db:new Float32Array([0,0])
+      }
+  }; 
 
   const iirParams =preCalcedCoeffs ?? getIIRCoefficients(sampleRate, patch);
   let impulseResponse = new Float32Array(FIRFFTLength);
   impulseResponse[0] = 1;
   applyIIRFilter(impulseResponse, iirParams.coeffs);
 
-  impulseResponse[0] = 0; // Remove impulse
-  return getMatchingFIRFilter(impulseResponse, iirParams.fcn, iirParams.Q, iirParams.sqrtGain);
+  //impulseResponse[0] = 0; // Remove impulse
+  return getMatchingFIRFilter(impulseResponse, sampleRate, iirParams.fcn, iirParams.Q, iirParams.sqrtGain);
 }
 
-const FIRFFTLength = 4096;//16384;
-const FFTFunc = getFFTFunctionRealAndImag(FIRFFTLength);
-const FIRWindow2 = buildBlackmanHarrisWindow(FIRFFTLength*2);
 
-function getMatchingFIRFilter(impulseResponse, fcn, Q, sqrtGain) {
+function getMatchingFIRFilter(impulseResponse,sampleRate, fcn, Q, sqrtGain) {
   const imp = new Float32Array(FIRFFTLength);
   const length = Math.min(impulseResponse.length, FIRFFTLength);
   for (let i = 0; i < length; i++) {
-    imp[i] = impulseResponse[i] * FIRWindow2[FIRFFTLength + i];
+    imp[i] = impulseResponse[i];// * FIRWindow2[FIRFFTLength + i];
   }
-  const fft = FFTFunc(imp);
+  const fft = getScaledFFT(imp, sampleRate);
 
   let firFilter = getMatchingFIRFilterViaSinc(fcn, Q, sqrtGain);
   
   return {
     fftImpulse: firFilter,
     iirImpulse: impulseResponse,
-    fft: fft.real,
+    fft: fft,
   }
 }
+
+
+// const previewFFTSize = 1024;
+const previewFFT = getFFTFunctionNoPhase(FIRFFTLength);
+function getScaledFFT(imp, sampleRate) {  
+  let fft = previewFFT(imp).magnitude;
+  let outputCount =200;
+  const fftSize = FIRFFTLength;
+  const fftSize2 = fftSize/2;
+
+    //Convert the accumulation to a log frequency scale, with the given number of output points
+    let lastBin = 1;//lastBin will be skiped. bin 0 is DC
+    const maxF =20000;
+    const minF =50;
+    const power10Scale = Math.log10(maxF/minF)/outputCount;
+    const fScale =sampleRate/fftSize;
+    let logValues=[]
+    let logFreqs =[];
+    for(let i=0;i<outputCount;i++){
+        let f = minF*Math.pow(10,i*power10Scale);
+        let nextBin = Math.round(f/fScale);
+
+        if (nextBin<=lastBin) continue; //Check if there are any bins in the range
+
+        nextBin = Math.min(nextBin,fftSize2);
+        let value = 0;
+        for (let k = lastBin; k < nextBin; k++) {
+            value += fft[k];
+        }
+        value /= (nextBin-lastBin);
+        logValues.push(value);
+        logFreqs.push(f);
+        lastBin = nextBin;
+        if (nextBin>=fftSize2) break;
+    }
+
+    //Convert the log values to dB
+    //The  fftsize2*0.125 is to make the db levels correspond more closely to the dynamic range of the signal as a whole
+    //The fft spreads out the power over the whole range, but in this case, that makes it a bit meaningless, maybe?
+    //Either way, its just a guide and works well as a comparison with the graph for the un-dithered signal
+    for(let i=0;i<logValues.length;i++){
+        logValues[i] =Math.max(-144, 20 * Math.log10(logValues[i]*fftSize2*0.5))+12;
+    }   
+
+    return {
+        f:new Float32Array(logFreqs),
+        db:new Float32Array(logValues)
+    };
+
+  }
+
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -158,6 +213,8 @@ function invertFIRFilterInPlace(filterKernel) {
 //Possibly doesn't work for long resonses (probably) but anyway, response is not anywhere near required
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+const FFTFunc = getFFTFunctionRealAndImag(FIRFFTLength);
+const FIRWindow2 = buildBlackmanHarrisWindow(FIRFFTLength*2);
 const FIRWindow = buildBlackmanHarrisWindow(FIRFFTLength);
 const iFFTFunc = getInverseFFTFunction(FIRFFTLength);
 
@@ -217,12 +274,12 @@ function createParametricEQFilter(centerFreq, sqrtGain, Q) {
   const alpha = sn / (2 * Q);
   const A = sqrtGain;
 
-  const a0 = 1 + alpha/A;
-  const a1 = -2 * cs;
-  const a2 = 1 - alpha/A;
   const b0 = 1 + alpha*A;
   const b1 = -2 * cs;
   const b2 = 1 - alpha*A;
+  const a0 = 1 + alpha/A;
+  const a1 = -2 * cs;
+  const a2 = 1 - alpha/A;
 
   const inverseA0 = 1 / a0;
   return [b0 * inverseA0, b1 * inverseA0, b2 * inverseA0, a1 * inverseA0 , a2 * inverseA0];

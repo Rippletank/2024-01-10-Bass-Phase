@@ -1059,35 +1059,33 @@ function paintFilterPreview(buffer, canvasId){
 
 
 
+    let border = 10;
+    let impW = w*0.33 -2*border;
+    let impH2 = h*0.5 -2*border;
+    const impB = h-10;
+    const impT = 10;
     let index = 0;
     [buffer.iirImpulse, buffer.fftImpulse].forEach(b=>{
         const bufferMidPoint = (maxBufferLength-b.length-1)/2 ;//Centre the middle sample of the buffer (assume buffer.length is odd)
 
-        let impW = w*0.5 -20;
-        let impH2 = h*0.5 -20;
-        const impB = h-10;
-        const impT = 10;
-        const impL =10 + (1-index)*(impW+20);
+        const impL =border + 2*index*(impW + 2*border);
         const impR =impL+impW;
         const impMidX = impL + (impW/2)*index;
         const impMidY = h/2;
 
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+        ctx.moveTo(impMidX, impB);
+        ctx.lineTo(impMidX, impT);
+        ctx.moveTo(impL, impMidY);
+        ctx.lineTo(impR, impMidY);
+        ctx.stroke();
 
         if (fixedScale){
             //Draw fixed scale - height =/-1 and width max of maxBufferLength
             const step = impW / Math.max(maxBufferLength,b.length);
-            let x = impL + step * bufferMidPoint;
-
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = getColorA(100, 100, 100,0.8);
-            ctx.moveTo(impMidX, impB);
-            ctx.lineTo(impMidX, impT);
-            ctx.moveTo(impL, impMidY);
-            ctx.lineTo(impR, impMidY);
-            ctx.stroke();
-        
-        
+            let x = impL + step * bufferMidPoint;        
         
             ctx.beginPath();
             ctx.lineWidth = 1;
@@ -1117,17 +1115,6 @@ function paintFilterPreview(buffer, canvasId){
             }
             let x = impL;
             let scale = impH2 / max;
-
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = getColorA(100, 100, 100,0.8);
-            ctx.moveTo(impMidX, impB);
-            ctx.lineTo(impMidX, impT);
-            ctx.moveTo(impL, impMidY);
-            ctx.lineTo(impR, impMidY);
-            ctx.stroke();
-        
-        
         
             ctx.beginPath();
             ctx.lineWidth = 1;
@@ -1149,6 +1136,74 @@ function paintFilterPreview(buffer, canvasId){
         index++;
     });
 
+
+    //Draw Dither Dynamic Range    
+    const maxF =20000;
+    const minF =50;
+    const dbMax =24;
+    const dbMin = -26
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColor(0, 100, 0);
+    let al =3 * border + impW;
+    let ab= impB;
+    let at = impT;
+    let xScale =impW / Math.log10(maxF/minF);
+    let yScale =  h/(dbMin -dbMax);
+
+    //Dither Dynamic Range axis lines
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+    ctx.moveTo(al, at);
+    ctx.lineTo(al, ab);
+    ctx.lineTo(al+impW, ab);
+    ctx.stroke();
+    
+
+    //Dither Linearity labels
+    ctx.fillStyle = getColor(0, 0, 0);
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    
+    ctx.fillText("100", al + Math.log10(100/minF) * xScale, ab+15);
+    ctx.fillText("300", al + Math.log10(300/minF) * xScale, ab+15);
+    ctx.fillText("1k", al + Math.log10(1000/minF) * xScale, ab+15);
+    ctx.fillText("3k", al + Math.log10(3000/minF) * xScale, ab+15);
+    ctx.fillText("10k", al + Math.log10(10000/minF) * xScale, ab+15);
+    ctx.fillText("20k", al + Math.log10(20000/minF) * xScale, ab+15);
+    //ctx.fillText("db", al-15, t+6);
+    ctx.fillText("24", al-15, at + (24 -dbMax)* yScale);
+    ctx.fillText("12", al-15, at + (12 -dbMax)* yScale);
+    ctx.fillText("0db", al-15, at + (0 -dbMax)* yScale);
+    ctx.fillText("-12", al-15, at + (-12 -dbMax)* yScale);
+    ctx.fillText("-24", al-15, at + (-24 -dbMax)* yScale);
+    //ctx.fillText("Dynamic Range", al+itemW/2, ab+28);
+
+    // ctx.save();
+    // ctx.translate(al-35, ab+6-ditherW/2);
+    // ctx.rotate(-Math.PI / 2);
+    // ctx.fillText("Dynamic Range", 0,0);
+    // ctx.restore();
+
+
+
+
+
+    ctx.strokeStyle = getColorA(100, 0, 0,0.8);
+    ctx.beginPath();   
+    for(let i = 0; i < buffer.fft.f.length; i++){
+        let f = buffer.fft.f[i];
+        let v = Math.max(dbMin, buffer.fft.db[i]);
+        let x = al + Math.log10(f/minF) * xScale;
+        let y = at + (v -dbMax) * yScale;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        }
+        else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
 }
 
 

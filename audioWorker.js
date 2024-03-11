@@ -63,7 +63,7 @@ self.onmessage = function(event) {
         }
     } catch (error) {
         // Send any errors back to the main thread
-        self.postMessage({ error: error.message });
+        self.postMessage({ error: error.stack });
     }
 };
 
@@ -120,7 +120,8 @@ function doDigitalPreview(patch, sampleRate) {
         digitalPreview.jitter.buffer,
         digitalPreview.filterImpulseResponse.fftImpulse.buffer,
         digitalPreview.filterImpulseResponse.iirImpulse.buffer,
-        digitalPreview.filterImpulseResponse.fft.buffer,
+        digitalPreview.filterImpulseResponse.fft.f.buffer,
+        digitalPreview.filterImpulseResponse.fft.db.buffer,
     ];
 
     self.postMessage({ digitalPreview },transferList);
