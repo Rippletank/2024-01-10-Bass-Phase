@@ -856,7 +856,18 @@ function paintDigitalPreview(data, canvasId){
     ctx.fillText("Deflection from expected", 0,0);
     ctx.restore();
 
+    const platform = getPlatform();
+
+    // Apply the appropriate compositing method based on the platform
+    if (platform === 'macOS') {
+    // Use 'lighter' composite operation or manual compositing for macOS
+    //ctx.globalCompositeOperation = 'darken';
+    ctx.strokeStyle = getColorA(0, 0, 100,0.5);
+    } else {
+    // Use the default behavior for other platforms (e.g., Windows, Linux)
+    //ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = getColorA(0, 0, 100,0.01);
+    }
     ctx.beginPath();  
     for(let i = 2; i < data.jitter.length-2; i++){
         let e =i*expectedYScale-1
@@ -875,6 +886,7 @@ function paintDigitalPreview(data, canvasId){
         ctx.bezierCurveTo(cps0[2], cps0[3], cpsp1[0], cpsp1[1], xp1, yp1);
     }
     ctx.stroke();
+    //ctx.globalCompositeOperation = 'source-over';
 
 
 
@@ -1355,6 +1367,28 @@ function paintTHDGraph(data, canvasId){
     }
 }
 
+
+function getPlatform() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  
+    // Check for macOS
+    if (/Mac/i.test(userAgent)) {
+      return 'macOS';
+    }
+  
+    // Check for Windows
+    if (/Win/i.test(userAgent)) {
+      return 'Windows';
+    }
+  
+    // Check for Linux
+    if (/Linux/i.test(userAgent)) {
+      return 'Linux';
+    }
+  
+    // If none of the above is detected, return 'Unknown'
+    return 'Unknown';
+  }
 
 function getUseFFT(){
     return useFFT;
