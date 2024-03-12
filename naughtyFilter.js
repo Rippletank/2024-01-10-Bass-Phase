@@ -27,7 +27,7 @@ export function doFilter(buffer, sampleRate, patch, isCyclic, maxFilterDelay=0) 
 
   if (patch.naughtyFilterMix === 0){
     if (maxFilterDelay>0 && !isCyclic){
-      const outputBuffer = new Float32Array(buffer.length + maxFilterDelay);      
+      let outputBuffer = new Float32Array(buffer.length + maxFilterDelay);      
       for(let i=0;i<buffer.length;i++){
         outputBuffer[maxFilterDelay + i]=buffer[i];
       }
@@ -51,12 +51,12 @@ export function doFilter(buffer, sampleRate, patch, isCyclic, maxFilterDelay=0) 
     return buffer; //Same input as output buffer - works for Previews
   }
   else{
-    const outputBuffer = new Float32Array(buffer.length + FIRImpulse.length - 1);
+    let outputBuffer = new Float32Array(buffer.length + FIRImpulse.length - 1);
     convolve(buffer, outputBuffer, FIRImpulse, patch.naughtyFilterMix);
     if (patch.naughtyFilterMix<1) applyIIRFilterMix(buffer, outputBuffer, iirParams.coeffs, FIRImpulse.length/2, 1-patch.naughtyFilterMix);
     
     if (maxFilterDelay>0 && !isCyclic){
-      const extraDelay = maxFilterDelay - (FIRImpulse.length-1)/2; 
+      const extraDelay = maxFilterDelay - ((FIRImpulse.length-1)/2 + 1); 
       if (extraDelay>0){
         const delayedBuffer = new Float32Array(outputBuffer.length + extraDelay);      
         for(let i=0;i<outputBuffer.length;i++){

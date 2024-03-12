@@ -238,7 +238,7 @@ function preMaxFilterDelay(patches, sampleRate){
         //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
         if(!patch || patch.naughtyFilterGain===0) continue;
         let fp = convertPatchToFilterParams(sampleRate, patch);
-        let delay = (fp.firFormSincOrder-1)/2;
+        let delay = (fp.firFormSincOrder-1)/2 + 1;
         if (delay>maxDelay) maxDelay = delay;
     }
     return maxDelay;
