@@ -281,6 +281,17 @@ function setValueFromPatch(ve, patch){
             ve.textContent =(10*patch.speakerNonLinearity).toFixed(1);break;
 
 
+        case "naughtyFilterQ": 
+            const f_20 = Math.min(250,Math.pow(10,3*patch.naughtyFilterFreq)); // Frequency/ 20 
+            const Q =1 + 1.5*(f_20-1) *patch.naughtyFilterQ; //See naughtyFilter.js for the formula
+            ve.textContent =Q.toFixed(3-Math.log10(f_20));break;
+        case "naughtyFilterGain": 
+            ve.textContent =(patch.naughtyFilterGain).toFixed(1)+'db';break;
+        case "naughtyFilterFreq": 
+            ve.textContent =(20*Math.pow(10,3*patch.naughtyFilterFreq)).toFixed(0)+'Hz';break;
+        case "naughtyFilterMix": 
+            ve.textContent =toPercent(patch.naughtyFilterMix);break;
+
         case "jitterADC": 
             ve.textContent =toPercent(patch.jitterADC);break;
         case "jitterDAC": 
@@ -347,6 +358,12 @@ function setValueFromPatch(ve, patch){
         case "oversampleTransition":
             ve.textContent =(0.005 +0.025 *patch.oversampleTransition).toFixed(3) + " of fc";break;
 
+        case "inharmonicNoise":
+            ve.innerHTML = 
+            '<div class=""><span class="tinyLabelFull">'+
+                toInharmonicString(patch.inharmonicNoiseLevel,
+                    patch.inharmonicNoiseColour==0?"White" :(patch.inharmonicNoiseColour==1?"Pink": "-"+(patch.inharmonicNoiseColour*3).toFixed(1)+"db")
+                    )+'</span></div>';break;
         case "inharmonicA":
             ve.innerHTML =
                 toInharmonicString(
@@ -364,7 +381,6 @@ function setValueFromPatch(ve, patch){
                 toInharmonicString(
                     patch.inharmonicCLevel, 
                     patch.inharmonicCSemitones.toFixed(0)+' semitones');
-            break;
             break;
         case "ultrasonic":
             ve.innerHTML =patch.oversampleTimes==0?"<b>off</b>":

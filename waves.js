@@ -1,5 +1,5 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Part of audio engine - fetches and opens wave files for alternative sounds
+//Part of audio engine - but on mainThread - fetches and opens wave files for alternative sounds
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //This code is not optimised for performance - it is intended to be fairly easy to understand and modify
 //It is not intended to be used in production code
@@ -30,7 +30,8 @@ fetch('/waves/waveList.json')
         console.error('Error fetching Wave List:', error);
     });
 
-
+//MUST be give the audioConext from the main thread so it can produce the correct sample rate etc
+//CAN'T work on workerThread because audioConext is not available there
 let audioContext = null;
 export function setAudioContext(context){
     audioContext = context;

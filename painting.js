@@ -246,7 +246,7 @@ function paintDetailedFFT(magnitudes, sampleRate, canvasId){
                 max = Math.max(max,magnitudes[j]);
             }
             let y = fftB - ( (Math.log10(max) -dbOffset) * hScale);// (20*Math.log10(max) -detailedMinDb)/(detailedMaxDb-detailedMinDb) * fftH;
-            if (!y || y>fftB) y=fftB-2;
+            if (!y || y>fftB) y=fftB;
             const x = fftL+i;
             let midX = x;
             if (lastX<x-1){
@@ -1043,6 +1043,173 @@ function getControlPoints(x0,y0,x1,y1,x2,y2,t){
 }
 
 
+
+let fixedScale = false;
+function paintFilterPreview(buffer, canvasId){
+    const maxBufferLength = 2000;//Can be bigger but will use this as scale for smaller
+    if (!buffer) return;
+    let canvas = document.getElementById(canvasId);
+    let ctx = canvas.getContext("2d");
+    ctx.textAlign = "center";
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    let w=canvas.width;
+    let h=canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+
+
+
+    let border = 25;
+    let impW = w*0.33 -2*border;
+    let impH2 = h*0.5 -2*border;
+    const impB = h-border*2;
+    const impT = 10;
+
+    let maxValue = 0;
+    [buffer.iirImpulse, buffer.fftImpulse].forEach((b, index)=>{
+        const midpoint = index*((b.length-1)/2);
+        for(let i = 0; i < b.length; i++){
+            if (i==midpoint)continue;
+            maxValue = Math.max(maxValue,Math.abs(b[i]));
+        }
+    });
+
+
+
+    [buffer.iirImpulse, buffer.fftImpulse].forEach((b, index)=>{
+        const midpoint = index*((b.length-1)/2);
+        //
+        const impL =border + 2*index*(impW + 2*border);
+        const impR =impL+impW;
+        const impMidX = impL + (impW/2)*index;
+        const impMidY = impT +(impB-impT)/2;
+
+        
+        ctx.font = "14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+            index==0 ?"IIR Impulse":"FIR Impulse", 
+            impL + (impR-impL)/2, impB+16);
+
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+        ctx.moveTo(impMidX, impB);
+        ctx.lineTo(impMidX, impT);
+        ctx.moveTo(impL, impMidY);
+        ctx.lineTo(impR, impMidY);
+        ctx.stroke();
+
+        
+        if (maxValue==0 || b.length==1){
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = getColor(index*100, 0, (1-index)*100);
+            ctx.moveTo(impL, impMidY);
+            ctx.lineTo(impR, impMidY);
+            ctx.stroke();
+        }
+        else{
+            //Scaled to fit
+            const step = impW / b.length;
+            let x = impL;
+            let scale = impH2 / maxValue;
+        
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = getColor(index*100, 0, (1-index)*100);
+            let isFirst = true;
+            for (let i = 0; i < b.length; i++) {
+                if (i==midpoint)continue;
+                let y = impMidY - b[i] * scale;
+                if (isFirst) {//may not be zero
+                    ctx.moveTo(x, y);
+                    isFirst=false;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                x += step;
+            }
+            // if (b.length ==1){
+            //     ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
+            // }
+            ctx.stroke();
+                
+        }
+    });
+
+
+    //Filter Frequency response Range    
+    const maxF =20000;
+    const minF =50;
+    const dbMax =24;
+    const dbMin = -5
+    let al =3 * border + impW;
+    let ab= impB-border;
+    let at = impT;
+    let xScale =impW / Math.log10(maxF/minF);
+    let yScale =  (ab-at)/(dbMin -dbMax);
+
+    //Filter Frequency response axis lines
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = getColorA(100, 100, 100,0.8);
+    ctx.moveTo(al, at);
+    ctx.lineTo(al, ab);
+    ctx.lineTo(al+impW, ab);
+    ctx.stroke();
+    
+
+    //Filter Frequency response labels
+    ctx.fillStyle = getColor(0, 0, 0);
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    
+    ctx.fillText("100", al + Math.log10(100/minF) * xScale, ab+15);
+    ctx.fillText("300", al + Math.log10(300/minF) * xScale, ab+15);
+    ctx.fillText("1k", al + Math.log10(1000/minF) * xScale, ab+15);
+    ctx.fillText("3k", al + Math.log10(3000/minF) * xScale, ab+15);
+    ctx.fillText("10k", al + Math.log10(10000/minF) * xScale, ab+15);
+    ctx.fillText("20k", al + Math.log10(20000/minF) * xScale, ab+15);
+    //ctx.fillText("db", al-15, t+6);
+    ctx.fillText("24", al-15, at + (24 -dbMax)* yScale);
+    ctx.fillText("12", al-15, at + (12 -dbMax)* yScale);
+    ctx.fillText("0db", al-15, at + (0 -dbMax)* yScale);
+    // ctx.fillText("-12", al-15, at + (-12 -dbMax)* yScale);
+    // ctx.fillText("-24", al-15, at + (-24 -dbMax)* yScale);
+    //ctx.fillText("Dynamic Range", al+itemW/2, ab+28);
+
+
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+        "IIR Frequency Response", 
+        al + (impW)/2, ab+border+16);
+
+
+
+
+
+
+    ctx.strokeStyle = getColorA(0, 0,100, 0.8);
+    ctx.beginPath();   
+    for(let i = 0; i < buffer.fft.f.length; i++){
+        let f = buffer.fft.f[i];
+        let v = Math.max(dbMin, buffer.fft.db[i]);
+        let x = al + Math.log10(f/minF) * xScale;
+        let y = at + (v -dbMax) * yScale;
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        }
+        else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+}
+
+
+
 let THDGraphMaxF = 10000;
 let THDGraphMinF = 30;
 function paintTHDGraph(data, canvasId){
@@ -1225,6 +1392,7 @@ export {
     //Quick Preview
     paintPreview,
     paintDigitalPreview,
+    paintFilterPreview,
 
     //THD Graph
     paintTHDGraph,

@@ -193,7 +193,7 @@ previewButtons.forEach(function(button) {
                 let target =90;
                 switch(button.name[2]){
                     case '6'://60db
-                        target=-60;
+                        target=-150;
                         break;
                     case '9'://90db
                         target=-90;
@@ -422,7 +422,8 @@ const commonSectionNames = [
     'TestSetup', 
     'SampleSetup',
     'DistortionSetup',
-    'DigitalSetup'
+    'DigitalSetup',
+    'naughtyFilter'
 ];
 
 
@@ -522,6 +523,7 @@ function setupPresetButtons(){
     insertPresetButtons('distortionPresets', miniPresets.distortionPresets);
     insertPresetButtons('oversamplingPresets', miniPresets.oversamplingPresets);
     insertPresetButtons('digitalPresets', miniPresets.digitalPresets);
+    insertPresetButtons('naughtyFilterPresets', miniPresets.naughtyFilterPresets);
 }
 
 function insertPresetButtons(id, presetList){     

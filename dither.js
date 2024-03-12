@@ -233,15 +233,15 @@ export function getDitherLinearityData(patch, valueCount, repeatCount){
 }
 
 
+const fftSize =1024;
+const fftSize2 = fftSize/2;
+const fftFunc = getFFTFunction(fftSize);
 export function getDitherDynamicRange(patch, sampleRate, fCount){
-    let fftSize =1024;
-    let fftSize2 = fftSize/2;
     let outputCount =50;
 
     //Generate a sine wave of a given frequency, apply bit depth reduction and dithering according to the patch
     //Do an FFT of the result, remove the bin of the given frequency and accumulate the other bins
     //Repeat for a range of frequencies and then average the result
-    let fftFunc = getFFTFunction(fftSize);
     let accumulation = new Float32Array(fftSize2);
     let b = new Float32Array(fftSize);
     for(let i=0;i<fCount;i++){

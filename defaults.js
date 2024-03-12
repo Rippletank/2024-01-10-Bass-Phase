@@ -307,6 +307,46 @@ const digitalPresets = [
     },
 ]
 
+const naughtyFilterPresets = [
+    {
+        name:"Default",
+        patch:{
+            naughtyFilterFreq:0.5,
+            naughtyFilterQ:0.5,
+            naughtyFilterGain:0,
+            naughtyFilterMix:0,
+        }   
+    },
+    {
+        name: "Minimum",
+        patch:{
+            naughtyFilterFreq:0.466,
+            naughtyFilterQ:0.5,
+            naughtyFilterGain:6,
+            naughtyFilterMix:0,
+        }
+    },
+    {
+        name: "Linear",
+        patch:{
+            naughtyFilterFreq:0.466,
+            naughtyFilterQ:0.5,
+            naughtyFilterGain:6,
+            naughtyFilterMix:1,
+        }
+    },
+    {
+        name: "Bad",
+        patch:{
+            naughtyFilterFreq:0.466,
+            naughtyFilterQ:0.75,
+            naughtyFilterGain:20,
+            naughtyFilterMix:1,
+        }
+    }
+
+]
+
 const speakerPresets = [
     {
 
@@ -518,9 +558,16 @@ function getTrueDefaultPatch(){
         inharmonicALevel:-91,//-91..0, in db -91 is off
         inharmonicBLevel:-91,//-91..0, in db -91 is off
         inharmonicCLevel:-91,//-91..0, in db -91 is off
+        inharmonicNoiseLevel:-91,//-91..0, in db -91 is off
         inharmonicAFrequency:1000,//Hz (for now?)
         inharmonicBSemitones:1,//semitones above root
-        inharmonicCSemitones:1,//semitones above root
+        inharmonicBSemitones:1,//semitones above root
+        inharmonicNoiseColour:0,//0=white, 1=pink
+
+        naughtyFilterFreq:0.5,// 0..1 0 = off, 1 = max frequency log scale
+        naughtyFilterQ:0.5,//0..1 0 = off, 1 = max order linear scale from 1 to 2000
+        naughtyFilterGain:0,//-24..24 db 0 = off
+        naughtyFilterMix:0,//0..1, 0=IIR, 1=FIR
 
         jitterADC:0,//0..1 0 = off, 1 = max jitter applied as if ADC was jittering
         jitterDAC:0,//0..1 0 = off, 1 = max jitter applied as if DAC was jittering
@@ -559,36 +606,27 @@ function getDefaultBPatch(){
 
 // const defaultTestSubjectList = 
 // [
-//     "speakerAmount"
+//     "naughtyFilterMix"
 // ];
 
 // function getDefaultPatch(){
 //     let patch =
 //     { 
 //         ...getTrueDefaultPatch(),
-//         ...wavePresets[6].patch//sine
 //     }
-//     patch.frequency=400;
-//     patch.distortion=1;
-//     patch.tanhDistortion=0;
-//     patch.speakerAmount=1;
-//     patch.speakerMass=0.14;
-//     patch.speakerDamping=0.82;
-//     patch.speakerStiffness=0.24;
-//     patch.speakerNonLinearity=0.5;
+//     patch.naughtyFilterGain=6;
+//     patch.naughtyFilterFreq=0.466;
 //     return patch;
 // }
 
 // function getDefaultAPatch(){
 //     let patch = getDefaultPatch();
-//     patch.speakerAmount=0;
-//     patch.frequency=400;
+//     patch.naughtyFilterMix=0;
 //     return patch;
 // }
 // function getDefaultBPatch(){
 //     let patch = getDefaultPatch();
-//     patch.speakerAmount=1;
-//     patch.frequency=400;
+//     patch.naughtyFilterMix=1;
 //     return patch;
 // }
 
@@ -600,7 +638,8 @@ const miniPresets ={
     speakerPresets, 
     filterPresets, 
     oversamplingPresets,
-    digitalPresets
+    digitalPresets,
+    naughtyFilterPresets
 };
 function getMiniPresets(){
     return miniPresets;

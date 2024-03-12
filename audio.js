@@ -23,10 +23,10 @@
 import { distort } from './distortion.js';
 import { buildBlackmanHarrisWindow } from './oversampling.js';
 import { jitter, getJitterPreview } from './jitter.js';
-import { getFFTFunction, getFFT1024, getFFT64k } from './basicFFT.js';
+import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-
+import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -34,6 +34,8 @@ function setSampleBuffers(buffer){
     sampleBuffers = buffer;
 }
 
+const getFFT1024=getFFTFunction(1024);
+const getFFT64k=getFFTFunctionNoPhase(65536);
 
 let harmonics = 2000;//Allows 20Hz to have harmonics up to 20KHz??
 let decayLengthFactor = 1.4;//Decay length ( in samples) is 1.4 times longer than the -60db decay time - allows for longer tail than RT60 alone
@@ -42,7 +44,8 @@ function getAudioBuffer(
     sampleRate,//Samples per second
     patch,
     patchR,
-    maxPreDelay
+    maxPreDelay,
+    maxFilterDelay
     ) {
     //Calculate max delay in samples
     
@@ -87,7 +90,7 @@ function getAudioBuffer(
         maxSampleBufferSize = channels.length>1 ? Math.max(sampleBuffers[0].length,sampleBuffers[1].length) : sampleBuffers[0].length;
     }
 
-    let maxBufferSize =Math.max(maxAdditiveBufferSize, maxSampleBufferSize);
+    let maxBufferSize =Math.max(maxAdditiveBufferSize, maxSampleBufferSize)+maxFilterDelay;
 
     //Create buffers for each channel
     let data = [];
@@ -134,9 +137,20 @@ function getAudioBuffer(
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
+
+            if (patch.naughtyFilterGain!=0) 
+            {
+                //Need to Reassign since the size is changed
+                audioBuffer.data[i]= doFilter(b,sampleRate,patch, false, maxFilterDelay);
+                b=audioBuffer.data[i];
+            }
+
             let oversamplingReport = distort(b, patch, sampleRate, false, true);
             oversamplingReports.push(oversamplingReport);
+
             jitter(b, sampleRate, patch, false, randSeed);
+
+            
             envelopeBuffers.push(envelopeBuffer);
             filters.push(filter);
         }
@@ -214,6 +228,20 @@ function preMaxCalcStartDelay(patches, sampleRate){
     }
     return maxDelay;
 
+}
+
+
+function preMaxFilterDelay(patches, sampleRate){
+    let maxDelay = 0;
+    for (let i = 0; i < patches.length; i++) {
+        let patch = patches[i];
+        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
+        if(!patch || patch.naughtyFilterGain===0) continue;
+        let fp = convertPatchToFilterParams(sampleRate, patch);
+        let delay = (fp.FIRKernelOffset % 2===0? fp.FIRKernelOffset : fp.FIRKernelOffset-1)/2 ;
+        if (delay>maxDelay) maxDelay = delay;
+    }
+    return maxDelay;
 }
 
 
@@ -312,6 +340,7 @@ function getDetailedFFT(samplerate, referencePatch, filterPreviewSubject){
         true,
         samplerate/adjustedSampleRate);
 
+    //Measure time of this function
     result.fft = getFFT64k(result.distortedSamples);
     return result;
 }
@@ -381,6 +410,7 @@ function _buildPreview(referencePatch, filterPreviewSubject,sampleRate, bufferSi
     distort(distorted, patch, sampleRate, true, includeInharmonicsAndDigital);
 
     if (includeInharmonicsAndDigital) {
+        if (patch.naughtyFilterGain!=0)doFilter(distorted, sampleRate, patch, true);
         jitter(distorted, sampleRate, patch, true, Math.random());
         ditherSimulation(distorted, patch, sampleRate);
     }
@@ -552,6 +582,9 @@ function getDigitalPreview(patch, sampleRate){
         ditherDRF:ditherDR.f,
         ditherDRdB:ditherDR.db,
         ditherDRFBase:baselineBitRedux.db,//should be same Freq dist as ditherDRF
+
+        filterImpulseResponse:getPreviewImpulseResponse(sampleRate, patch),//Impulse response of filter
+
         //odd number of sample values 
         jitter:getJitterPreview(patch, sampleRate)
     }
@@ -754,6 +787,34 @@ function AddInharmonics(patch, sampleRate, b, envelopeBuffer, delayN){
         * 2 * Math.PI  / sampleRate; 
         mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
     }
+    if (patch.inharmonicNoiseLevel>-91){
+        let level = Math.pow(10,patch.inharmonicNoiseLevel/20); 
+        let env = -1;
+        
+        let pinkFactor = patch.inharmonicNoiseColour;
+        //Pink noise from https://www.firstpr.com.au/dsp/pink-noise/#Voss-McCartney
+        let b0, b1, b2, b3, b4, b5, b6;
+        b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+
+        for (let i = 0; i < envelopeBuffer.length; i++) {
+            if (i >= delayN)   {
+                env++;
+                let l=envelopeBuffer[env] * level;
+                if (l<zeroLevel) continue;
+                const white = Math.random() * 2 - 1;
+                b0 = 0.99886 * b0 + white * 0.0555179;
+                b1 = 0.99332 * b1 + white * 0.0750759;
+                b2 = 0.96900 * b2 + white * 0.1538520;
+                b3 = 0.86650 * b3 + white * 0.3104856;
+                b4 = 0.55000 * b4 + white * 0.5329522;
+                b5 = -0.7616 * b5 - white * 0.0168980;
+                const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                b6 = white * 0.115926;
+            
+                b[i] = l* (pinkFactor * pink + (1 - pinkFactor) * white * 4);
+            }
+        }
+    }
 }
 
 
@@ -805,6 +866,7 @@ export {
     getAudioBuffer, 
     scaleAndGetNullBuffer,
     preMaxCalcStartDelay,
+    preMaxFilterDelay,
 
     getPreview,
     getDigitalPreview,  

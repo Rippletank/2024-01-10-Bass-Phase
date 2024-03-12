@@ -60,6 +60,7 @@ import {
     
     paintPreview,
     paintDigitalPreview,
+    paintFilterPreview,
     paintDetailedFFT, 
     paintTHDGraph
 } from './painting.js';
@@ -528,6 +529,7 @@ function doPaintPreview(){
 function doPaintDigitalPreview(){
     if (!digitalPreviewResult) return;
     paintDigitalPreview( digitalPreviewResult, "digitalPreview");
+    paintFilterPreview( digitalPreviewResult.filterImpulseResponse, "filterPreview");
 }
 
 
