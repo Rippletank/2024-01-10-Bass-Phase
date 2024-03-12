@@ -23,5 +23,15 @@
     {
         "name":"Speaker distortion",
         "path":"speaker.json"
+    },
+    
+    {
+        "name":"Linear Phase Pre-ringing",
+        "path":"preringing.json"
+    },
+    
+    {
+        "name":"Quantisation and Dither",
+        "path":"quantisation.json"
     }
 ]
