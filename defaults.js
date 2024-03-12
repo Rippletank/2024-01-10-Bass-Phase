@@ -307,6 +307,46 @@ const digitalPresets = [
     },
 ]
 
+const naughtyFilterPresets = [
+    {
+        name:"Default",
+        patch:{
+            naughtyFilterFreq:0.5,
+            naughtyFilterQ:0.5,
+            naughtyFilterGain:0,
+            naughtyFilterMix:0,
+        }   
+    },
+    {
+        name: "Minimum",
+        patch:{
+            naughtyFilterFreq:0.466,
+            naughtyFilterQ:0.5,
+            naughtyFilterGain:6,
+            naughtyFilterMix:0,
+        }
+    },
+    {
+        name: "Linear",
+        patch:{
+            naughtyFilterFreq:0.466,
+            naughtyFilterQ:0.5,
+            naughtyFilterGain:6,
+            naughtyFilterMix:1,
+        }
+    },
+    {
+        name: "Bad",
+        patch:{
+            naughtyFilterFreq:0.466,
+            naughtyFilterQ:0.75,
+            naughtyFilterGain:20,
+            naughtyFilterMix:1,
+        }
+    }
+
+]
+
 const speakerPresets = [
     {
 
@@ -596,7 +636,8 @@ const miniPresets ={
     speakerPresets, 
     filterPresets, 
     oversamplingPresets,
-    digitalPresets
+    digitalPresets,
+    naughtyFilterPresets
 };
 function getMiniPresets(){
     return miniPresets;

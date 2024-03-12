@@ -1050,6 +1050,7 @@ function paintFilterPreview(buffer, canvasId){
     if (!buffer) return;
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
+    ctx.textAlign = "center";
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     let w=canvas.width;
@@ -1062,16 +1063,34 @@ function paintFilterPreview(buffer, canvasId){
     let border = 25;
     let impW = w*0.33 -2*border;
     let impH2 = h*0.5 -2*border;
-    const impB = h-10;
+    const impB = h-border*2;
     const impT = 10;
-    let index = 0;
-    [buffer.iirImpulse, buffer.fftImpulse].forEach(b=>{
-        const bufferMidPoint = (maxBufferLength-b.length-1)/2 ;//Centre the middle sample of the buffer (assume buffer.length is odd)
 
+    let maxValue = 0;
+    [buffer.iirImpulse, buffer.fftImpulse].forEach((b, index)=>{
+        const midpoint = index*((b.length-1)/2);
+        for(let i = 0; i < b.length; i++){
+            if (i==midpoint)continue;
+            maxValue = Math.max(maxValue,Math.abs(b[i]));
+        }
+    });
+
+
+
+    [buffer.iirImpulse, buffer.fftImpulse].forEach((b, index)=>{
+        const midpoint = index*((b.length-1)/2);
+        //
         const impL =border + 2*index*(impW + 2*border);
         const impR =impL+impW;
         const impMidX = impL + (impW/2)*index;
-        const impMidY = h/2;
+        const impMidY = impT +(impB-impT)/2;
+
+        
+        ctx.font = "14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+            index==0 ?"IIR Impulse":"FIR Impulse", 
+            impL + (impR-impL)/2, impB+16);
 
         ctx.beginPath();
         ctx.lineWidth = 1;
@@ -1082,47 +1101,31 @@ function paintFilterPreview(buffer, canvasId){
         ctx.lineTo(impR, impMidY);
         ctx.stroke();
 
-        if (fixedScale){
-            //Draw fixed scale - height =/-1 and width max of maxBufferLength
-            const step = impW / Math.max(maxBufferLength,b.length);
-            let x = impL + step * bufferMidPoint;        
         
+        if (maxValue==0 || b.length==1){
             ctx.beginPath();
             ctx.lineWidth = 1;
-            ctx.strokeStyle = getColor(0, 0, 0);
-            const start = Math.max(0,(b.length-maxBufferLength)/2);
-            const end = Math.min(b.length,maxBufferLength);
-            for (let i = start; i < end; i++) {
-                let y = impMidY - b[i] * impH2;
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-                x += step;
-            }
-            // if (b.length ==1){
-            //     ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
-            // }
+            ctx.strokeStyle = getColor(index*100, 0, (1-index)*100);
+            ctx.moveTo(impL, impMidY);
+            ctx.lineTo(impR, impMidY);
             ctx.stroke();
         }
         else{
             //Scaled to fit
             const step = impW / b.length;
-            let max = 0;
-            for (let i = 0; i < b.length; i++) {
-                max=Math.max(max,Math.abs(b[i]));
-            }
             let x = impL;
-            let scale = impH2 / max;
+            let scale = impH2 / maxValue;
         
             ctx.beginPath();
             ctx.lineWidth = 1;
-            ctx.strokeStyle = getColor(0, 0, 0);
+            ctx.strokeStyle = getColor(index*100, 0, (1-index)*100);
+            let isFirst = true;
             for (let i = 0; i < b.length; i++) {
+                if (i==midpoint)continue;
                 let y = impMidY - b[i] * scale;
-                if (i === 0) {
+                if (isFirst) {//may not be zero
                     ctx.moveTo(x, y);
+                    isFirst=false;
                 } else {
                     ctx.lineTo(x, y);
                 }
@@ -1132,26 +1135,23 @@ function paintFilterPreview(buffer, canvasId){
             //     ctx.lineTo(impMidX, impMidY);//won't be drawn otherwise
             // }
             ctx.stroke();
+                
         }
-        index++;
     });
 
 
-    //Draw Dither Dynamic Range    
+    //Filter Frequency response Range    
     const maxF =20000;
     const minF =50;
     const dbMax =24;
-    const dbMin = -26
-    ctx.beginPath();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = getColor(0, 100, 0);
+    const dbMin = -5
     let al =3 * border + impW;
-    let ab= impB;
+    let ab= impB-border;
     let at = impT;
     let xScale =impW / Math.log10(maxF/minF);
-    let yScale =  h/(dbMin -dbMax);
+    let yScale =  (ab-at)/(dbMin -dbMax);
 
-    //Dither Dynamic Range axis lines
+    //Filter Frequency response axis lines
     ctx.lineWidth = 1;
     ctx.strokeStyle = getColorA(100, 100, 100,0.8);
     ctx.moveTo(al, at);
@@ -1160,7 +1160,7 @@ function paintFilterPreview(buffer, canvasId){
     ctx.stroke();
     
 
-    //Dither Linearity labels
+    //Filter Frequency response labels
     ctx.fillStyle = getColor(0, 0, 0);
     ctx.font = "12px Arial";
     ctx.textAlign = "center";
@@ -1175,21 +1175,23 @@ function paintFilterPreview(buffer, canvasId){
     ctx.fillText("24", al-15, at + (24 -dbMax)* yScale);
     ctx.fillText("12", al-15, at + (12 -dbMax)* yScale);
     ctx.fillText("0db", al-15, at + (0 -dbMax)* yScale);
-    ctx.fillText("-12", al-15, at + (-12 -dbMax)* yScale);
-    ctx.fillText("-24", al-15, at + (-24 -dbMax)* yScale);
+    // ctx.fillText("-12", al-15, at + (-12 -dbMax)* yScale);
+    // ctx.fillText("-24", al-15, at + (-24 -dbMax)* yScale);
     //ctx.fillText("Dynamic Range", al+itemW/2, ab+28);
 
-    // ctx.save();
-    // ctx.translate(al-35, ab+6-ditherW/2);
-    // ctx.rotate(-Math.PI / 2);
-    // ctx.fillText("Dynamic Range", 0,0);
-    // ctx.restore();
+
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+        "IIR Frequency Response", 
+        al + (impW)/2, ab+border+16);
 
 
 
 
 
-    ctx.strokeStyle = getColorA(100, 0, 0,0.8);
+
+    ctx.strokeStyle = getColorA(0, 0,100, 0.8);
     ctx.beginPath();   
     for(let i = 0; i < buffer.fft.f.length; i++){
         let f = buffer.fft.f[i];

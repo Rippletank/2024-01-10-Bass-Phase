@@ -283,7 +283,7 @@ function setValueFromPatch(ve, patch){
 
         case "naughtyFilterQ": 
             const f_20 = Math.min(250,Math.pow(10,3*patch.naughtyFilterFreq)); // Frequency/ 20 
-            const Q =1 + (f_20-1) *patch.naughtyFilterQ; //See naughtyFilter.js for the formula
+            const Q =1 + 1.5*(f_20-1) *patch.naughtyFilterQ; //See naughtyFilter.js for the formula
             ve.textContent =Q.toFixed(3-Math.log10(f_20));break;
         case "naughtyFilterGain": 
             ve.textContent =(patch.naughtyFilterGain).toFixed(1)+'db';break;
@@ -375,7 +375,6 @@ function setValueFromPatch(ve, patch){
                 toInharmonicString(
                     patch.inharmonicCLevel, 
                     patch.inharmonicCSemitones.toFixed(0)+' semitones');
-            break;
             break;
         case "ultrasonic":
             ve.innerHTML =patch.oversampleTimes==0?"<b>off</b>":

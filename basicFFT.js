@@ -105,9 +105,21 @@ function buildFFT(N, isInverse, returnMagnitudeAndPhase, returnMagnitudeOnly){
     let coreOperation = isInverse? inverseCoreOperation : forwardCoreOperation;
     let returnOperation = returnMagnitudeAndPhase? returnOperationToMagAndPhase :(returnMagnitudeOnly ? returnOperationToMagOnly : (fr,fi,N_2)=>{return {real:fr,imag:fi}});
 
-    return (real, imag)=>{  
-        if (real.length!=N)  return null;        
-        const fr = new Float32Array(real);
+    return (real, imag)=>{       
+        let fr = null;
+        if (real.length===N){
+            fr = new Float32Array(real);
+        }else if (real.length===N_2){
+            //Copy and mirror real values (for example, from magnitude array)
+            fr = new Float32Array(N);
+            for(let i=1;i<N_2-1;i++){ //miss out DC and Nyquist
+                const r= real[i];
+                fr[i] = r;
+                fr[N_1-i] = r;
+            }
+        }
+        else return null;//unexpected length
+        
         const fi = new Float32Array(imag? imag : N);//Intialise with imaginary if present, else set to length N
         bitReversalOperation(fr,fi, bitReversals);
         coreOperation(fr,fi,N,N_4,logN,sinLUT);

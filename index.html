@@ -901,10 +901,13 @@
         <div class="collapsible-content">     
             <div class="presetHeader">
                 <h3>Naughty Filter</h3>
-                <div id="digitalPresets" class="PresetButtons"></div>
+                <div id="naughtyFilterPresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
-                <div class="help-popup">C
-                    <p>FIR filter which is tuned to show exaggerated pre-ringing.</p>
+                <div class="help-popup">
+                    <p>Two implementations of a narrow bandpass designed to reveal the sound of pre-ringing from subtle to overt.</p>
+                    <p>One uses a standard (RBJ) Infinite Impulse Response (IIR) peaking filter, which is minimum phase.</p>
+                    <p>The other uses combined windowed sinc functions to create a similar linear phase Finite Impulse Response (FIR) filter.</p>
+                    <p>It's a bit crude, particularly the FIR implementation, but sufficient to clearly distinguish pre-ringing.</p>
                 </div>
             </div>     
             <div class="canvasBox">
@@ -928,7 +931,7 @@
             </div>
             <div class="slider-container">
                 <label for="naughtyFilterFreq">Frequency:</label>
-                <input type="range" id="naughtyFilterFreq" name="naughtyFilterFreq" min="0" max="1" step="0.001" value="0.5">
+                <input type="range" id="naughtyFilterFreq" name="naughtyFilterFreq" min="0" max="0.7" step="0.001" value="0.5">
                 <output class="valueSpan" name="naughtyFilterFreq"></output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
@@ -937,7 +940,7 @@
             </div>
             <div class="slider-container">
                 <label for="naughtyFilterGain">Gain:</label>
-                <input type="range" id="naughtyFilterGain" name="naughtyFilterGain" min="-24" max="24" step="0.1" value="0">
+                <input type="range" id="naughtyFilterGain" name="naughtyFilterGain" min="0" max="24" step="0.1" value="0">
                 <output class="valueSpan" name="naughtyFilterGain"></output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
@@ -954,12 +957,12 @@
                 </div>
             </div>
             <div class="slider-container">
-                <label for="naughtyFilterMix">Minimum to Linear Mix:</label>
+                <label for="naughtyFilterMix">Mix IIR ↔ FIR:</label>
                 <input type="range" id="naughtyFilterMix" name="naughtyFilterMix" min="0" max="1" step="0.01" value="0.5">
                 <output class="valueSpan" name="naughtyFilterMix"></output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
-                    <p>Mix of Minimum phase to Linear Phase in output. 100% = all linear.</p>
+                    <p>Mix of Minimum phase (IIR) to Linear Phase (FIR) in output. 0% = all IIR, 100% = all FIR.</p>
                 </div>
             </div>
         </div>

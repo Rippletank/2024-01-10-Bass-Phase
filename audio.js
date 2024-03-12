@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-import {doFilter, getImpulseResponse, convertPatchToFilterParams} from './naughtyFilter.js';
+import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -90,7 +90,7 @@ function getAudioBuffer(
         maxSampleBufferSize = channels.length>1 ? Math.max(sampleBuffers[0].length,sampleBuffers[1].length) : sampleBuffers[0].length;
     }
 
-    let maxBufferSize =Math.max(maxAdditiveBufferSize, maxSampleBufferSize);
+    let maxBufferSize =Math.max(maxAdditiveBufferSize, maxSampleBufferSize)+maxFilterDelay;
 
     //Create buffers for each channel
     let data = [];
@@ -238,7 +238,7 @@ function preMaxFilterDelay(patches, sampleRate){
         //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
         if(!patch || patch.naughtyFilterGain===0) continue;
         let fp = convertPatchToFilterParams(sampleRate, patch);
-        let delay = (fp.firFormSincOrder-1)/2 + 1;
+        let delay = (fp.FIRKernelOffset % 2===0? fp.FIRKernelOffset : fp.FIRKernelOffset-1)/2 ;
         if (delay>maxDelay) maxDelay = delay;
     }
     return maxDelay;
@@ -583,7 +583,7 @@ function getDigitalPreview(patch, sampleRate){
         ditherDRdB:ditherDR.db,
         ditherDRFBase:baselineBitRedux.db,//should be same Freq dist as ditherDRF
 
-        filterImpulseResponse:getImpulseResponse(sampleRate, patch),//Impulse response of filter
+        filterImpulseResponse:getPreviewImpulseResponse(sampleRate, patch),//Impulse response of filter
 
         //odd number of sample values 
         jitter:getJitterPreview(patch, sampleRate)
