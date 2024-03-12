@@ -22,17 +22,24 @@ const FIRFFTLength = 4096;//16384;
 
 //Note: non-cyclic input buffers return a new buffer with length = buffer.length + impulseResponse.length - 1
 //Cyclic buffer return themselves with the convolution result in the same buffer
-export function doFilter(buffer, sampleRate, patch, isCyclic) {
+export function doFilter(buffer, sampleRate, patch, isCyclic, maxFilterDelay=0) {
   const iirParams = getIIRCoefficients(sampleRate, patch);
 
   if (patch.naughtyFilterMix === 0){
+    if (maxFilterDelay>0 && !isCyclic){
+      const outputBuffer = new Float32Array(buffer.length + maxFilterDelay);      
+      for(let i=0;i<buffer.length;i++){
+        outputBuffer[maxFilterDelay + i]=buffer[i];
+      }
+      buffer = outputBuffer;
+    }
     //Simple case - only IIR
     return applyIIRFilter(buffer, iirParams.coeffs);//Same input as output buffer - saves memory/allocation time
   }
 
   //Otherwise, a mix of IIR and FIR
   //const FIRImpulse = getImpulseResponse(sampleRate, patch, iirParams.coeffs).fftImpulse;
-  const FIRImpulse = getMatchingFIRFilterViaSinc(iirParams.fcn, iirParams.Q, iirParams.gain);
+  const FIRImpulse = getMatchingFIRFilterViaSinc(iirParams.fcn, iirParams.Q, iirParams.gain, iirParams.firFormSincOrder);
 
   if (isCyclic){
     const outputBuffer = new Float32Array(buffer.length);
@@ -47,6 +54,17 @@ export function doFilter(buffer, sampleRate, patch, isCyclic) {
     const outputBuffer = new Float32Array(buffer.length + FIRImpulse.length - 1);
     convolve(buffer, outputBuffer, FIRImpulse, patch.naughtyFilterMix);
     if (patch.naughtyFilterMix<1) applyIIRFilterMix(buffer, outputBuffer, iirParams.coeffs, FIRImpulse.length/2, 1-patch.naughtyFilterMix);
+    
+    if (maxFilterDelay>0 && !isCyclic){
+      const extraDelay = maxFilterDelay - (FIRImpulse.length-1)/2; 
+      if (extraDelay>0){
+        const delayedBuffer = new Float32Array(outputBuffer.length + extraDelay);      
+        for(let i=0;i<outputBuffer.length;i++){
+          delayedBuffer[extraDelay + i]=outputBuffer[i];
+        }
+        outputBuffer = delayedBuffer;
+      }
+    }
     return outputBuffer;
   }
 }
@@ -70,11 +88,11 @@ export function getImpulseResponse(sampleRate, patch, preCalcedCoeffs=null) {
   applyIIRFilter(impulseResponse, iirParams.coeffs);
 
   //impulseResponse[0] = 0; // Remove impulse
-  return getMatchingFIRFilter(impulseResponse, sampleRate, iirParams.fcn, iirParams.Q, iirParams.gain);
+  return getMatchingFIRFilter(impulseResponse, sampleRate, iirParams.fcn, iirParams.Q, iirParams.gain, iirParams.firFormSincOrder);
 }
 
 
-function getMatchingFIRFilter(impulseResponse,sampleRate, fcn, Q, sqrtGain) {
+function getMatchingFIRFilter(impulseResponse,sampleRate, fcn, Q, sqrtGain, firFormSincOrder) {
   const imp = new Float32Array(FIRFFTLength);
   const length = Math.min(impulseResponse.length, FIRFFTLength);
   for (let i = 0; i < length; i++) {
@@ -82,7 +100,7 @@ function getMatchingFIRFilter(impulseResponse,sampleRate, fcn, Q, sqrtGain) {
   }
   const fft = getScaledFFT(imp, sampleRate);
 
-  let firFilter = getMatchingFIRFilterViaSinc(fcn, Q, sqrtGain);
+  let firFilter = getMatchingFIRFilterViaSinc(fcn, Q, sqrtGain, firFormSincOrder);
   
   return {
     fftImpulse: firFilter,
@@ -147,11 +165,11 @@ function getScaledFFT(imp, sampleRate) {
 //FIR filter
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-function getMatchingFIRFilterViaSinc(fcn, Q, gain){
+function getMatchingFIRFilterViaSinc(fcn, Q, gain, order){
   // const lpf1FIR= createLowPassFilterKernel(fcn * (1-0.5/Q), Math.round(Q*100/2)*2+1); 
   // const lpf2FIR= createLowPassFilterKernel(fcn * (1+0.5/Q), Math.round(Q*100/2)*2+1); 
-  const lpf1FIR= createLowPassFilterKernel(fcn * (1-0.5/Q), Math.round(Q*250/2)*2+1); 
-  const lpf2FIR= createLowPassFilterKernel(fcn * (1+0.5/Q), Math.round(Q*250/2)*2+1); 
+  const lpf1FIR= createLowPassFilterKernel(fcn * (1-0.5/Q), order); 
+  const lpf2FIR= createLowPassFilterKernel(fcn * (1+0.5/Q), order); 
   let sum=0;
   for (let i = 0; i < lpf1FIR.length; i++) {
     lpf2FIR[i] -= lpf1FIR[i];
@@ -253,23 +271,39 @@ function getMatchingFIRFilterViaFFT(fft) {
 }
 
 
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//General parameters
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+export function convertPatchToFilterParams(sampleRate, patch){
+  const f_20 = Math.pow(10,3*patch.naughtyFilterFreq); // Frequency/ 20 
+  const normalisedF = 20*f_20/sampleRate; // Normalized cutoff frequency
+  const Q =1 + (Math.min(250,f_20)-1) *patch.naughtyFilterQ; //Scale MaxQ with frequency, roughly linear, to keep the impulse less than 16k samples, but top out a 250, it gets non-linear above that
+  const gainDB = patch.naughtyFilterGain;
+
+  const firFormSincOrder = Math.round(Q*250/2)*2+1;
+  return {
+    fcn:normalisedF,
+    Q:Q,
+    gain:gainDB===0?0 : Math.sign(gainDB)* Math.pow(10,Math.abs(gainDB) / 20),
+    firFormSincOrder:firFormSincOrder
+  }
+}
+
+
+
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //IIR filter
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 function getIIRCoefficients(sampleRate, patch) {
-  const f_20 = Math.pow(10,3*patch.naughtyFilterFreq); // Frequency/ 20 
-  const normalisedF = 20*f_20/sampleRate; // Normalized cutoff frequency
-  const Q =1 + (Math.min(250,f_20)-1) *patch.naughtyFilterQ; //Scale MaxQ with frequency, roughly linear, to keep the impulse less than 16k samples, but top out a 250, it gets non-linear above that
-  const gainDB = patch.naughtyFilterGain;
-  const sqrtGain = Math.pow(10, gainDB / 40); //sqrt of gain
-
-  return {
-    coeffs:createParametricEQFilter(normalisedF, sqrtGain, Q),
-    fcn:normalisedF,
-    Q:Q,
-    gain:gainDB===0?0 : Math.sign(gainDB)* Math.pow(10,Math.abs(gainDB) / 20)
-  }
+  const result = convertPatchToFilterParams(sampleRate, patch); 
+  const sqrtGain = Math.pow(10, patch.naughtyFilterGain / 40); //sqrt of gain
+  result.coeffs = createParametricEQFilter(result.fcn, sqrtGain, result.Q);
+  return result;
 }
 
 

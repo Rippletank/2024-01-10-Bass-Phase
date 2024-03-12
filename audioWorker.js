@@ -17,6 +17,8 @@ import {
     setSampleBuffers,
     getAudioBuffer, 
     preMaxCalcStartDelay,
+    preMaxFilterDelay,
+    
     scaleAndGetNullBuffer,
 
     getPreview,   
@@ -134,18 +136,23 @@ function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
     let patchList = [patchesToUse.A, patchesToUse.AR, patchesToUse.B, patchesToUse.BR]
     const maxPreDelay = preMaxCalcStartDelay(patchList, sampleRate);
 
+    //check each patch in patchList to see if any have patch.naughtyFilterGain!=0
+    let maxFilterDelay =  preMaxFilterDelay(patchList, sampleRate);
+
     let bufferA = getAudioBuffer(
         sampleRate, 
         patchesToUse.A,
         isStereo? patchesToUse.AR: null,
-        maxPreDelay
+        maxPreDelay,
+        maxFilterDelay
     );
 
     let bufferB = getAudioBuffer(
         sampleRate, 
         patchesToUse.B,
         isStereo? patchesToUse.BR: null,
-        maxPreDelay
+        maxPreDelay,
+        maxFilterDelay
     );
 
     let bufferNull = scaleAndGetNullBuffer(bufferA, bufferB, isNormToLoudest, patchList);

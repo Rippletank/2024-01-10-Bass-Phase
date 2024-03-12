@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-import {doFilter, getImpulseResponse} from './naughtyFilter.js';
+import {doFilter, getImpulseResponse, convertPatchToFilterParams} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -44,7 +44,8 @@ function getAudioBuffer(
     sampleRate,//Samples per second
     patch,
     patchR,
-    maxPreDelay
+    maxPreDelay,
+    maxFilterDelay
     ) {
     //Calculate max delay in samples
     
@@ -136,15 +137,16 @@ function getAudioBuffer(
             
             AddInharmonics(patch, sampleRate, b, envelopeBuffer, c.delayN);
 
-            let oversamplingReport = distort(b, patch, sampleRate, false, true);
-            oversamplingReports.push(oversamplingReport);
 
             if (patch.naughtyFilterGain!=0) 
             {
                 //Need to Reassign since the size is changed
-                audioBuffer.data[i]= doFilter(b,sampleRate,patch, false);
+                audioBuffer.data[i]= doFilter(b,sampleRate,patch, false, maxFilterDelay);
                 b=audioBuffer.data[i];
             }
+
+            let oversamplingReport = distort(b, patch, sampleRate, false, true);
+            oversamplingReports.push(oversamplingReport);
 
             jitter(b, sampleRate, patch, false, randSeed);
 
@@ -226,6 +228,20 @@ function preMaxCalcStartDelay(patches, sampleRate){
     }
     return maxDelay;
 
+}
+
+
+function preMaxFilterDelay(patches, sampleRate){
+    let maxDelay = 0;
+    for (let i = 0; i < patches.length; i++) {
+        let patch = patches[i];
+        //Only matters if the higher harmonic are going to be delayed ie, the rootPhaseDelay is negative
+        if(!patch || patch.naughtyFilterGain===0) continue;
+        let fp = convertPatchToFilterParams(sampleRate, patch);
+        let delay = (fp.firFormSincOrder-1)/2;
+        if (delay>maxDelay) maxDelay = delay;
+    }
+    return maxDelay;
 }
 
 
@@ -822,6 +838,7 @@ export {
     getAudioBuffer, 
     scaleAndGetNullBuffer,
     preMaxCalcStartDelay,
+    preMaxFilterDelay,
 
     getPreview,
     getDigitalPreview,  
