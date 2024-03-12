@@ -358,6 +358,12 @@ function setValueFromPatch(ve, patch){
         case "oversampleTransition":
             ve.textContent =(0.005 +0.025 *patch.oversampleTransition).toFixed(3) + " of fc";break;
 
+        case "inharmonicNoise":
+            ve.innerHTML = 
+            '<div class=""><span class="tinyLabelFull">'+
+                toInharmonicString(patch.inharmonicNoiseLevel,
+                    patch.inharmonicNoiseColour==0?"White" :(patch.inharmonicNoiseColour==1?"Pink": "-"+(patch.inharmonicNoiseColour*3).toFixed(1)+"db")
+                    )+'</span></div>';break;
         case "inharmonicA":
             ve.innerHTML =
                 toInharmonicString(

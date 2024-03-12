@@ -558,9 +558,11 @@ function getTrueDefaultPatch(){
         inharmonicALevel:-91,//-91..0, in db -91 is off
         inharmonicBLevel:-91,//-91..0, in db -91 is off
         inharmonicCLevel:-91,//-91..0, in db -91 is off
+        inharmonicNoiseLevel:-91,//-91..0, in db -91 is off
         inharmonicAFrequency:1000,//Hz (for now?)
         inharmonicBSemitones:1,//semitones above root
-        inharmonicCSemitones:1,//semitones above root
+        inharmonicBSemitones:1,//semitones above root
+        inharmonicNoiseColour:0,//0=white, 1=pink
 
         naughtyFilterFreq:0.5,// 0..1 0 = off, 1 = max frequency log scale
         naughtyFilterQ:0.5,//0..1 0 = off, 1 = max order linear scale from 1 to 2000
@@ -581,52 +583,52 @@ function getTrueDefaultPatch(){
     }
 }
 
-// const defaultTestSubjectList = 
-// [
-//     "rootPhaseDelay"
-// ];
-// function getDefaultPatch(){
-//     return getTrueDefaultPatch();
-// }
-
-
-// function getDefaultAPatch(){
-//     let patch = getDefaultPatch();
-//     patch.rootPhaseDelay=0;
-//     return patch;
-// }
-// function getDefaultBPatch(){
-//     let patch = getDefaultPatch();
-//     patch.rootPhaseDelay=0.25;
-//     return patch;
-// }
-
-
 const defaultTestSubjectList = 
 [
-    "naughtyFilterMix"
+    "rootPhaseDelay"
 ];
-
 function getDefaultPatch(){
-    let patch =
-    { 
-        ...getTrueDefaultPatch(),
-    }
-    patch.naughtyFilterGain=6;
-    patch.naughtyFilterFreq=0.466;
-    return patch;
+    return getTrueDefaultPatch();
 }
+
 
 function getDefaultAPatch(){
     let patch = getDefaultPatch();
-    patch.naughtyFilterMix=0;
+    patch.rootPhaseDelay=0;
     return patch;
 }
 function getDefaultBPatch(){
     let patch = getDefaultPatch();
-    patch.naughtyFilterMix=1;
+    patch.rootPhaseDelay=0.25;
     return patch;
 }
+
+
+// const defaultTestSubjectList = 
+// [
+//     "naughtyFilterMix"
+// ];
+
+// function getDefaultPatch(){
+//     let patch =
+//     { 
+//         ...getTrueDefaultPatch(),
+//     }
+//     patch.naughtyFilterGain=6;
+//     patch.naughtyFilterFreq=0.466;
+//     return patch;
+// }
+
+// function getDefaultAPatch(){
+//     let patch = getDefaultPatch();
+//     patch.naughtyFilterMix=0;
+//     return patch;
+// }
+// function getDefaultBPatch(){
+//     let patch = getDefaultPatch();
+//     patch.naughtyFilterMix=1;
+//     return patch;
+// }
 
 
 const miniPresets ={

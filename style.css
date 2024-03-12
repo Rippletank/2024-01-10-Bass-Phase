@@ -150,6 +150,10 @@ input[type="range"]:focus {
     font-family: sans-serif;
     opacity: 0.4;
  }
+ .slider-container .tinyLabelFull {
+     font-size: small;
+     font-family: sans-serif;
+  }
  .slider-container .tinyLabelDiv {
      text-align: right   ;
   }
@@ -350,8 +354,6 @@ input[type="range"]:focus {
     margin-left: 1em;
     flex-basis: 100%;
     border: none;
-}
-#notesEdit:focus {
 }
 
 .button-selected {

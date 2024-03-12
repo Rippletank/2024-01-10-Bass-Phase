@@ -464,16 +464,17 @@
 
 
     <div class="bordered" id="SampleSetup">
-        <div class="collapsible-header"><span class="header-text">Sampled Waveforms</span><span class="chevron">&#x25BC;</span></div>
+        <div class="collapsible-header"><span class="header-text">Samples and Inharmonic Tones</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">
             <div class="presetHeader">
-                <h3>Sampled Waveforms</h3>
+                <h3>Samples and Inharmonics</h3>
                 <div id="samplePresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
                     <p>Selection of sampled waveforms which can be used instead of or mixed in with the additive waveform.</p>
                     <p>The waveform is mixed in after the additive process synthesis stage. So all stages below this, including distortion and digital processing affect the sample, too.</p>
                     <p>Waveforms were created in Cubase using included samples together with various plugin instruments and effects.</p>
+                    <p>There are also a range of tones which can be added to investigate intermodulation and other effects.</p>
                 </div>
             </div>
             <div class ="previewButtons bottomSpaced">
@@ -504,6 +505,61 @@
                     <p>The final output is normalised according to the normalisation settings to prevent unintended clipping.</p>
                 </div>
             </div>
+
+            <div class="presetHeader">
+                <h3>Inharmonics</h3>
+                <div id="inharmonicPresets" class="PresetButtons"></div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Controls to add audio range sine-wave tones which can be added to investigate intermodulation distortion. </p>
+                    <p>The frequency can be unrelated to the main tone or a ratio defined by the different scales.</p>
+                    <p>The envelope is the same as used for the additive synthesis, even if a sampled waveform is used.</p>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="inharmonicAFrequency">A (Frequency):</label>
+                <input type="range" id="inharmonicAFrequency" name="inharmonicAFrequency" min="20" max="2000" step="1" value="1000" class="mid-slider" list="ticksPlus1Zero">
+                <label for="inharmonicALevel"  class="flipLabel">Level:</label>
+                <input type="range" id="inharmonicALevel" name="inharmonicALevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                <output class="valueSpan" name="inharmonicA">-1</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">Level and frequency of a tone, A, mixed in to the main sound. Frequency set directly. </div>
+            </div>
+            <div class="slider-container">
+                <label for="inharmonicBSemitones">B (Equal Temper.):</label>
+                <input type="range" id="inharmonicBSemitones" name="inharmonicBSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
+                <label for="inharmonicBLevel"  class="flipLabel">Level:</label>
+                <input type="range" id="inharmonicBLevel" name="inharmonicBLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                <output class="valueSpan" name="inharmonicB">-1</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Equal temperament scale. </div>
+            </div>
+            <div class="slider-container">
+                <label for="inharmonicCSemitones">C (Just Intonation):</label>
+                <input type="range" id="inharmonicCSemitones" name="inharmonicCSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
+                <label for="inharmonicCLevel"  class="flipLabel">Level:</label>
+                <input type="range" id="inharmonicCLevel" name="inharmonicCLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                <output class="valueSpan" name="inharmonicC">off</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Ptolemy's intense diatonic scale. </div>
+            </div>
+
+            <div class="slider-container">
+                <label for="inharmonicNoiseColour">Noise (white/pink):</label>
+                <input type="range" id="inharmonicNoiseColour" name="inharmonicNoiseColour" min="0" max="1" step="0.1" value="0" class="mid-slider" list="ticksPlus1ZeroMinus1">
+                <label for="inharmonicNoiseLevel"  class="flipLabel">Level:</label>
+                <input type="range" id="inharmonicNoiseLevel" name="inharmonicNoiseLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                <output class="valueSpan" name="inharmonicNoise">off</output>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>Amount of noise to add.</p>
+                    <p>Colour varies from white (0db) to pink (-3db).</p>
+                    <p>The level at 1Khz is about the same for each.</p>
+                    <p>Uses the main pitch envelope.</p>
+                </div>
+            </div>
+            </div>
+
         </div>
     </div>
  
@@ -516,7 +572,10 @@
                 <h3>Distortion</h3>
                 <div id="distortionPresets" class="PresetButtons"></div>
                 <span class="help-icon">?</span>
-                <div class="help-popup">A range of non-linear processes which can be applied to the sound, controls for the quality of oversampling and some inharmonic tones to investigate Intermodulation. The preview is of a single cycle of the distorted waveform and the FFT of this cycle (excluding inharmonic tones).
+                <div class="help-popup">
+                    <p>A range of non-linear processes which can be applied to the sound, controls for the quality of oversampling. </p>
+                    <p>The preview is of a single cycle of the distorted waveform and the FFT of this cycle.</p>
+                    <P>You can also add inharmonic tones above to investigate intermodulation distortion etc.</P>
                 </div>
             </div>
         
@@ -688,43 +747,6 @@
         
 
 
-            <div class="presetHeader">
-                <h3>Inharmonics</h3>
-                <div id="inharmonicPresets" class="PresetButtons"></div>
-                <span class="help-icon">?</span>
-                <div class="help-popup">
-                    <p>Controls to add audio range sine-wave tones which can be added to investigate intermodulation distortion. </p>
-                    <p>The frequency can be unrelated to the main tone or a ratio defined by the different scales.</p>
-                    <p>The envelope is the same as used for the additive synthesis, even if a sampled waveform is used.</p>
-                </div>
-            </div>
-            <div class="slider-container">
-                <label for="inharmonicAFrequency">A (Frequency):</label>
-                <input type="range" id="inharmonicAFrequency" name="inharmonicAFrequency" min="20" max="2000" step="1" value="1000" class="mid-slider" list="ticksPlus1Zero">
-                <label for="inharmonicALevel"  class="flipLabel">Level:</label>
-                <input type="range" id="inharmonicALevel" name="inharmonicALevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
-                <output class="valueSpan" name="inharmonicA">-1</output>
-                <span class="help-icon">?</span>
-                <div class="help-popup">Level and frequency of a tone, A, mixed in to the main sound. Frequency set directly. </div>
-            </div>
-            <div class="slider-container">
-                <label for="inharmonicBSemitones">B (Equal Temper.):</label>
-                <input type="range" id="inharmonicBSemitones" name="inharmonicBSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
-                <label for="inharmonicBLevel"  class="flipLabel">Level:</label>
-                <input type="range" id="inharmonicBLevel" name="inharmonicBLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
-                <output class="valueSpan" name="inharmonicB">-1</output>
-                <span class="help-icon">?</span>
-                <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Equal temperament scale. </div>
-            </div>
-            <div class="slider-container">
-                <label for="inharmonicCSemitones">C (Just Intonation):</label>
-                <input type="range" id="inharmonicCSemitones" name="inharmonicCSemitones" min="1" max="11" step="1" value="1" class="mid-slider" list="ticksPlus1ZeroMinus1">
-                <label for="inharmonicCLevel"  class="flipLabel">Level:</label>
-                <input type="range" id="inharmonicCLevel" name="inharmonicCLevel" min="-91" max="0" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
-                <output class="valueSpan" name="inharmonicC">off</output>
-                <span class="help-icon">?</span>
-                <div class="help-popup">Level and pitch of a tone, B, mixed in to the main sound. The pitch is set in semitones according to Ptolemy's intense diatonic scale. </div>
-            </div>
         </div>
     </div>
 
@@ -1007,7 +1029,7 @@
                     <p>Tap the pin icon to keep this section in view. </p>
                     <p>It doesn't show sampled waveforms. This is because it is specifically setup to show sharp details for analysis of distortion and other effects.</p>
                     <p>To achieve this, it uses the same sound settings as above but tuned to give a whole number of cycles within the 64k sample frame, hence the spectrum is very sharp for harmonics.</p> 
-                    <p>Inharmonic tones are added using a windowing function to keep the spectrum as clean as possible.</p>
+                    <p>Note: Inharmonic tones are added using a windowing function to keep the spectrum as clean as possible.</p>
                 </div>
             </div>
             <div class="canvasBox">
