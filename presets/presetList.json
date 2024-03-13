@@ -33,5 +33,10 @@
     {
         "name":"Quantisation and Dither",
         "path":"quantisation.json"
+    },
+    
+    {
+        "name":"Phase reversal",
+        "path":"phaseMono.json"
     }
 ]

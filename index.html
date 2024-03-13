@@ -904,13 +904,16 @@
                     <p>Applied at very end of chain, after normalisation and quantisation processing.</p>
                 </div>
             </div>
+
             <div class="slider-container">
                 <label for="attenuation">Attenuation:</label>
-                <input type="range" id="attenuation" name="attenuation" min="0" max="1" step="0.001" value="0">
-                <output class="valueSpan" name="attenuation">0db</output>
+                <input type="range" id="attenuation" name="attenuation" min="0" max="1" step="0.001" value="0" class="mid-slider" list="ticksPlus1Zero">
+                <label for="attenuationPhase"  class="flipLabel">Phase:</label>
+                <input type="range" id="attenuationPhase" name="attenuationPhase" min="0" max="1" step="1" value="0" class="short-slider" list="ticksPlus1Zero">
+                <output class="valueSpan" name="attenuation">-1</output>
                 <span class="help-icon">?</span>
                 <div class="help-popup">
-                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed.</p>
+                    <p>Final attenuation of waveforms. Slider scale is adjusted (squared) to allow for fine adjustments of small differences, but also allow big differences if needed. Phase flip is just normal or flip.</p>
                 </div>
                 <br>
                 <br>

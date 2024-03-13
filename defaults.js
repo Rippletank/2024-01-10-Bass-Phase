@@ -580,6 +580,7 @@ function getTrueDefaultPatch(){
         digitalDitherShaping:0,//0..1 Amount of noise shaping applied to the dither
 
         attenuation:1,//0..1 final attenuation applied to the signal
+        attenuationPhase:0,//0 normal phase, 1 = 180 degree phase shift
     }
 }
 

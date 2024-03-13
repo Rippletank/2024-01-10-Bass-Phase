@@ -200,10 +200,10 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     }
 
     
-    scaleSquaredSingleBuffer(audioBufferA.buffer.data[0], patchList[0].attenuation);
-    if (audioBufferA.buffer.numberOfChannels>1) scaleSquaredSingleBuffer(audioBufferA.buffer.data[1], patchList[1].attenuation);
-    scaleSquaredSingleBuffer(audioBufferB.buffer.data[0], patchList[2].attenuation);
-    if (audioBufferB.buffer.numberOfChannels>1) scaleSquaredSingleBuffer(audioBufferB.buffer.data[1], patchList[3].attenuation);
+    scaleSquaredSingleBuffer(audioBufferA.buffer.data[0], patchList[0].attenuation, patchList[0].attenuationPhase);
+    if (audioBufferA.buffer.numberOfChannels>1) scaleSquaredSingleBuffer(audioBufferA.buffer.data[1], patchList[1].attenuation, patchList[1].attenuationPhase);
+    scaleSquaredSingleBuffer(audioBufferB.buffer.data[0], patchList[2].attenuation, patchList[2].attenuationPhase);
+    if (audioBufferB.buffer.numberOfChannels>1) scaleSquaredSingleBuffer(audioBufferB.buffer.data[1], patchList[3].attenuation, patchList[3].attenuationPhase);
 
     
     let nullMax = getBufferMax(audioBufferNull.buffer);
@@ -257,9 +257,9 @@ function scaleBuffer(buffer, scale){
     return max;
 }
 
-function scaleSquaredSingleBuffer(buffer, scale){
-    if (scale==1) return;
-    scale *= scale;
+function scaleSquaredSingleBuffer(buffer, scale, phase){
+    if (scale==1 && phase==0) return;
+    scale *= scale * (phase<0.5? 1 : -1);
     for (let i = 0; i < buffer.length; i++) {
         buffer[i] *= scale;
     }   
