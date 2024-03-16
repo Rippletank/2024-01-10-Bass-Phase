@@ -57,10 +57,10 @@ import {
 
     setSampledWave,
 
-    startSuspendPreviewUpdates, endSuspendPreviewUpdates
+    startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { setupMushra } from './mushra.js';
+import { setupMushra, playMushraSound, reportMushra } from './mushra.js';
 
 
 
@@ -1299,12 +1299,24 @@ document.getElementById('mushraTest').addEventListener('click', function() {
             cachedPatches.B,
             flags.isStereo ? cachedPatches.BR : null
         ], 
-        getTestSubjectList());
+        getTestSubjectList(),
+        getTrueSampleRate(),
+        flags.isNormToLoudest);
   });
   
   document.getElementById('closeMushra').addEventListener('click', function() {
     document.getElementById('mushraModal').style.display = 'none';
     document.getElementById('mushraModalBackground').style.display = 'none';
+  });
+  document.getElementById('mushraA').addEventListener('click', function() {
+    playMushraSound(0)
+  });
+  document.getElementById('mushraB').addEventListener('click', function() {
+    playMushraSound(1)
+  });
+
+  document.getElementById('reportMushra').addEventListener('click', function() {
+    reportMushra()
   });
 
 
