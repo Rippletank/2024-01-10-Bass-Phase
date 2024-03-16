@@ -169,8 +169,12 @@ audioBufferWorker.onmessage = function(event) {
     audioBufferWorkerBusy = false;    
     if (data.error) {
       console.error(`There was an error calling the Audio Buffer function: ${data.error}`);
-    } else {
+    } else
+    if (data.type=="ABN") {
         audioBufferCallback(data.bufferA, data.bufferB, data.bufferNull);
+    }
+    else if (data.type=="Mushra") {
+        mushraBufferCallback(data.buffers);
     }
     checkForCachedAudioBuffer();
   }; 
@@ -182,6 +186,10 @@ audioBufferWorker.onmessage = function(event) {
 let audioBufferCallback = (bufferA, bufferB, bufferNull)=>{};
 export function setAudioBufferCallback( callback ) {
     audioBufferCallback = callback;
+}
+let mushraBufferCallback = (buffers)=>{};
+export function setMushraBufferCallback( callback ) {
+    mushraBufferCallback = callback;
 }
 let audioBufferCached = null;
 export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest, sampleName ) {
@@ -201,6 +209,22 @@ export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNorm
       });
 }
 
+let mushraBufferCached = null;
+export function calculateMushraBuffer( patchList, sampleRate, isNormToLoudest ) {
+    if (audioBufferWorkerBusy){
+        mushraBufferCached = {patchList, sampleRate, isNormToLoudest};
+        return;
+    }
+    mushraBufferCached=null;
+    audioBufferWorkerBusy=true;
+    audioBufferWorker.postMessage({
+        action: 'getMushraBuffers',
+        patchList:patchList,
+        sampleRate:sampleRate,
+        isNormToLoudest:isNormToLoudest
+      });
+}
+
 function checkForCachedAudioBuffer(){
     if (audioBufferCached){
         calculateAudioBuffer(
@@ -209,6 +233,12 @@ function checkForCachedAudioBuffer(){
             audioBufferCached.isStereo,
             audioBufferCached.isNormToLoudest,
             audioBufferCached.sampleName);
+    }
+    else if (mushraBufferCached){
+        calculateMushraBuffer(
+            mushraBufferCached.patchList, 
+            mushraBufferCached.sampleRate, 
+            mushraBufferCached.isNormToLoudest);
     }
 }
 

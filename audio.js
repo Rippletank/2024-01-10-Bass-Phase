@@ -170,18 +170,15 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
-    //Normalise here to provide just under full scale input to ditherSimulation functions
     if (!isNormToLoudest && scaleA != scaleB){
+        scaleBuffer(audioBufferA.buffer, scaleA);
+        scaleBuffer(audioBufferB.buffer, scaleB);
         if (scale==scaleA) 
         {
-            scaleBuffer(audioBufferA.buffer, scaleA);
-            scaleBuffer(audioBufferB.buffer, scaleB);
-            scale = scaleB;//
+            scale = scaleB;
         }
         else 
         {
-            scaleBuffer(audioBufferB.buffer, scaleB);
-            scaleBuffer(audioBufferB.buffer, scaleB);
             scale = scaleA;
         }
     }
@@ -214,6 +211,41 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     }
     return audioBufferNull;
 }
+
+
+
+function scaleBufferList(audioBuffers, isNormToLoudest){
+    let scale = 10000;
+    audioBuffers.forEach((audioBuffer)=>{
+        audioBuffer.scale =0.99 /Math.max(audioBuffer.maxValue, 0.000001);
+        if (audioBuffer.scale<scale) scale = audioBuffer.scale;
+    });
+
+    //Normalise here to provide just under full scale input to ditherSimulation functions
+
+    if (isNormToLoudest){
+        audioBuffers.forEach((audioBuffer)=>{
+            scaleBuffer(audioBuffer.buffer, scale);
+        });
+    }
+    else{
+        audioBuffers.forEach((audioBuffer)=>{
+            scaleBuffer(audioBuffer.buffer, audioBuffer.scale);
+        });
+    }
+    
+
+    audioBuffers.forEach((audioBuffer)=>{
+        ditherSimulation(audioBuffer.buffer.data[0], audioBuffer.patches[0]);
+        scaleSquaredSingleBuffer(audioBuffer.buffer.data[0], audioBuffer.patches[0].attenuation, audioBuffer.patches[0].attenuationPhase);
+        if (audioBuffer.buffer.numberOfChannels>1){
+            ditherSimulation(audioBuffer.buffer.data[1], audioBuffer.patches[1]);
+            scaleSquaredSingleBuffer(audioBuffer.buffer.data[1], audioBuffer.patches[1].attenuation, audioBuffer.patches[1].attenuationPhase);
+        }
+    });
+}
+
+
 
 //Takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
 //Quick calc of delay to allow coordination between sound A and sound B even if in stereo - so the null test is valid for any phase offset
@@ -865,6 +897,7 @@ export {
     setSampleBuffers,
     getAudioBuffer, 
     scaleAndGetNullBuffer,
+    scaleBufferList,
     preMaxCalcStartDelay,
     preMaxFilterDelay,
 

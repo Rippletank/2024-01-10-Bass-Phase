@@ -60,6 +60,8 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates
 } from './audioAPI.js';
 
+import { setupMushra } from './mushra.js';
+
 
 
 let flags = getFlags();
@@ -1231,8 +1233,8 @@ function playABX(){
 
 document.getElementById('abxTest').addEventListener('click', function() {
     abxTestChoice = Math.round(Math.random());
-    document.getElementById('abxButtons').style.display = 'flex';
-    document.getElementById('abxTest').style.display = 'none';
+    document.querySelectorAll('.abxTestButtons').forEach(b=>b.classList.remove('show'));
+    document.querySelectorAll('.abxAnswerButtons').forEach(b=>b.classList.add('show'));
     document.getElementById('resetTest').style.display = 'block';
     playABX();
 });
@@ -1254,8 +1256,8 @@ document.getElementById('resetTest').addEventListener('click', function() {
     results.innerHTML = '';
     abxCount =0;
     abxScore =0;
-    document.getElementById('abxButtons').style.display = 'none';
-    document.getElementById('abxTest').style.display = 'block';
+    document.querySelectorAll('.abxTestButtons').forEach(b=>b.classList.add('show'));
+    document.querySelectorAll('.abxAnswerButtons').forEach(b=>b.classList.remove('show'));
     document.getElementById('resetTest').style.display = 'none';
     const stats = document.getElementById('stats');
     stats.textContent = '';
@@ -1274,12 +1276,36 @@ function checkChoice(choice) {
     }
 
     results.appendChild(result);
-    document.getElementById('abxButtons').style.display = 'none';
-    document.getElementById('abxTest').style.display = 'block';
+    document.querySelectorAll('.abxTestButtons').forEach(b=>b.classList.add('show'));
+    document.querySelectorAll('.abxAnswerButtons').forEach(b=>b.classList.remove('show'));
     
     const stats = document.getElementById('stats');
     stats.textContent = 'Score: ' + abxScore + '/' + abxCount +'  ' + Math.round(abxScore / abxCount * 100).toFixed(0) + '%' ;
 }
+
+
+
+document.getElementById('mushraTest').addEventListener('click', function() {
+    document.getElementById('mushraModal').style.display = 'block';
+    document.getElementById('mushraModalBackground').style.display = 'block';
+  });
+  
+  document.getElementById('startMushra').addEventListener('click', function() {
+    let cachedPatches = getCachedPatches();
+    setupMushra(
+        [
+            cachedPatches.A, 
+            flags.isStereo ? cachedPatches.AR : null, 
+            cachedPatches.B,
+            flags.isStereo ? cachedPatches.BR : null
+        ], 
+        getTestSubjectList());
+  });
+  
+  document.getElementById('closeMushra').addEventListener('click', function() {
+    document.getElementById('mushraModal').style.display = 'none';
+    document.getElementById('mushraModalBackground').style.display = 'none';
+  });
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -105,11 +105,19 @@
             <div id="abxTestContainer">
                 <h3>ABX test</h3>
                 <ol id="results"></ol>
-                <button id="abxTest" class="testCenter">Test</button>
-                <div id="abxButtons"  style="display: none;">
-                    <button id="buttonA">X is A</button>
-                    <button id="play">Play X</button>
-                    <button id="buttonB">X is B</button>
+                <div class="abxAnswerButtons " >
+                    <div class="abxButtons">
+                        <button class="PlayA">Play A</button>
+                        <button id="play">Play X</button>
+                        <button class="PlayB">Play B</button>
+                    </div>
+                    <div class="abxButtons">
+                        <button id="buttonA">X is A</button>
+                        <button id="buttonB">X is B</button>
+                    </div>
+                </div>
+                <div class="abxTestButtons show">
+                    <button id="abxTest" class="testCenter">Test</button>
                 </div>
                 <p id="stats" class="testCenter"></p>
                 <br>
@@ -118,7 +126,26 @@
         </div>
     </div>
 
+    <div class="bordered">
+        <div id="centerContainer">
+            <div id="abxTestContainer">
+                <h3>MUSHRA Style test</h3>
+                <button id="mushraTest" class="testCenter">Start</button>
+            </div>
+        </div>
+    </div>
     
+    <div id="mushraModalBackground" class="mushraModalBackground">
+        <div id="mushraModal" class="mushraModal">
+          <button id="closeMushra">Close</button>
+          <button id="startMushra">Start</button>
+          <button id="mushraA">A</button>
+          <button id="mushraB">B</button>
+          <!-- Add your modal content here -->
+        </div>
+      </div>
+
+
     <br>
     <div class="bordered">
         <div class ="previewButtons">

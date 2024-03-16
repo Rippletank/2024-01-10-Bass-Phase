@@ -402,12 +402,68 @@ input[type="range"]:focus {
     margin-bottom: 1em;
     text-align: center;
 }
-#abxButtons {
+#abxTestContainer h3 {
+    text-align: center;
+}
+.abxButtons {
     display: flex;
     justify-content: space-evenly;
-    margin-top: 2em;
-    margin-bottom: 3em;
+    margin-top: 1em;
+    margin-bottom: 1em;
 }
+
+.abxAnswerButtons {
+    max-height: 0;
+    opacity: 0  ;
+    overflow: hidden;
+    transition: opacity 0.2s ease-out;
+    transition: max-height 0.2s ease-out;
+}
+
+.abxAnswerButtons.show {
+    opacity: 1 ;
+    max-height: 300px;
+}
+
+.abxTestButtons {
+    max-height: 0;
+    opacity: 0  ;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    transition: opacity 0.2s ease-out;
+}
+
+.abxTestButtons.show {
+    opacity: 1 ;
+    max-height: 200px;
+}
+
+.mushraModalBackground {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
+  
+  .mushraModal {
+    display: none;
+    position: fixed;
+    left : 15%;
+    max-width: 1000px;
+    max-height: 800px;
+    top: 25%;
+    width: 70%;
+    height: 50%;
+    background-color: white;
+    z-index: 1001;
+  }
+
+
+
 
 .fftPlayButtons {
     flex-basis: 80%;
