@@ -14,6 +14,10 @@ class MyAudioProcessor extends AudioWorkletProcessor {
       this.playList = [];
       this.sounds = [];
 
+      this.max=0;
+      this.maxCount=0;
+      this.isPaused = false;
+
       this.port.onmessage = (event)=>{
         const payload = event.data;
         switch (payload.type) {
@@ -25,7 +29,7 @@ class MyAudioProcessor extends AudioWorkletProcessor {
             case "loadSounds":
                 //this.port.postMessage({type:"report", data:"Loading sounds: "+payload.data.sounds.length});
                 this.loadSounds(payload.data.sounds);
-                //this.port.postMessage({type:"Sounds", data:this.sounds.length});
+                this.port.postMessage({type:"SoundsOk", data:"ok"});
             break;
             case "report":
                 //this.port.postMessage({type:"report", data:"Good"});
@@ -44,6 +48,9 @@ class MyAudioProcessor extends AudioWorkletProcessor {
                     this.port.postMessage({type:"sound "+index, data: item ? item.length : 'null'});
                     if (item) item.forEach((chan, index)=> this.port.postMessage({type:"   channel "+index+" ", data: chan.length}));
                 });
+            break;
+            case "pause":
+                this.isPaused = payload.data;
             break;
 
         }
@@ -87,10 +94,12 @@ class MyAudioProcessor extends AudioWorkletProcessor {
       return true;
     }
 
+
     
     processOutput(buffers, sampleRate, decay, bufferLength){
         if (!this.sounds) return;
-
+        if (this.isPaused) return;
+        
         const decayStep = 1/(sampleRate*decay);
 
         this.playList.forEach((item)=>{
@@ -126,6 +135,22 @@ class MyAudioProcessor extends AudioWorkletProcessor {
         this.playList = this.playList.filter((item)=>{
             return !item.isDone;
         });
+
+
+    
+        buffers.forEach((buffer)=>{
+            buffer.forEach((sample)=>{
+                const s = Math.abs(sample);
+                if (s > this.max) this.max = s;
+            });
+        });
+        this.maxCount+=bufferLength;
+        if (this.maxCount>sampleRate/60)
+        {
+            this.port.postMessage({type:"max", data: this.max});
+            this.max=0;
+            this.maxCount=0;        
+        }
 
     }
 

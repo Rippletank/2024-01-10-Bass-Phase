@@ -60,7 +60,7 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { setupMushra, playMushraSound, reportMushra } from './mushra.js';
+import { setupMushra, initMushra, shutDownMushra } from './mushra.js';
 
 
 
@@ -1286,10 +1286,10 @@ function checkChoice(choice) {
 
 
 document.getElementById('mushraTest').addEventListener('click', function() {
-    document.getElementById('mushraModal').style.display = 'block';
-    document.getElementById('mushraModalBackground').style.display = 'block';
+    document.getElementById('mushraModal').style.display = 'flex';
+    document.getElementById('mushraModalBackground').style.display = 'flex';
+    initMushra();
   });
-  
   document.getElementById('startMushra').addEventListener('click', function() {
     let cachedPatches = getCachedPatches();
     setupMushra(
@@ -1305,19 +1305,11 @@ document.getElementById('mushraTest').addEventListener('click', function() {
   });
   
   document.getElementById('closeMushra').addEventListener('click', function() {
+    shutDownMushra();
     document.getElementById('mushraModal').style.display = 'none';
     document.getElementById('mushraModalBackground').style.display = 'none';
   });
-  document.getElementById('mushraA').addEventListener('click', function() {
-    playMushraSound(0)
-  });
-  document.getElementById('mushraB').addEventListener('click', function() {
-    playMushraSound(1)
-  });
 
-  document.getElementById('reportMushra').addEventListener('click', function() {
-    reportMushra()
-  });
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

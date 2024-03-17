@@ -136,34 +136,94 @@
     </div>
     
     <div id="mushraModalBackground" class="mushraModalBackground">
-        <div id="mushraModal" class="mushraModal">
-            <button id="closeMushra">Close</button>
-            <button id="startMushra">Start</button>
-            <button id="reportMushra">report</button>
-            <button id="mushraA">A</button>
-            <button id="mushraB">B</button>
-            <div class="vertical-slider-container">
-                <div class="vSlideGroup">
-                    <button id="mButton1">Play</button>
-                    <input type="range" min="0" max="100" value="50" class="vertSlider" id="mSlider1">
+        <div id="mushraModal" class="mushraModal bordered">
+            <div class="presetHeader">
+                <h3>Mushra style Test </h3>
+                <div class="PresetButtons">            
                 </div>
-                <div class="vSlideGroup">
-                    <button id="mButton1">Play</button>
-                    <input type="range" min="0" max="100" value="50" class="vertSlider" id="mSlider2">
-                </div>
-                <div class="vSlideGroup">
-                    <button id="mButton1">Play</button>
-                    <input type="range" min="0" max="100" value="50" class="vertSlider" id="mSlider3">
-                </div>
-                <div class="vSlideGroup">
-                    <button id="mButton1">Play</button>
-                    <input type="range" min="0" max="100" value="50" class="vertSlider" id="mSlider4">
-                </div>
-                <div class="vSlideGroup">
-                    <button id="mButton1">Play</button>
-                    <input type="range" min="0" max="100" value="50" class="vertSlider" id="mSlider5">
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>Sound A is considered the reference and Sound B should be set so that the quality difference is clearly but just audible.</p>
+                    <p>Several sounds are created varying between A and b, as well as an "anchor" sound that is reduce quality.</p>
+                    <p>Rank each sound according to the perceived quality.</p>
+                    <p>The graph is for feedback that a sound is playing but noise is deliberately added to obscure the waveforms, so they won't match.</p>
+                    
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
                 </div>
             </div>
+            <div class="canvasBox">
+                <canvas id="mushraOutput" width ="2000" height="100"></canvas>
+            </div>
+            <div class="vertical-slider-container blurredDisabled">
+                <div id="mGroup0" class="vSlideGroup">
+                    <button>A</button>
+                    <p class="score">Score</p>
+                    <div class="mScale">
+                        <p class="mValue"><span>100</span></p>
+                        <p>Excellent</p>
+                        <p class="mValue"><span>80</span></p>
+                        <p>Good</p>
+                        <p class="mValue"><span>60</span></p>
+                        <p>Fair</p>
+                        <p class="mValue"><span>40</span></p>
+                        <p>Poor</p>
+                        <p class="mValue"><span>20</span></p>
+                        <p>Bad</p>
+                        <p class="mValue"><span>0</span></p>
+                    </div>
+                </div>
+                <div id="mGroup1" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider1" class="score">100</label>
+                    <input id="mSlider1" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup2" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider2" class="score">100</label>
+                    <input id="mSlider2" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup3" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider3" class="score">100</label>
+                    <input id="mSlider3" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup4" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider4" class="score">100</label>
+                    <input id="mSlider4" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup5" class="vSlideGroup ">
+                    <button>Play</button>
+                    <label for="mSlider5" class="score">100</label>
+                    <input id="mSlider5" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup6" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider6" class="score">100</label>
+                    <input id="mSlider6" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <button id="startMushra">Start</button>
+                    <button id="nextMushra">Next</button>
+                    <button id="pauseMushra">Pause</button>
+                    <button id="resultsMushra">Results</button>
+                </div>
+                <h3>  </h3>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button id="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
+
         </div>
     </div>
 
