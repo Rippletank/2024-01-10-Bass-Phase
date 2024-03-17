@@ -18,14 +18,14 @@ class MyAudioProcessor extends AudioWorkletProcessor {
         const payload = event.data;
         switch (payload.type) {
             case "playSound":
-                this.port.postMessage({type:"report", data:"Playing sound: "+payload.data.index});
+                //this.port.postMessage({type:"report", data:"Playing sound: "+payload.data.index});
                 this.startPlayingSound(payload.data.index)
-                this.port.postMessage({type:"playlist", data: this.playList.length});
+                //this.port.postMessage({type:"playlist", data: this.playList.length});
             break;
             case "loadSounds":
-                this.port.postMessage({type:"report", data:"Loading sounds: "+payload.data.sounds.length});
+                //this.port.postMessage({type:"report", data:"Loading sounds: "+payload.data.sounds.length});
                 this.loadSounds(payload.data.sounds);
-                this.port.postMessage({type:"Sounds", data:this.sounds.length});
+                //this.port.postMessage({type:"Sounds", data:this.sounds.length});
             break;
             case "report":
                 //this.port.postMessage({type:"report", data:"Good"});
@@ -106,7 +106,7 @@ class MyAudioProcessor extends AudioWorkletProcessor {
                         item.level = 0;
                         item.isFading = false;
                         item.isDone=true;
-                        this.port.postMessage({type:"report", data:"Sound faded: "+item.index});  
+                        //this.port.postMessage({type:"report", data:"Sound faded: "+item.index});  
                     }
                 }
                 if (item.isDone) break;
@@ -118,7 +118,7 @@ class MyAudioProcessor extends AudioWorkletProcessor {
                 item.position++;
                 if (item.position >= b1.length) {
                     item.isDone=true;     
-                    this.port.postMessage({type:"report", data:"Sound done: "+item.index});      
+                    //this.port.postMessage({type:"report", data:"Sound done: "+item.index});      
                 }
             }
         });
