@@ -186,7 +186,7 @@ function doMushraBuffers(patchList, sampleRate, isNormToLoudest) {
     });
 
 
-    scaleBufferList(fullBuffers, isNormToLoudest)
+    scaleBufferList(fullBuffers, sampleRate, isNormToLoudest)
 
     let buffers =[]
     fullBuffers.forEach((b)=>{ 

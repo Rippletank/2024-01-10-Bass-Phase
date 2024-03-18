@@ -53,11 +53,25 @@ function getInterpolatedPatches(patchList, subjectList){
         patches[pos+1] = newPair;
     });
 
-    
-    let BadL = {...patchList[0][0]};
-    let BadR = patchList[0][1] ?  {...patchList[0][1]}:null;
+    let activePatches = patchList.reduce((acc, val)=>{   
+                                acc.push(val[0]);
+                                if (val[1]) acc.push(val[1]);
+                                return acc;
+                                },[]);
+    let hasBitDepth = activePatches.some((patch)=>patch.digitalBitDepth<25);
+    let hasNoise = activePatches.some((patch)=>patch.inharmonicNoiseLevel>-91);
+    let BadL = {...patchList[1][0]};    
     BadL.badFilter=true;
-    if (BadR) BadR.badFilter=true;
+    if (!hasBitDepth) BadL.digitalBitDepth=9; 
+    if (hasBitDepth && !hasNoise) BadL.inharmonicNoiseLevel=-50;                         
+    
+    let BadR = null;
+    if (patchList[0][1]){
+        BadR = {...patchList[1][1]};
+        BadR.badFilter=true;
+        if (!hasBitDepth) BadR.digitalBitDepth=9; 
+        if (hasBitDepth && !hasNoise) BadR.inharmonicNoiseLevel=-50;  
+    }
     patches[5] = [BadL, BadR];
     return patches;
 }
@@ -224,7 +238,6 @@ function sliderFunction(scoreElement, index, value) {
 
 
 function shuffleMappings(){
-
     let newMapping = [0,1,2,3,4,5];
     for (let i = newMapping.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
