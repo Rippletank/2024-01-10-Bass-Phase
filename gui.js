@@ -1288,6 +1288,7 @@ function checkChoice(choice) {
 document.getElementById('mushraTest').addEventListener('click', function() {
     document.getElementById('mushraModal').style.display = 'flex';
     document.getElementById('mushraModalBackground').style.display = 'flex';
+    document.getElementById('mushraResultsModal').style.display = 'none';
     initMushra();
   });
   document.getElementById('startMushra').addEventListener('click', function() {
@@ -1304,11 +1305,14 @@ document.getElementById('mushraTest').addEventListener('click', function() {
         flags.isNormToLoudest);
   });
   
-  document.getElementById('closeMushra').addEventListener('click', function() {
-    shutDownMushra();
-    document.getElementById('mushraModal').style.display = 'none';
-    document.getElementById('mushraModalBackground').style.display = 'none';
-  });
+  document.querySelectorAll('.closeMushra').forEach(b=>{
+        b.addEventListener('click', function() {
+            shutDownMushra();
+            document.getElementById('mushraModal').style.display = 'none';
+            document.getElementById('mushraModalBackground').style.display = 'none';
+            document.getElementById('mushraResultsModal').style.display = 'none';
+        });
+    });
 
 
 

@@ -691,8 +691,19 @@ input[type="range"]:focus {
     z-index: 1001;
   }
 
-  .mushraModal canvas{
+
+  
+  .mushraModalBackground .presetHeader h3{
+    margin-top: 0.1em; 
+    flex-basis: 40%;
+ }
+
+
+  .mushraModal #mushraOutputCanvas{
     height:50px;
+  }
+  .mushraModal #mushraResultCanvas{
+    height:500px;
   }
 
   .mushraModal button.active{

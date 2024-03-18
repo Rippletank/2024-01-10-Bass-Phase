@@ -30,12 +30,21 @@ export function setupMushra(patches,subjectList, sampleRate, isNormToLoudest) {
     calculateMushraBuffer(getInterpolatedPatches(patchList, subjectList), sampleRate, isNormToLoudest);
 }
 
-
+const numberOfSliders=6;
+let lastInterpolations = [];
 function getInterpolatedPatches(patchList, subjectList){
-    const patches = new Array(6);
+    const patches = new Array(numberOfSliders);
     patches[0]=patchList[0];
-    patches[4]=patchList[1];
-    [0.25,0.5,0.75].forEach((x, pos)=>{
+    patches[numberOfSliders-2]=patchList[1];
+
+    let interpolations =[];
+    let intersCount = numberOfSliders-3;
+    let intersStep = 1/(1+intersCount);
+    for(let i=1; i<=intersCount; i++){
+        interpolations.push(intersStep*i);
+    }
+
+    interpolations.forEach((x, pos)=>{
         let newPair = [];
         for(let i=0; i<2; i++){
             let A = patchList[0][i]? {...patchList[0][i]} : null;
@@ -52,7 +61,9 @@ function getInterpolatedPatches(patchList, subjectList){
         }
         patches[pos+1] = newPair;
     });
+    lastInterpolations = interpolations;
 
+    //Work out the anchor patch - should be bad sounding - but filter alone is often not enough
     let activePatches = patchList.reduce((acc, val)=>{   
                                 acc.push(val[0]);
                                 if (val[1]) acc.push(val[1]);
@@ -72,7 +83,7 @@ function getInterpolatedPatches(patchList, subjectList){
         if (!hasBitDepth) BadR.digitalBitDepth=9; 
         if (hasBitDepth && !hasNoise) BadR.inharmonicNoiseLevel=-50;  
     }
-    patches[5] = [BadL, BadR];
+    patches[numberOfSliders-1] = [BadL, BadR];
     return patches;
 }
 
@@ -179,6 +190,7 @@ if (reportButton) reportButton.addEventListener('click', function() {
 document.getElementById('nextMushra').addEventListener('click', function() {    
     results.push({mapping,values});
     shuffleMappings();
+    
 });
 
 let isPaused=false;
@@ -196,7 +208,10 @@ pauseButton.addEventListener('click', function() {
     postWorkletMessage("pause",isPaused);
 });
 document.getElementById('resultsMushra').addEventListener('click', function() {    
-    
+    document.getElementById('mushraModal').style.display = 'none';
+    document.getElementById('mushraResultsModal').style.display = 'flex'; 
+    results.push({mapping,values});
+    generateReport();
 });
 
 document.querySelectorAll('.vSlideGroup').forEach(function(group) {
@@ -221,8 +236,8 @@ document.querySelectorAll('.vSlideGroup').forEach(function(group) {
     });
 });
 
-let values = [0,0,0,0,0,0];
-let mapping = [0,1,2,3,4,5];
+let values = [];//Set by shuffleMappings
+let mapping = [];//Set by shuffleMappings
 let results = [];
 function buttonFunction(index) {
     if (isPaused) return;
@@ -238,13 +253,14 @@ function sliderFunction(scoreElement, index, value) {
 
 
 function shuffleMappings(){
-    let newMapping = [0,1,2,3,4,5];
-    for (let i = newMapping.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newMapping[i], newMapping[j]] = [newMapping[j], newMapping[i]];
-    }
+    let newMapping = new Array(numberOfSliders).fill(0);
+    newMapping.forEach((v,i)=>newMapping[i]=i);
+    // for (let i = newMapping.length - 1; i > 0; i--) {
+    //     const j = Math.floor(Math.random() * (i + 1));
+    //     [newMapping[i], newMapping[j]] = [newMapping[j], newMapping[i]];
+    // }
     mapping = newMapping;
-    values = [0,0,0,0,0,0];
+    values = new Array(numberOfSliders).fill(0);
 
     document.querySelectorAll('.vSlideGroup').forEach(function(group) {
         var index = parseInt(group.id.replace('mGroup', ''));
@@ -273,7 +289,7 @@ function enableSliders() {
     document.getElementById('nextMushra').style.display = "block";
     document.getElementById('startMushra').style.display = "none";
     document.getElementById('pauseMushra').style.display = "block";
-    document.getElementById('resultsMushra').style.display = "block";
+    document.getElementById('resultsMushra').style.display =  "block";
 }
 
 function disableSliders() {
@@ -314,14 +330,6 @@ function setEnablesForIndex(index){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 let frameCall = null;
-function getFrameCall(){
-    return frameCall;
-}
-function clearFrameCall(){
-    frameCall = null;
-}
-
-
 let maxValues = [];
 function updateMinMax(maxValue){
     const variation = 0.6 -maxValue*0.5;
@@ -331,12 +339,12 @@ function updateMinMax(maxValue){
 
 }
 
-const canvas = document.getElementById("mushraOutput");
-const ctx = canvas.getContext("2d");
+const waveCanvas = document.getElementById("mushraOutputCanvas");
+const waveCTX = waveCanvas.getContext("2d");
 
 
 function clearWaveform(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    waveCTX.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
 }
 
 
@@ -345,6 +353,8 @@ function paintWaveform(){
     frameCall = null;
     const values = maxValues;
     maxValues = [];
+    const ctx = waveCTX;    
+    const canvas = waveCanvas;
 
 
     if (canvas.width != canvas.clientWidth || canvas.height != canvas.clientHeight){
@@ -356,6 +366,7 @@ function paintWaveform(){
 
     const waveformWidth = canvas.width;
     const waveformHeight = canvas.height;
+    if (waveformHeight<2 || waveformWidth<2) return;
     ctx.fillStyle = "white";
     const scale = waveformHeight/2.2;//slightly bigger than +/-1
     const halfHeight = waveformHeight/2;
@@ -377,3 +388,152 @@ function paintWaveform(){
 
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Analyse Results
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+function generateReport(){
+    let analysis = analyseResults(results);
+    paintResults(analysis)
+}
+
+
+function analyseResults(){
+    //get array of values in the correct order (A=>B,anchor)
+    let r = results.map((result)=>{
+        return unShuffleMapping(result.mapping, result.values);
+    });
+    let analysis = {};
+    analysis.means=getMeans(r);
+    analysis.heatMap=getHeatMaps(r, 100);
+    return analysis;
+}
+
+
+//Turn mapping and values list into one list of values in the correct order
+function unShuffleMapping(mapping, values){
+    let newValues = new Array(numberOfSliders).fill(0);
+    mapping.forEach((value, index)=>{
+        newValues[value] = values[index];
+    });
+    return newValues;
+}
+
+function getMeans(r){
+    //calculate mean values for each wave
+    let means=[];
+    for(let i=0; i<numberOfSliders; i++){
+        let sum = 0;
+        for(let j=0; j<r.length; j++){
+            sum+=r[j][i];        
+        }
+        means.push(sum/r.length);
+    }
+    return means;
+}
+
+function getHeatMaps(r, pointsCount){
+    //Scan through the results
+    //Create an array representing pointsCount points. 
+    //Each point has a sum of distances to each of the values
+    let heatMaps = [];
+    let pScale = 100/pointsCount;
+    let min = Number.MAX_SAFE_INTEGER;
+    let max = Number.MIN_SAFE_INTEGER;
+    for(let i=0; i<numberOfSliders; i++){
+        let heatMap = new Array(pointsCount).fill(0);
+        for (let p=0; p<pointsCount; p++){
+            let point = p*pScale;
+            let sum = 0;
+            for(let j=0; j<r.length; j++){
+                let value = r[j][i];
+                const dist = value-point;
+                sum+= Math.abs(dist);//*dist;
+            }
+            heatMap[p]=sum;
+            if (sum<min) min = sum;
+            if (sum>max) max = sum;
+        }
+        heatMaps.push(heatMap);
+    }
+
+
+    //Remap all of the values so that the hottest is 1 and the coldest is 0
+    //The distance calc gives hottest as lowest number, so need to inverse
+    //If min and max are the same, set all values to 0.5
+    let range = max-min;
+    let scale =range!=0? -1/range : 0;
+    let offset = range!=0? 1 : 0.5;
+
+    heatMaps.forEach((heatMap)=>{
+        heatMap.forEach((point,index)=>{
+            heatMap[index] = (point-min)*scale+offset;
+        });
+    });
+    return heatMaps;
+}
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Draw Results
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+const resCanvas = document.getElementById("mushraResultCanvas");
+const resCtx = resCanvas.getContext("2d");
+
+function paintResults(analysis){
+    //Reset ready for next frame
+    const ctx = resCtx;    
+    const canvas = resCanvas;
+
+
+    if (canvas.width != canvas.clientWidth || canvas.height != canvas.clientHeight){
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+    }
+
+
+    const waveformWidth = canvas.width;
+    const waveformHeight = canvas.height;
+
+    let heatMap = analysis.heatMap;
+    let means = analysis.means;
+
+    const columnWidth = waveformWidth / heatMap.length;
+
+    ctx.clearRect(0, 0, waveformWidth, waveformHeight);
+
+    for (let i = 0; i < heatMap.length; i++) {
+        const columnX = i * columnWidth;
+        const meanY = waveformHeight - (means[i] / 100) * waveformHeight;
+
+        // Draw heatmap
+        const len = heatMap[i].length;
+        const rectangleHeight = waveformHeight / len;
+        for (let j = 0; j < len; j++) {
+            const rectangleY = (len-1-j) * rectangleHeight;
+            const colorIntensity = 255 - Math.round(255 * heatMap[i][j]);
+            ctx.fillStyle = `rgb(255,${colorIntensity},${colorIntensity})`;
+            ctx.fillRect(columnX, rectangleY, columnWidth, rectangleHeight);
+        }
+        // Draw column
+        ctx.strokeStyle = 'gray';
+        ctx.beginPath();
+        ctx.moveTo(columnX, 0);
+        ctx.lineTo(columnX, waveformHeight);
+        ctx.stroke();
+
+        // Draw mean
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(columnX + columnWidth / 2, meanY, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+
+        // Draw text number
+        ctx.fillStyle = 'black';
+        ctx.fillText(i, columnX + columnWidth / 2, waveformHeight - 10);
+    }
+
+}

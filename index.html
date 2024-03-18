@@ -138,7 +138,7 @@
     <div id="mushraModalBackground" class="mushraModalBackground">
         <div id="mushraModal" class="mushraModal bordered">
             <div class="presetHeader">
-                <h3>Mushra style Test </h3>
+                <h3>MUSHRA-like Testing</h3>
                 <div class="PresetButtons">            
                 </div>
                 <span class="help-icon">?</span>
@@ -154,7 +154,7 @@
                 </div>
             </div>
             <div class="canvasBox">
-                <canvas id="mushraOutput" width ="2000" height="100"></canvas>
+                <canvas id="mushraOutputCanvas" width ="2000" height="100"></canvas>
             </div>
             <div class="vertical-slider-container blurredDisabled">
                 <div id="mGroup0" class="vSlideGroup">
@@ -206,7 +206,7 @@
                 </div>
             </div>
             <div class="presetHeader spaceTop">
-                <h3>  </h3>
+                <h3></h3>
                 <div class="PresetButtons">                
                     <button id="startMushra">Start</button>
                     <button id="nextMushra">Next</button>
@@ -219,11 +219,40 @@
                 <h3>  </h3>
                 <div class="PresetButtons">                
                     <!-- <button id="reportMushra">report</button> -->
-                    <button id="closeMushra">Close</button>
+                    <button class="closeMushra">Close</button>
                 </div>
                 <h3>  </h3>
             </div>
 
+        </div>
+        <div id="mushraResultsModal" class="mushraModal bordered" >
+            <div class="presetHeader">
+                <h3>MUSHRA-like Testing - Results </h3>
+                <div class="PresetButtons">            
+                </div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>Sound A is considered the reference and Sound B should be set so that the quality difference is clearly but just audible.</p>
+                    <p>Several sounds are created varying between A and b, as well as an "anchor" sound that is reduce quality.</p>
+                    <p>Rank each sound according to the perceived quality.</p>
+                    <p>The graph is for feedback that a sound is playing but noise is deliberately added to obscure the waveforms, so they won't match.</p>
+                    
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
+                </div>
+            </div>
+            <div class="canvasBox">
+                <canvas id="mushraResultCanvas" width ="2000" height="100"></canvas>
+            </div>>
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button class="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
         </div>
     </div>
 
