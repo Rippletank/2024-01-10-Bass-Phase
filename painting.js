@@ -1400,6 +1400,7 @@ function toggleUseFFT(){
 
 export {
     toLightMode, 
+    getColor,
 
     getCanvasTooltips,
 
@@ -1430,5 +1431,7 @@ export {
 
     //THD Graph
     paintTHDGraph,
+
+
 
 }

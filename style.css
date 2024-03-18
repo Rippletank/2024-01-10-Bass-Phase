@@ -703,8 +703,13 @@ input[type="range"]:focus {
   .mushraModal #mushraOutputCanvas{
     height:50px;
   }
-  .mushraModal #mushraResultCanvas{
-    height:500px;
+  
+  .mushraModal #mushraOutputCanvas{
+    height:50px;
+  }
+  .mushraModal .canvasBox{
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
   .mushraModal button.active{

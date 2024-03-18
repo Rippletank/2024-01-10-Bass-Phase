@@ -1,6 +1,7 @@
 
 
 import {setMushraBufferCallback, calculateMushraBuffer} from "./workerLauncher.js";
+import {getColor} from "./painting.js";
 
 
 let audioContext = null;
@@ -350,7 +351,9 @@ const waveCTX = waveCanvas.getContext("2d");
 
 
 function clearWaveform(){
-    waveCTX.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+    checkBounds(waveCanvas)
+    waveCTX.fillStyle =  getColor(215,215,215);
+    waveCTX.fillRect(0, 0, waveCanvas.width, waveCanvas.height);
 }
 
 
@@ -362,28 +365,22 @@ function paintWaveform(){
     const ctx = waveCTX;    
     const canvas = waveCanvas;
 
-
-    if (canvas.width != canvas.clientWidth || canvas.height != canvas.clientHeight){
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        return;
-    }
-
+    checkBounds(canvas)
 
     const waveformWidth = canvas.width;
     const waveformHeight = canvas.height;
     if (waveformHeight<2 || waveformWidth<2) return;
-    ctx.fillStyle = "white";
+    ctx.fillStyle =  getColor(215,215,215);
     const scale = waveformHeight/2.2;//slightly bigger than +/-1
     const halfHeight = waveformHeight/2;
 
     values.forEach((max)=>{    
         ctx.drawImage(canvas, -1, 0);  
-        ctx.strokeStyle = "green";  
+        
         //ctx.clearRect(waveformWidth - 1, 0, 2, waveformHeight);
         ctx.fillRect(waveformWidth - 1, 0, 2, waveformHeight);
         ctx.beginPath();  
-        ctx.strokeStyle = "blue";
+        ctx.strokeStyle = getColor(0,0,255);
         ctx.lineWidth = 1;
         ctx.moveTo(waveformWidth-1 , halfHeight );
         ctx.lineTo(waveformWidth , halfHeight);
@@ -392,6 +389,13 @@ function paintWaveform(){
         ctx.stroke();
         });
 
+}
+
+function checkBounds(canvas){
+    if (canvas.width != canvas.clientWidth || canvas.height != canvas.clientHeight){
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+    }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -500,11 +504,7 @@ function paintResults(analysis){
     const ctx = resCtx;    
     const canvas = resCanvas;
 
-
-    if (canvas.width != canvas.clientWidth || canvas.height != canvas.clientHeight){
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-    }
+    checkBounds(canvas)
 
     const labels = [
         "A",
@@ -535,7 +535,7 @@ function paintResults(analysis){
     const len = heatMap[0].length;
     const rectangleHeight =  gH / len;
     
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = getColor(0,0,0);
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
     ctx.fillText('100', gL-15, gy100);
@@ -567,7 +567,7 @@ function paintResults(analysis){
 
 
         // Draw text number
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = getColor(0,0,0);
         ctx.font = "14px Arial";
         ctx.textAlign = "center";
         ctx.fillText(labels[i], columnX + columnWidth / 2, gB + 18);
