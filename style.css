@@ -686,7 +686,8 @@ input[type="range"]:focus {
     max-width: 1000px;
     max-height: 800px;
     width: 70%;
-    height: 50%;
+    height: 90%;
+    top:5%;
     background-color: var(--background-color);
     z-index: 1001;
   }
@@ -713,6 +714,11 @@ input[type="range"]:focus {
   
   .mushraModal .PresetButtons button{
     width:80px;
+  }
+  .mushraModal .PresetButtons button.blurredDisabled{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
   }
 .vertical-slider-container {
     display: flex;

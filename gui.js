@@ -60,7 +60,7 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { setupMushra, initMushra, shutDownMushra } from './mushra.js';
+import { setupMushra, initMushra, shutDownMushra, repaintMushra } from './mushra.js';
 
 
 
@@ -358,6 +358,7 @@ function updateCanvas() {
     updateDisplay();
     doPaintAllPreviews();
     repaintDetailedFFT();
+    repaintMushra();
 }
 updateCanvas();
 
