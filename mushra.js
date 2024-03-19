@@ -377,7 +377,7 @@ function createResultsTable(analysis){
             }
             else if (absPValue===0.5){
                 pScoreText=(pValue<0?"< -":">") + "0.25";
-                meaningText="Too few tests";
+                meaningText="Too random";
             }
             else if(absPValue<0.05){
                 meaningText="Significantly" + (pValue<0?" lower":" higher");
@@ -400,6 +400,18 @@ function createResultsTable(analysis){
 
 }
 
+
+function createTextReport(analysis) {
+    let div = document.getElementById('mushraTextAnalysis');
+    div.innerHTML = '';
+
+    // Create and append new p elements based on the analysis object
+    for (let i=0; i<analysis.qualityChecks.length; i++) {
+            let p = document.createElement('p');
+            p.textContent = analysis.qualityChecks[i] ;
+            div.appendChild(p);
+    }
+}
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -611,6 +623,7 @@ function generateReport(){
     let analysis = analyseResults(results);
     paintResults(analysis)
     createResultsTable(analysis);
+    createTextReport(analysis);
     lastAnalysis = analysis;
 }
 
@@ -627,11 +640,13 @@ function analyseResults(){
     const means = getMeans(r);
     let analysis = {
         labels : getLabels(),
+        raw:r,
         means:means,
         heatMap:getHeatMaps(r, 200),
         line : getQuadraticFit(means),
         sds : getStandardDeviations(r,means),
         pValues : calculatePValues(r),
+        qualityChecks:getChecks(r)
     };
     return analysis;
 }
@@ -642,8 +657,8 @@ function getLabels(){
         ...lastInterpolations.map((x)=>x.toFixed(2)), 
         "B",
         "Anchor"];
+    }
 
-}
 
 //Turn mapping and values list into one list of values in the correct order
 function unShuffleMapping(mapping, values){
@@ -679,6 +694,29 @@ function getStandardDeviations(r,means){
     }
     return sds;
 
+}
+
+function getChecks(r){
+    let ALessThan90 = 0;
+    let BGreaterThan90 = 0;
+    let AnchorGreaterThan90 = 0;
+    for(let i=0; i<r.length; i++){
+        if (r[i][0]<90) ALessThan90++;
+        if (r[i][r.length-2]>90) BGreaterThan90++;
+        if (r[i][r.length-1]>90) AnchorGreaterThan90++;
+    }
+    const ATooLow=ALessThan90/r.length;
+    const BTooHigh=BGreaterThan90/r.length;
+    const AnchorTooHigh=AnchorGreaterThan90/r.length;
+
+    let report =[];
+    if (r.length<3) report.push("Too few tests to be reliable.");
+    if (ATooLow>0.15) report.push("Too many low scores for A: "+(ATooLow*100).toFixed(0)+"%");
+    if (BTooHigh>0.15) report.push("Too many high score for B: "+(ATooLow*100).toFixed(0)+"%");
+    if (BTooHigh>0.25) report.push("B probably too similar to A.");
+    if (AnchorTooHigh>0.15) report.push("Too many high scores for Anchor: "+(ATooLow*100).toFixed(0)+"%");
+    if (AnchorTooHigh>0.25) report.push("Anchor may be too similar to do its job.");
+    return report;
 }
 
 function getQuadraticFit(means) {

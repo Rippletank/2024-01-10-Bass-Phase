@@ -868,3 +868,7 @@ input[type="range"]:focus {
     padding: 10px;
     text-align: center;
 }
+
+#mushraTextAnalysis{
+    overflow: scroll;
+}
