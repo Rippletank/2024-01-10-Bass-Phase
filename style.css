@@ -848,3 +848,23 @@ input[type="range"]:focus {
     z-index: -100;
     opacity: 0.7;
 }
+
+#mushraTableContainer{
+    margin:10px;
+}
+
+#mushraResultsTable {
+    width: 100%; /* Stretch the table across the available space */
+    border-collapse: collapse; /* Collapse borders to draw lines between cells */
+}
+
+#mushraResultsTable th{
+    border: 1px solid var(--text-color); 
+    padding: 10px; 
+}
+
+#mushraResultsTable td {
+    border: 1px solid var(--text-color); 
+    padding: 10px;
+    text-align: center;
+}
