@@ -113,6 +113,18 @@ export function do12dbFilter(buffer, sampleRate, cutoffFrequency) {
 }
 
 
+export function doLinearLowpass(buffer, sampleRate, cutoffFrequency) {
+  const filter = createLowPassFilterKernel(cutoffFrequency / sampleRate, 150);
+  let outputBuffer = new Float32Array(buffer.length + filter.length - 1);
+  convolve(buffer, outputBuffer, filter, 1);
+  //const offset = (filter.length - 1) / 2;
+  for (let i = 0; i < buffer.length; i++) {
+    buffer[i] = outputBuffer[i];
+  }
+}
+
+
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Preview data
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

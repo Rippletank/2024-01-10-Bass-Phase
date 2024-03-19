@@ -80,14 +80,14 @@ function getInterpolatedPatches(patchList, subjectList){
     let hasNoise = activePatches.some((patch)=>patch.inharmonicNoiseLevel>-91);
     let BadL = {...patchList[1][0]};    
     BadL.badFilter=true;
-    if (!hasBitDepth) BadL.digitalBitDepth=9; 
+    if (!hasBitDepth) BadL.digitalBitDepth=10; 
     if (hasBitDepth && !hasNoise) BadL.inharmonicNoiseLevel=-50;                         
     
     let BadR = null;
     if (patchList[0][1]){
         BadR = {...patchList[1][1]};
         BadR.badFilter=true;
-        if (!hasBitDepth) BadR.digitalBitDepth=9; 
+        if (!hasBitDepth) BadR.digitalBitDepth=10; 
         if (hasBitDepth && !hasNoise) BadR.inharmonicNoiseLevel=-50;  
     }
     patches[numberOfSliders-1] = [BadL, BadR];

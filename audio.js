@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams, do12dbFilter} from './naughtyFilter.js';
+import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams, do12dbFilter, doLinearLowpass} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -213,7 +213,7 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
 }
 
 
-const badFilterCutoff = 2000;//Hz
+const badFilterCutoff = 3500;//Hz
 function scaleBufferList(audioBuffers, sampleRate, isNormToLoudest){
     let scale = 10000;
     audioBuffers.forEach((audioBuffer)=>{
@@ -236,11 +236,11 @@ function scaleBufferList(audioBuffers, sampleRate, isNormToLoudest){
     
 
     audioBuffers.forEach((audioBuffer)=>{
-        if (audioBuffer.patches[0].badFilter)do12dbFilter(audioBuffer.buffer.data[0], sampleRate,audioBuffer.patches[0].frequency + badFilterCutoff);
+        if (audioBuffer.patches[0].badFilter)doLinearLowpass(audioBuffer.buffer.data[0], sampleRate,badFilterCutoff);
         ditherSimulation(audioBuffer.buffer.data[0], audioBuffer.patches[0]);
         scaleSquaredSingleBuffer(audioBuffer.buffer.data[0], audioBuffer.patches[0].attenuation, audioBuffer.patches[0].attenuationPhase);
         if (audioBuffer.buffer.numberOfChannels>1){
-            if (audioBuffer.patches[1].badFilter)do12dbFilter(audioBuffer.buffer.data[1], sampleRate,audioBuffer.patches[1].frequency + badFilterCutoff);
+            if (audioBuffer.patches[1].badFilter)doLinearLowpass(audioBuffer.buffer.data[1], sampleRate, badFilterCutoff);
             ditherSimulation(audioBuffer.buffer.data[1], audioBuffer.patches[1]);
             scaleSquaredSingleBuffer(audioBuffer.buffer.data[1], audioBuffer.patches[1].attenuation, audioBuffer.patches[1].attenuationPhase);
         }
