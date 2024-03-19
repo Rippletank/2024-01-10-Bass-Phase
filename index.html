@@ -53,9 +53,6 @@
         <option value="1">
     </datalist>
 
-    <!--**********************************************************************-->
-    <!--*****************  Start ABX Setup and Test  *************************-->
-    <!--**********************************************************************-->
 
     <div class="bordered">
         <h3>Sound A</h3>
@@ -83,6 +80,9 @@
         </div>
     </div>
 
+    <!--**********************************************************************-->
+    <!--*****************        Transport           *************************-->
+    <!--**********************************************************************-->
     <div class="canBeStickyTop stickyTop">
         <div class="bordered">    
             <div class="flexHeader">                           
@@ -100,6 +100,9 @@
     <br>
 
 
+    <!--**********************************************************************-->
+    <!--*****************  Start ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
     <div class="bordered">
         <div class="centerContainer">
             <div id="abxTestContainer">
@@ -126,6 +129,16 @@
         </div>
     </div>
 
+    <!--**********************************************************************-->
+    <!--*******************  End ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
+
+
+
+    
+    <!--**********************************************************************-->
+    <!--*****************        MUSHRA Test         *************************-->
+    <!--**********************************************************************-->
     <div class="bordered">
         <div class="centerContainer">
             <div id="abxTestContainer">
@@ -257,6 +270,11 @@
     </div>
 
 
+    
+    <!--**********************************************************************-->
+    <!--*****************        Notes               *************************-->
+    <!--**********************************************************************-->
+
     <br>
     <div class="bordered">
         <div class ="previewButtons">
@@ -267,6 +285,10 @@
         </div>
     </div>
     
+    <!--**********************************************************************-->
+    <!--*****************        Setup               *************************-->
+    <!--**********************************************************************-->
+
     <div class="bordered">
         <div class="presetHeader">
             <h3>Setup </h3>
@@ -321,12 +343,11 @@
             </div>
         </div>
     </div>
-
-    <!--**********************************************************************-->
-    <!--*******************  End ABX Setup and Test  *************************-->
-    <!--**********************************************************************-->
     
 
+    <!--**********************************************************************-->
+    <!--*****************        Additive Tone       *************************-->
+    <!--**********************************************************************-->
 
     <div class="bordered" id="CommonSettings">
         <div class="collapsible-header"><span class="header-text">Additive Tone Synthesis</span><span class="chevron">&#x25BC;</span></div>
@@ -491,6 +512,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************        Additive Filter     *************************-->
+    <!--**********************************************************************-->
     <div class="bordered" id="FilterSetup">
         <div class="collapsible-header"><span class="header-text">Additive Filter</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">
@@ -561,6 +585,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************        Additive Phase Shift  ***********************-->
+    <!--**********************************************************************-->
 
     <div class="bordered" id="TestSetup">
         <div class="collapsible-header"><span class="header-text">Additive Phase shifts</span><span class="chevron">&#x25BC;</span></div>
@@ -601,6 +628,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************    Samples and Inharmonics   ***********************-->
+    <!--**********************************************************************-->
     <div class="bordered" id="SampleSetup">
         <div class="collapsible-header"><span class="header-text">Samples and Inharmonic Tones</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">
@@ -702,6 +732,9 @@
     </div>
  
  
+    <!--**********************************************************************-->
+    <!--*****************            Distortion        ***********************-->
+    <!--**********************************************************************-->
 
     <div class="bordered" id="DistortionSetup">
         <div class="collapsible-header"><span class="header-text">Distortion and oversampling</span><span class="chevron">&#x25BC;</span></div>
@@ -889,6 +922,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************      Digital conversion      ***********************-->
+    <!--**********************************************************************-->
     <div class="bordered"  id="DigitalSetup">   
         <div class="collapsible-header"><span class="header-text">Digital Converters</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">     
@@ -1059,6 +1095,13 @@
             </div>
         </div>
     </div>
+
+
+
+    <!--**********************************************************************-->
+    <!--*****************      Naughty Filter          ***********************-->
+    <!--**********************************************************************-->
+
     <div class="bordered"  id="naughtyFilter">   
         <div class="collapsible-header"><span class="header-text">Naughty Filter</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">     
@@ -1131,6 +1174,15 @@
         </div>
     </div>
 
+
+
+
+    <!--**********************************************************************-->
+    <!--*****************      Web Audio FFT           ***********************-->
+    <!--**********************************************************************-->
+
+
+
     <div class="canBeSticky">
         <div class="bordered">
             <div class="presetHeader">
@@ -1156,6 +1208,12 @@
             </div>
         </div>
     </div>
+
+
+
+    <!--**********************************************************************-->
+    <!--*****************      Detailed  FFT           ***********************-->
+    <!--**********************************************************************-->
 
     <div class="canBeSticky">
         <div class="bordered">
@@ -1207,39 +1265,13 @@
             </div>
         </div>
     </div>
-<!-- 
-
-    <div class="bordered">
-        <h3>Sound A</h3>
-        <div class="canvasBox">
-            <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <div class="testSoundControls" id="SoundASetup">
-            <h3 class="stereoLabel hideForMono">Left:</h3>
-        </div>
-        <div class="testSoundControls hideForMono" id="SoundARSetup">
-            <h3 class="stereoLabel hideForMono">Right:</h3>
-        </div>
-        <button class="playSoundA PlayA">Play A</button>
-    </div>
 
 
 
-    <div class="bordered">
-        <h3>Sound B</h3>
-        <div class="canvasBox">
-            <canvas id="waveformB"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <div class="testSoundControls" id="SoundBSetup">
-            <h3 class="stereoLabel hideForMono">Left:</h3>
-        </div>
-        <div class="testSoundControls hideForMono" id="SoundBRSetup">
-            <h3 class="stereoLabel hideForMono">Right:</h3>
-        </div>
-        <button class="playSoundB PlayB">Play B</button>
-    </div> -->
 
-
+    <!--**********************************************************************-->
+    <!--*****************         NULL                 ***********************-->
+    <!--**********************************************************************-->
 
     <div class="bordered">
         <div class="presetHeader">
@@ -1257,6 +1289,9 @@
         </div>
     </div>
 
+    <!--**********************************************************************-->
+    <!--*****************         Notes                ***********************-->
+    <!--**********************************************************************-->
 
 
     <div id="Notes1" class="bordered">

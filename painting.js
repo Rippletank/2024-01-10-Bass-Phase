@@ -1401,6 +1401,7 @@ function toggleUseFFT(){
 export {
     toLightMode, 
     getColor,
+    getColorA,
 
     getCanvasTooltips,
 

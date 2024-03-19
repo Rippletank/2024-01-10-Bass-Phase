@@ -1,7 +1,7 @@
 
 
 import {setMushraBufferCallback, calculateMushraBuffer} from "./workerLauncher.js";
-import {getColor} from "./painting.js";
+import {getColor, getColorA} from "./painting.js";
 
 
 let audioContext = null;
@@ -332,6 +332,299 @@ function setEnablesForIndex(index){
 
 
 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Analyse Results
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let lastAnalysis = null;
+function generateReport(){
+    let analysis = analyseResults(results);
+    paintResults(analysis)
+    lastAnalysis = analysis;
+}
+
+export function repaintMushra(){
+    if (lastAnalysis) paintResults(lastAnalysis);
+}
+
+
+function analyseResults(){
+    //get array of values in the correct order (A=>B,anchor)
+    let r = results.map((result)=>{
+        return unShuffleMapping(result.mapping, result.values);
+    });
+    let analysis = {};
+    analysis.means=getMeans(r);
+    analysis.heatMap=getHeatMaps(r, 200);
+    analysis.line = getQuadraticFit(analysis.means);
+    return analysis;
+}
+
+
+//Turn mapping and values list into one list of values in the correct order
+function unShuffleMapping(mapping, values){
+    let newValues = new Array(numberOfSliders).fill(0);
+    mapping.forEach((value, index)=>{
+        newValues[value] = values[index];
+    });
+    return newValues;
+}
+
+function getMeans(r){
+    //calculate mean values for each wave
+    let means=[];
+    for(let i=0; i<numberOfSliders; i++){
+        let sum = 0;
+        for(let j=0; j<r.length; j++){
+            sum+=r[j][i];        
+        }
+        means.push(sum/r.length);
+    }
+    return means;
+}
+
+function getQuadraticFit(means) {
+    let x_sum = 0;
+    let x2_sum = 0;
+    let x3_sum = 0;
+    let x4_sum = 0;
+    let y_sum = 0;
+    let xy_sum = 0;
+    let x2y_sum = 0;
+
+    const n = means.length - 1; // Ignore the last point
+
+    for (let i = 0; i < n; i++) {
+        const x = i;
+        const y = means[i];
+        const x2 = x * x;
+        const x3 = x2 * x;
+        const x4 = x2 * x2;
+        const xy = x * y;
+        const x2y = x2 * y;
+
+        x_sum += x;
+        x2_sum += x2;
+        x3_sum += x3;
+        x4_sum += x4;
+        y_sum += y;
+        xy_sum += xy;
+        x2y_sum += x2y;
+    }
+
+    //Copilot version -wrong
+    // const denominator = n * (x2_sum * x4_sum - x3_sum * x3_sum) + x_sum * (x3_sum * x2_sum - x2_sum * x4_sum) + x2_sum * (x2_sum * x3_sum - x2_sum * x2_sum);
+    // const a = (n * (x2y_sum * x4_sum - x3_sum * xy_sum) + x_sum * (x3_sum * xy_sum - x2y_sum * x4_sum) + x2_sum * (x2_sum * x2y_sum - x2_sum * xy_sum)) / denominator;
+    // const b = (n * (x2_sum * x2y_sum - x2_sum * xy_sum) + x_sum * (x3_sum * xy_sum - x2y_sum * x2_sum) + x2_sum * (x2_sum * x3_sum - x2_sum * x2_sum)) / denominator;
+    // const c = (x2_sum * (x2_sum * x2y_sum - x2_sum * xy_sum) + x_sum * (x2_sum * xy_sum - x3_sum * x2y_sum) + n * (x3_sum * x2y_sum - x2_sum * x2_sum)) / denominator;
+
+    //My Hand version
+    //ax^2+bx+c+e=y  where e is error
+    //Total squared error, E = Σ(y - (ax^2+bx+c))^2
+    //minimimise E by finding dE/da = 0, dE/db = 0, dE/dc = 0
+    //dE/da = 0 = Σ2(y - (ax^2+bx+c))x^2
+    //dE/db = 0 = Σ2(y - (ax^2+bx+c))x
+    //dE/dc = 0 = Σ2(y - (ax^2+bx+c))
+    //Couple of pages of calculations later to solve for a,b,c:
+    const Z_x2y = x2y_sum - x2_sum * y_sum / n;
+    const Z_xy = xy_sum - x_sum * y_sum / n;
+    const Z_x3 = x3_sum - x_sum * x2_sum / n;
+    const Z_x4 = x4_sum - x2_sum * x2_sum / n;
+    const Z_x2 = x2_sum - x_sum * x_sum / n;
+    let a = (Z_x2y * Z_x2 - Z_xy * Z_x3) / (Z_x2 * Z_x4 - Z_x3 * Z_x3);
+    let b = (Z_xy - a * Z_x3) / Z_x2;
+    let c = (y_sum - a * x2_sum - b * x_sum) / n;
+
+
+    return { a, b, c};
+}
+
+
+
+
+function getHeatMaps(r, pointsCount){
+    //Scan through the results
+    //Create an array representing pointsCount points. 
+    //Each point has a sum of distances to each of the values
+    let heatMaps = [];
+    let pScale = 100/pointsCount;
+    let min = Number.MAX_SAFE_INTEGER;
+    let max = Number.MIN_SAFE_INTEGER;
+    const lowP =-Math.round(pointsCount*0.1);
+    const highP = pointsCount - lowP;
+    for(let i=0; i<numberOfSliders; i++){
+        let heatMap = new Array(pointsCount).fill(0);
+        for (let p=lowP; p<highP; p++){
+            let point = p*pScale;
+            let sum = 0;
+            for(let j=0; j<r.length; j++){
+                let value = r[j][i];
+                const dist = (100 - Math.abs(value-point))*0.01;//
+                sum+= dist*dist*dist*dist*dist*dist;
+            }
+            heatMap[p-lowP]=sum;
+            if (sum<min) min = sum;
+            if (sum>max) max = sum;
+        }
+        heatMaps.push(heatMap);
+    }
+
+
+    //Remap all of the values so that the hottest is 1 and the coldest is 0
+    //The distance calc gives hottest as lowest number, so need to inverse
+    //If min and max are the same, set all values to 0.5
+    let range = max-min;
+    let scale =range!=0? -1/range : 0;
+    let offset = range!=0? 1 : 0.5;
+
+    heatMaps.forEach((heatMap)=>{
+        heatMap.forEach((point,index)=>{
+            heatMap[index] = (point-min)*scale+offset;
+        });
+    });
+    return heatMaps;
+}
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Draw Results
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+const resCanvas = document.getElementById("mushraResultCanvas");
+const resCtx = resCanvas.getContext("2d");
+
+function paintResults(analysis){
+    //Reset ready for next frame
+    const ctx = resCtx;    
+    const canvas = resCanvas;
+
+    checkBounds(canvas)
+
+    const labels = [
+        "A",
+        ...lastInterpolations.map((x)=>x.toFixed(2)), 
+        "B",
+        "Anchor"];
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const border=20;
+
+    let heatMap = analysis.heatMap;
+    let means = analysis.means;
+    let fit = analysis.line;
+
+    const gL = border*2;
+    const gT = border;
+    const gB = h-border;
+    const gW = w-border*3;
+    const gH = gB-gT;
+    const gy0 =gB- gH/12;
+    const gy100 = gT+ gH/12;
+    const gyh= gy0-gy100;
+
+    const columnWidth = gW / heatMap.length;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const len = heatMap[0].length;
+    const rectangleHeight =  gH / len;
+    
+    //Draw heat map and mean plot
+    for (let i = 0; i < heatMap.length; i++) {
+        const columnX =gL + i * columnWidth;
+        const meanY = gy0 - (means[i] / 100) * gyh;
+
+        // Draw heatmap
+        for (let j = 0; j < len; j++) {
+            const rectangleY =gT + (len-1-j) * rectangleHeight;
+            const colorIntensity = Math.round(255 * heatMap[i][j]);
+            ctx.fillStyle = `rgb(255,${colorIntensity},${colorIntensity})`;
+            ctx.fillRect(columnX, rectangleY, columnWidth, 1+rectangleHeight);
+        }
+        // Draw mean
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(columnX + columnWidth / 2, meanY, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
+    //Draw grid and column labels
+    for (let i = 0; i < heatMap.length; i++) {
+        const columnX =gL + i * columnWidth;
+
+        // Draw column
+        ctx.strokeStyle = 'gray';
+        ctx.beginPath();
+        ctx.moveTo(columnX + columnWidth, gT);
+        ctx.lineTo(columnX+ columnWidth, gB);
+        ctx.stroke();
+
+        // Draw text number
+        ctx.fillStyle = getColor(0,0,0);
+        ctx.font = "14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(labels[i], columnX + columnWidth / 2, gB + 18);
+    }
+    // Draw Ideal Line
+    ctx.beginPath();
+    ctx.lineWidth = columnWidth*0.8;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(0,0,128,0.1)';
+    const startY = gy0 - (100 / 100) * gyh; // Start at a value of 100
+    const endY = gy0 - (0 / 100) * gyh; // End at a value of 0
+    ctx.moveTo(gL + 0.5 * columnWidth, startY); // Start at column zero
+    ctx.lineTo(gL + (0.5 + heatMap.length - 2) * columnWidth, endY); // End at the last column (the one before the ignored one)
+    ctx.stroke();
+
+
+    //Draw quadratic fit
+    const pointsPerColumn = 5;
+    const length = (heatMap.length-2)*pointsPerColumn +1;// Ignore the last column, plot centre of first to centre of last, 
+    
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,255,0.5)';
+    for (let i = 0; i < length; i++) { 
+        const x = i/pointsPerColumn;
+        const columnX = gL + (0.5+x) * columnWidth;    
+        
+        // Draw quadratic fit
+        const y = gy0 - (((fit.a * x  + fit.b) * x + fit.c) / 100) * gyh;
+        if (i==0){
+            ctx.moveTo(columnX , y);
+        }
+        else{
+            ctx.lineTo(columnX, y);
+        }
+    }
+    ctx.stroke();
+
+    ctx.lineCap = 'butt';
+
+
+    //Labels
+    ctx.fillStyle = getColor(0,0,0);
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText('100', gL-15, gy100);
+    ctx.fillText('0', gL-15, gy0);
+
+    //Axis
+    
+    ctx.strokeStyle = getColor(0,0,0);
+    ctx.beginPath();
+    ctx.moveTo(gL, gT);
+    ctx.lineTo(gL, gB);
+    ctx.lineTo(gL + gW, gB);
+    ctx.stroke();
+
+
+}
+
+
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Draw Waveform
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -396,181 +689,4 @@ function checkBounds(canvas){
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
     }
-}
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Analyse Results
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-let lastAnalysis = null;
-function generateReport(){
-    let analysis = analyseResults(results);
-    paintResults(analysis)
-    lastAnalysis = analysis;
-}
-
-export function repaintMushra(){
-    if (lastAnalysis) paintResults(lastAnalysis);
-}
-
-
-function analyseResults(){
-    //get array of values in the correct order (A=>B,anchor)
-    let r = results.map((result)=>{
-        return unShuffleMapping(result.mapping, result.values);
-    });
-    let analysis = {};
-    analysis.means=getMeans(r);
-    analysis.heatMap=getHeatMaps(r, 200);
-    return analysis;
-}
-
-
-//Turn mapping and values list into one list of values in the correct order
-function unShuffleMapping(mapping, values){
-    let newValues = new Array(numberOfSliders).fill(0);
-    mapping.forEach((value, index)=>{
-        newValues[value] = values[index];
-    });
-    return newValues;
-}
-
-function getMeans(r){
-    //calculate mean values for each wave
-    let means=[];
-    for(let i=0; i<numberOfSliders; i++){
-        let sum = 0;
-        for(let j=0; j<r.length; j++){
-            sum+=r[j][i];        
-        }
-        means.push(sum/r.length);
-    }
-    return means;
-}
-
-function getHeatMaps(r, pointsCount){
-    //Scan through the results
-    //Create an array representing pointsCount points. 
-    //Each point has a sum of distances to each of the values
-    let heatMaps = [];
-    let pScale = 100/pointsCount;
-    let min = Number.MAX_SAFE_INTEGER;
-    let max = Number.MIN_SAFE_INTEGER;
-    const lowP =-Math.round(pointsCount*0.1);
-    const highP = pointsCount - lowP;
-    for(let i=0; i<numberOfSliders; i++){
-        let heatMap = new Array(pointsCount).fill(0);
-        for (let p=lowP; p<highP; p++){
-            let point = p*pScale;
-            let sum = 0;
-            for(let j=0; j<r.length; j++){
-                let value = r[j][i];
-                const dist = (100 - Math.abs(value-point))*0.01;//
-                sum+= dist*dist;
-            }
-            heatMap[p]=sum;
-            if (sum<min) min = sum;
-            if (sum>max) max = sum;
-        }
-        heatMaps.push(heatMap);
-    }
-
-
-    //Remap all of the values so that the hottest is 1 and the coldest is 0
-    //The distance calc gives hottest as lowest number, so need to inverse
-    //If min and max are the same, set all values to 0.5
-    let range = max-min;
-    let scale =range!=0? -1/range : 0;
-    let offset = range!=0? 1 : 0.5;
-
-    heatMaps.forEach((heatMap)=>{
-        heatMap.forEach((point,index)=>{
-            heatMap[index] = (point-min)*scale+offset;
-        });
-    });
-    return heatMaps;
-}
-
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Draw Results
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-const resCanvas = document.getElementById("mushraResultCanvas");
-const resCtx = resCanvas.getContext("2d");
-
-function paintResults(analysis){
-    //Reset ready for next frame
-    const ctx = resCtx;    
-    const canvas = resCanvas;
-
-    checkBounds(canvas)
-
-    const labels = [
-        "A",
-        ...lastInterpolations.map((x)=>x.toFixed(2)), 
-        "B",
-        "Anchor"];
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const border=20;
-
-    let heatMap = analysis.heatMap;
-    let means = analysis.means;
-
-    const gL = border*2;
-    const gT = border;
-    const gB = h-border;
-    const gW = w-border*3;
-    const gH = gB-gT;
-    const gy0 =gB- gH/12;
-    const gy100 = gT+ gH/12;
-    const gyh= gy0-gy100;
-
-    const columnWidth = gW / heatMap.length;
-
-    ctx.clearRect(0, 0, w, h);
-
-    const len = heatMap[0].length;
-    const rectangleHeight =  gH / len;
-    
-    ctx.fillStyle = getColor(0,0,0);
-    ctx.font = "14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText('100', gL-15, gy100);
-    ctx.fillText('0', gL-15, gy0);
-
-    for (let i = 0; i < heatMap.length; i++) {
-        const columnX =gL + i * columnWidth;
-        const meanY = gy0 - (means[i] / 100) * gyh;
-
-        // Draw heatmap
-        for (let j = 0; j < len; j++) {
-            const rectangleY =gT + (len-1-j) * rectangleHeight;
-            const colorIntensity = Math.round(255 * heatMap[i][j]);
-            ctx.fillStyle = `rgb(255,${colorIntensity},${colorIntensity})`;
-            ctx.fillRect(columnX, rectangleY, columnWidth, 1+rectangleHeight);
-        }
-        // Draw column
-        ctx.strokeStyle = 'gray';
-        ctx.beginPath();
-        ctx.moveTo(columnX, gT);
-        ctx.lineTo(columnX, gB);
-        ctx.stroke();
-
-        // Draw mean
-        ctx.fillStyle = 'black';
-        ctx.beginPath();
-        ctx.arc(columnX + columnWidth / 2, meanY, 5, 0, 2 * Math.PI);
-        ctx.fill();
-
-
-        // Draw text number
-        ctx.fillStyle = getColor(0,0,0);
-        ctx.font = "14px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(labels[i], columnX + columnWidth / 2, gB + 18);
-    }
-
 }
