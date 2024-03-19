@@ -84,6 +84,34 @@ function getFIRFilter(iirParams) {
   }
 }
 
+//From Robert Bristow-Johnson's Audio EQ Cookbook -  see below for further references
+export function do12dbFilter(buffer, sampleRate, cutoffFrequency) {
+  var w0 = 2 * Math.PI * cutoffFrequency / sampleRate;
+  var alpha = Math.sin(w0) / (2 * Math.sqrt(2)); // Q factor is sqrt(2) for Butterworth
+  var cosw0 = Math.cos(w0);
+  var a0 = 1 + alpha;
+  var inv_a0 = 1 / a0;
+  var a1 = (-2 * cosw0) * inv_a0;
+  var a2 = (1 - alpha) * inv_a0;
+  var b0 = (1 - cosw0) / 2 * inv_a0;
+  var b1 = (1 - cosw0) * inv_a0;
+  var b2 = (1 - cosw0) / 2 * inv_a0;
+
+  var x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+
+  for (var i = 0; i < buffer.length; i++) {
+    var x0 = buffer[i];
+    var y0 = b0*x0 + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+
+    buffer[i] = y0;
+
+    x2 = x1;
+    x1 = x0;
+    y2 = y1;
+    y1 = y0;
+  }
+}
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Preview data

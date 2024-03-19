@@ -1,3 +1,7 @@
+/* ************************************************* */
+/*           Theme handling                          */
+/* ************************************************* */
+
 :root {
     --text-color: black;
     --background-color: white;
@@ -66,72 +70,64 @@ select{
 
 
 
-/* Range customisation from here: */
-/* https://www.smashingmagazine.com/2021/12/create-custom-range-input-consistent-browsers/ */
-input[type="range"]{
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-    width: 15rem;
+/* ************************************************* */
+/*        Main bordered container styles             */
+/* ************************************************* */
+
+.bordered {
+    border: 1px solid;
+    border-color: var(--border-color);
+    border-radius: 10px;
+    margin: 10px;
+    padding: 10px;
 }
-/***** Track Styles *****/
-/***** Chrome, Safari, Opera, and Edge Chromium *****/
-input[type="range"]::-webkit-slider-runnable-track {
-    background: var(--tracks-color);
-    height: 0.5rem;
-  }
+
+.bordered h3{
+   margin-top: 0.1em; 
+}
+
+.bordered h4{
+   margin-top: 1.5em; 
+   margin-bottom: 1em;
+}
+.bordered button{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+.bordered button:not(.previewButton){
+    border-color: var(--border-color);
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.paragraphReport{
+    text-align: center;
+    color: #6b8b6b;
+}
+
+.fftPlayButtons {
+    flex-basis: 80%;
+    display: flex;
+    justify-content: space-evenly;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.fftPlayButton{
+    margin-top: 0em !important;
+    margin-bottom: 0em !important;
+}
+
+
   
-/******** Firefox ********/
-input[type="range"]::-moz-range-track {
-    background: var(--tracks-color);
-    height: 0.5rem;
-}
-/***** Thumb Styles *****/
-/***** Chrome, Safari, Opera, and Edge Chromium *****/
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; /* Override default look */
-    appearance: none;
-    margin-top: -3.5px; /* Centers thumb on the track */
-    border-radius: 100%;
-    background-color: var(--thumb-color);
-    height: 1rem;
-    width: 1rem;    
- }
-/***** Firefox *****/
-input[type="range"]::-moz-range-thumb {
-    border: none; /*Removes extra border that FF applies*/
-    border-radius: 100%;
-    background-color: var(--thumb-color);
-    height: 1rem;
-    width: 1rem;    
-}
+/* ************************************************* */
+/*       Layout of main parameter sliders            */
+/* ************************************************* */
 
-/***** Focus Styles *****/
-/* Removes default focus */
-input[type="range"]:focus {
-    outline: none;
-  }
-  
-  /***** Chrome, Safari, Opera, and Edge Chromium *****/
-  input[type="range"]:focus::-webkit-slider-thumb {
-    border: 1px solid var(--thumb-focus-color);
-    outline: 3px solid var(--thumb-focus-color);
-    outline-offset: 0.125rem;
-  }
-  
-  /******** Firefox ********/
-  input[type="range"]:focus::-moz-range-thumb {
-    border: 1px solid var(--thumb-focus-color);
-    outline: 3px solid var(--thumb-focus-color);
-    outline-offset: 0.125rem;     
-  }
-
-
-
-.canvasHalfHeight {
-    height: 150px;
-}
 .slider-container {
     position: relative;
     display: flex;
@@ -209,17 +205,92 @@ input[type="range"]:focus {
     margin-left: 2em;
 }
 
+.slider-container .blurredDisabled{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+}
+
+
+/* ************************************************* */
+/*    Customisation of slider - to allow for themes  */
+/* ************************************************* */
+
+/* Range customisation from here: */
+/* https://www.smashingmagazine.com/2021/12/create-custom-range-input-consistent-browsers/ */
+input[type="range"]{
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    width: 15rem;
+}
+/***** Track Styles *****/
+/***** Chrome, Safari, Opera, and Edge Chromium *****/
+input[type="range"]::-webkit-slider-runnable-track {
+    background: var(--tracks-color);
+    height: 0.5rem;
+  }
+  
+/******** Firefox ********/
+input[type="range"]::-moz-range-track {
+    background: var(--tracks-color);
+    height: 0.5rem;
+}
+/***** Thumb Styles *****/
+/***** Chrome, Safari, Opera, and Edge Chromium *****/
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    margin-top: -3.5px; /* Centers thumb on the track */
+    border-radius: 100%;
+    background-color: var(--thumb-color);
+    height: 1rem;
+    width: 1rem;    
+ }
+/***** Firefox *****/
+input[type="range"]::-moz-range-thumb {
+    border: none; /*Removes extra border that FF applies*/
+    border-radius: 100%;
+    background-color: var(--thumb-color);
+    height: 1rem;
+    width: 1rem;    
+}
+
+/***** Focus Styles *****/
+/* Removes default focus */
+input[type="range"]:focus {
+    outline: none;
+  }
+  
+  /***** Chrome, Safari, Opera, and Edge Chromium *****/
+  input[type="range"]:focus::-webkit-slider-thumb {
+    border: 1px solid var(--thumb-focus-color);
+    outline: 3px solid var(--thumb-focus-color);
+    outline-offset: 0.125rem;
+  }
+  
+  /******** Firefox ********/
+  input[type="range"]:focus::-moz-range-thumb {
+    border: 1px solid var(--thumb-focus-color);
+    outline: 3px solid var(--thumb-focus-color);
+    outline-offset: 0.125rem;     
+  }
+
+
+
+
+
+/* ************************************************* */
+/*       Help icon and help popups                   */
+/* ************************************************* */
+
+.slider-container .help-icon {
+    flex-basis: 20px;
+}
 
 .presetHeader .help-icon {
     margin-left:6em;
-    flex-basis: 20px;
-}
-.presetHeader output {
-    flex-basis: 6em;
-    text-align: center;
-    margin-left: 6px;
-}
-.slider-container .help-icon {
     flex-basis: 20px;
 }
 
@@ -252,15 +323,46 @@ input[type="range"]:focus {
 }
 
 
-.slider-container .blurredDisabled{
-    filter: blur(1px);
-    pointer-events: none !important;
-    opacity: 0.3;
+
+/* ************************************************* */
+/*       Canvases for diagrams                       */
+/* ************************************************* */
+
+#wavePreview{
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+   }
+#distortionPreview{
+    margin-top: 2em;
+    margin-bottom: 0.5em;
 }
-.presetHeader{
-    display: flex;
-    align-items: center;
+
+.waveformCanvas {
+    margin-bottom: 2em;
 }
+
+.blur {
+    filter: blur(4px);
+}
+
+.canvasHalfHeight {
+    height: 150px;
+}
+
+.tooltip{
+    padding : 10px;
+    background: white;
+    border : 1px solid black;
+    border-radius : 5px;
+}
+
+
+
+
+
+/* ************************************************* */
+/*       Spacing helpers                             */
+/* ************************************************* */
 
 .topSpaced{
     margin-top: 2em;
@@ -268,14 +370,20 @@ input[type="range"]:focus {
 .bottomSpacedSlight{
     margin-bottom: 0.5em;
 }
-.topSpacedImportant{
-    margin-top: 1em !important;
-}
-
 .bottomSpaced{
     margin-bottom: 2em;
 }
 
+
+
+/* ************************************************* */
+/*       Individual section Preset handling          */
+/* ************************************************* */
+
+.presetHeader{
+    display: flex;
+    align-items: center;
+}
 .presetHeader h4{
     flex-basis: 20%;
 }
@@ -304,14 +412,12 @@ input[type="range"]:focus {
     padding-bottom: 0.5em;
 }
 
-#wavePreview{
- margin-top: 2em;
- margin-bottom: 0.5em;
-}
-#distortionPreview{
- margin-top: 2em;
- margin-bottom: 0.5em;
-}
+
+
+
+/* ************************************************* */
+/*       Diagram/Preview option buttons              */
+/* ************************************************* */
 
 .previewButtons {
     margin-top: 0em;
@@ -350,12 +456,6 @@ input[type="range"]:focus {
     font-size: x-small;
 }
 
-#notesEdit{
-    margin-left: 1em;
-    flex-basis: 100%;
-    border: none;
-}
-
 .button-selected {
     background-color: #007B00; 
     color: white; 
@@ -370,11 +470,17 @@ input[type="range"]:focus {
 }
 
 
-.tooltip{
-    padding : 10px;
-    background: white;
-    border : 1px solid black;
-    border-radius : 5px;
+
+
+
+/* ************************************************* */
+/*       Preset handling                             */
+/* ************************************************* */
+
+#notesEdit{
+    margin-left: 1em;
+    flex-basis: 100%;
+    border: none;
 }
 
 #serverPresetList{
@@ -383,12 +489,12 @@ input[type="range"]:focus {
     padding-top: 0em;
 }
 
-#centerContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
 
+
+
+/* ************************************************* */
+/*        ABX testing panel layout             */
+/* ************************************************* */
 #abxTestContainer {
     width: 25em;
     background-color: var(--background-color);
@@ -402,33 +508,64 @@ input[type="range"]:focus {
     margin-bottom: 1em;
     text-align: center;
 }
-#abxButtons {
+#abxTestContainer h3 {
+    text-align: center;
+}
+.abxButtons {
     display: flex;
     justify-content: space-evenly;
-    margin-top: 2em;
-    margin-bottom: 3em;
+    margin-top: 1em;
+    margin-bottom: 1em;
 }
 
-.fftPlayButtons {
-    flex-basis: 80%;
-    display: flex;
-    justify-content: space-evenly;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    margin-left: auto;
-    margin-right: auto;
+.abxAnswerButtons {
+    max-height: 0;
+    opacity: 0  ;
+    overflow: hidden;
+    transition: opacity 0.2s ease-out;
+    transition: max-height 0.2s ease-out;
 }
-.fftPlayButton{
-    margin-top: 0em !important;
-    margin-bottom: 0em !important;
+
+.abxAnswerButtons.show {
+    opacity: 1 ;
+    max-height: 300px;
 }
-.bordered {
-    border: 1px solid;
-    border-color: var(--border-color);
-    border-radius: 10px;
-    margin: 10px;
+
+.abxTestButtons {
+    max-height: 0;
+    opacity: 0  ;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    transition: opacity 0.2s ease-out;
+}
+
+.abxTestButtons.show {
+    opacity: 1 ;
+    max-height: 200px;
+}
+
+.testSoundControls {
+
+    margin: 0px;
     padding: 10px;
 }
+
+.centerContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+
+
+
+
+
+/* ************************************************* */
+/*        Pinning containers to top and bottom       */
+/* ************************************************* */
 
 :is(.stickyTop, .stickyBottom){
     position: sticky;
@@ -481,46 +618,13 @@ input[type="range"]:focus {
 }
 
 
-.testSoundControls {
 
-    margin: 0px;
-    padding: 10px;
-}
 
-.bordered h3{
-   margin-top: 0.1em; 
-}
 
-.bordered h4{
-   margin-top: 1.5em; 
-   margin-bottom: 1em;
-}
-.bordered button{
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 2em;
-    margin-bottom: 1em;
-}
-.bordered button:not(.previewButton){
-    border-color: var(--border-color);
-    background-color: var(--background-color);
-    color: var(--text-color);
-}
 
-.waveformCanvas {
-    margin-bottom: 2em;
-}
-
-.blur {
-    filter: blur(4px);
-}
-
-.paragraphReport{
-    text-align: center;
-    color: #6b8b6b;
-}
-
+/* ************************************************* */
+/*                Collapsing bordered container      */
+/* ************************************************* */
 
 .collapsible-content {
     max-height: 0;
@@ -551,3 +655,196 @@ input[type="range"]:focus {
     transform: rotate(180deg);
 }
 
+
+
+
+
+
+
+/* ************************************************* */
+/*                MUSHRA Related                     */
+/* ************************************************* */
+
+
+.mushraModalBackground {
+    display: none;
+    position: fixed;
+    flex-direction: column;
+    align-items: center;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
+  
+  .mushraModal {
+    display: none;
+    position: fixed;
+    flex-direction: column;
+    max-width: 1000px;
+    max-height: 800px;
+    width: 70%;
+    height: 90%;
+    top:5%;
+    background-color: var(--background-color);
+    z-index: 1001;
+  }
+
+
+  
+  .mushraModalBackground .presetHeader h3{
+    margin-top: 0.1em; 
+    flex-basis: 40%;
+ }
+
+
+  .mushraModal #mushraOutputCanvas{
+    height:50px;
+  }
+  
+  .mushraModal #mushraResultCanvas{
+    height:500px;
+  }
+  .mushraModal .canvasBox{
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .mushraModal button.active{
+    background-color: #007b008e;
+    color: white;
+  }
+  
+  .mushraModal .PresetButtons button{
+    width:80px;
+  }
+  .mushraModal .PresetButtons button.blurredDisabled{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+  }
+.vertical-slider-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0px;
+  }
+  
+.vertical-slider-container.blurredDisabled input[type="range"]{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+}
+
+.vertical-slider-container.blurredDisabled button{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+}
+.vertical-slider-container.blurredDisabled label{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+}
+
+.vertical-slider-container.blurredDisabled p{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+}
+
+  .vSlideGroup{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    width: 100px;
+    height: 300px;
+  }
+
+  .vSlideGroup .score{
+    text-align: center;
+    margin-top: 0.8em;
+    margin-bottom: 0.2em;
+    flex-basis: 4% ;
+  }
+
+  .vSlideGroup button{
+    flex-basis: 16% ;
+    margin-bottom: 10px;
+    width: 58px;
+  }
+
+
+  .vSlideGroup.blurredDisabled  input[type="range"]{
+    filter: blur(1px);
+    pointer-events: none !important;
+    opacity: 0.3;
+}
+
+  input[type="range"].vertSlider {
+    flex-basis: 80% ;
+    -webkit-appearance: none;
+    width: 170px;
+    height: 20px;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    margin: 10px;
+    transform: rotate(-90deg);
+  }
+  
+  .vertSlider:hover {
+    opacity: 1;
+  }
+  
+  .vertSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--thumb-color);
+    cursor: pointer;
+  }
+  
+  .vertSlider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--thumb-color);
+    cursor: pointer;
+  }
+
+  .mScale{
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    flex-basis: 80% ;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+  }
+.mScale p{
+    margin-top: auto;
+    margin-bottom: auto;
+    font-size: x-small;
+    text-align: center;
+    opacity: 0.7;
+}
+.mScale p span{
+    background-color: var(--background-color);
+    padding: 0 2px;
+}
+.mScale .mValue::before{
+    content: "";
+    display: block;
+    height: 1px;
+    background-color: var(--text-color);; /* Change color as needed */
+    position: relative;
+    top: 50%;
+    z-index: -100;
+    opacity: 0.7;
+}

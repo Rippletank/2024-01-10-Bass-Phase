@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams} from './naughtyFilter.js';
+import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams, do12dbFilter} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -170,18 +170,15 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     //Normalise buffers - but scale by the same amount - find which is largest and scale to +/-0.99
     let scale = Math.min(scaleA, scaleB);
 
-    //Normalise here to provide just under full scale input to ditherSimulation functions
     if (!isNormToLoudest && scaleA != scaleB){
+        scaleBuffer(audioBufferA.buffer, scaleA);
+        scaleBuffer(audioBufferB.buffer, scaleB);
         if (scale==scaleA) 
         {
-            scaleBuffer(audioBufferA.buffer, scaleA);
-            scaleBuffer(audioBufferB.buffer, scaleB);
-            scale = scaleB;//
+            scale = scaleB;
         }
         else 
         {
-            scaleBuffer(audioBufferB.buffer, scaleB);
-            scaleBuffer(audioBufferB.buffer, scaleB);
             scale = scaleA;
         }
     }
@@ -214,6 +211,43 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
     }
     return audioBufferNull;
 }
+
+
+const badFilterCutoff = 2000;//Hz
+function scaleBufferList(audioBuffers, sampleRate, isNormToLoudest){
+    let scale = 10000;
+    audioBuffers.forEach((audioBuffer)=>{
+        audioBuffer.scale =0.99 /Math.max(audioBuffer.maxValue, 0.000001);
+        if (audioBuffer.scale<scale) scale = audioBuffer.scale;
+    });
+
+    //Normalise here to provide just under full scale input to ditherSimulation functions
+
+    if (isNormToLoudest){
+        audioBuffers.forEach((audioBuffer)=>{
+            scaleBuffer(audioBuffer.buffer, scale);
+        });
+    }
+    else{
+        audioBuffers.forEach((audioBuffer)=>{
+            scaleBuffer(audioBuffer.buffer, audioBuffer.scale);
+        });
+    }
+    
+
+    audioBuffers.forEach((audioBuffer)=>{
+        if (audioBuffer.patches[0].badFilter)do12dbFilter(audioBuffer.buffer.data[0], sampleRate,audioBuffer.patches[0].frequency + badFilterCutoff);
+        ditherSimulation(audioBuffer.buffer.data[0], audioBuffer.patches[0]);
+        scaleSquaredSingleBuffer(audioBuffer.buffer.data[0], audioBuffer.patches[0].attenuation, audioBuffer.patches[0].attenuationPhase);
+        if (audioBuffer.buffer.numberOfChannels>1){
+            if (audioBuffer.patches[1].badFilter)do12dbFilter(audioBuffer.buffer.data[1], sampleRate,audioBuffer.patches[1].frequency + badFilterCutoff);
+            ditherSimulation(audioBuffer.buffer.data[1], audioBuffer.patches[1]);
+            scaleSquaredSingleBuffer(audioBuffer.buffer.data[1], audioBuffer.patches[1].attenuation, audioBuffer.patches[1].attenuationPhase);
+        }
+    });
+}
+
+
 
 //Takes an array of patches and returns the maximum delay in samples for the non-fundamental harmonics
 //Quick calc of delay to allow coordination between sound A and sound B even if in stereo - so the null test is valid for any phase offset
@@ -811,7 +845,7 @@ function AddInharmonics(patch, sampleRate, b, envelopeBuffer, delayN){
                 const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
                 b6 = white * 0.115926;
             
-                b[i] = l* (pinkFactor * pink + (1 - pinkFactor) * white * 4);
+                b[i] += l* (pinkFactor * pink + (1 - pinkFactor) * white * 4);
             }
         }
     }
@@ -865,6 +899,7 @@ export {
     setSampleBuffers,
     getAudioBuffer, 
     scaleAndGetNullBuffer,
+    scaleBufferList,
     preMaxCalcStartDelay,
     preMaxFilterDelay,
 

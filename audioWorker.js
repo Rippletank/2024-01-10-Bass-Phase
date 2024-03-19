@@ -20,6 +20,7 @@ import {
     preMaxFilterDelay,
     
     scaleAndGetNullBuffer,
+    scaleBufferList,
 
     getPreview,   
     getDigitalPreview, 
@@ -50,6 +51,9 @@ self.onmessage = function(event) {
                 break;
             case 'getAudioBuffers':
                 doAudioBuffer(data.patchesToUse, data.sampleRate, data.isStereo , data.isNormToLoudest);
+                break;
+            case 'getMushraBuffers':
+                doMushraBuffers(data.patchList, data.sampleRate, data.isNormToLoudest);
                 break;
             case 'getPreview':
                 doPreview(data.referencePatch, data.filterPreviewSubject , data.sampleRate);
@@ -135,8 +139,6 @@ function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
     //let t = performance.now();
     let patchList = [patchesToUse.A, patchesToUse.AR, patchesToUse.B, patchesToUse.BR]
     const maxPreDelay = preMaxCalcStartDelay(patchList, sampleRate);
-
-    //check each patch in patchList to see if any have patch.naughtyFilterGain!=0
     let maxFilterDelay =  preMaxFilterDelay(patchList, sampleRate);
 
     let bufferA = getAudioBuffer(
@@ -162,7 +164,37 @@ function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
     getAudioBufferTransferList(transferList, bufferB)
     getAudioBufferTransferList(transferList, bufferNull)
 
-    self.postMessage({ bufferA, bufferB, bufferNull }, transferList);
+    self.postMessage({ type:"ABN", bufferA, bufferB, bufferNull }, transferList);
+    //console.log('Audio buffer time:', performance.now()-t);
+}
+
+function doMushraBuffers(patchList, sampleRate, isNormToLoudest) {
+    //let t = performance.now();
+
+    const fullBuffers = [];
+    let transferList = [    ];
+    patchList.forEach((patchPair)=>{
+        let b = getAudioBuffer(
+            sampleRate, 
+            patchPair[0],
+            patchPair[1], //May be null
+            0,
+            0
+        );
+        b.patches = patchPair;
+        fullBuffers.push(b);
+    });
+
+
+    scaleBufferList(fullBuffers, sampleRate, isNormToLoudest)
+
+    let buffers =[]
+    fullBuffers.forEach((b)=>{ 
+        buffers.push(b.buffer.data)
+        b.buffer.data.forEach((b)=>transferList.push(b.buffer));
+    });
+
+    self.postMessage({ type:"Mushra", buffers }, transferList);
     //console.log('Audio buffer time:', performance.now()-t);
 }
 

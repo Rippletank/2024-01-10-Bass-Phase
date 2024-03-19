@@ -53,9 +53,6 @@
         <option value="1">
     </datalist>
 
-    <!--**********************************************************************-->
-    <!--*****************  Start ABX Setup and Test  *************************-->
-    <!--**********************************************************************-->
 
     <div class="bordered">
         <h3>Sound A</h3>
@@ -83,6 +80,9 @@
         </div>
     </div>
 
+    <!--**********************************************************************-->
+    <!--*****************        Transport           *************************-->
+    <!--**********************************************************************-->
     <div class="canBeStickyTop stickyTop">
         <div class="bordered">    
             <div class="flexHeader">                           
@@ -100,16 +100,27 @@
     <br>
 
 
+    <!--**********************************************************************-->
+    <!--*****************  Start ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
     <div class="bordered">
-        <div id="centerContainer">
+        <div class="centerContainer">
             <div id="abxTestContainer">
                 <h3>ABX test</h3>
                 <ol id="results"></ol>
-                <button id="abxTest" class="testCenter">Test</button>
-                <div id="abxButtons"  style="display: none;">
-                    <button id="buttonA">X is A</button>
-                    <button id="play">Play X</button>
-                    <button id="buttonB">X is B</button>
+                <div class="abxAnswerButtons " >
+                    <div class="abxButtons">
+                        <button class="PlayA">Play A</button>
+                        <button id="play">Play X</button>
+                        <button class="PlayB">Play B</button>
+                    </div>
+                    <div class="abxButtons">
+                        <button id="buttonA">X is A</button>
+                        <button id="buttonB">X is B</button>
+                    </div>
+                </div>
+                <div class="abxTestButtons show">
+                    <button id="abxTest" class="testCenter">Test</button>
                 </div>
                 <p id="stats" class="testCenter"></p>
                 <br>
@@ -118,7 +129,150 @@
         </div>
     </div>
 
+    <!--**********************************************************************-->
+    <!--*******************  End ABX Setup and Test  *************************-->
+    <!--**********************************************************************-->
+
+
+
     
+    <!--**********************************************************************-->
+    <!--*****************        MUSHRA Test         *************************-->
+    <!--**********************************************************************-->
+    <div class="bordered">
+        <div class="centerContainer">
+            <div id="abxTestContainer">
+                <h3>MUSHRA Style test</h3>
+                <button id="mushraTest" class="testCenter">Start</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="mushraModalBackground" class="mushraModalBackground">
+        <div id="mushraModal" class="mushraModal bordered">
+            <div class="presetHeader">
+                <h3>MUSHRA-like Testing</h3>
+                <div class="PresetButtons">            
+                </div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>Sound A is considered the reference and Sound B should be set so that the quality difference is clearly but just audible.</p>
+                    <p>Several sounds are created varying between A and b, as well as an "anchor" sound that is reduce quality.</p>
+                    <p>Rank each sound according to the perceived quality.</p>
+                    <p>The graph is for feedback that a sound is playing but noise is deliberately added to obscure the waveforms, so they won't match.</p>
+                    <p>This is only a proof of concept and isn't meant for serious scientific research.</p>
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
+                </div>
+            </div>
+            <div class="canvasBox">
+                <canvas id="mushraOutputCanvas" width ="2000" height="100"></canvas>
+            </div>
+            <div class="vertical-slider-container blurredDisabled">
+                <div id="mGroup0" class="vSlideGroup">
+                    <button>A</button>
+                    <p class="score">Score</p>
+                    <div class="mScale">
+                        <p class="mValue"><span>100</span></p>
+                        <p>Excellent</p>
+                        <p class="mValue"><span>80</span></p>
+                        <p>Good</p>
+                        <p class="mValue"><span>60</span></p>
+                        <p>Fair</p>
+                        <p class="mValue"><span>40</span></p>
+                        <p>Poor</p>
+                        <p class="mValue"><span>20</span></p>
+                        <p>Bad</p>
+                        <p class="mValue"><span>0</span></p>
+                    </div>
+                </div>
+                <div id="mGroup1" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider1" class="score">100</label>
+                    <input id="mSlider1" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup2" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider2" class="score">100</label>
+                    <input id="mSlider2" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup3" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider3" class="score">100</label>
+                    <input id="mSlider3" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup4" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider4" class="score">100</label>
+                    <input id="mSlider4" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup5" class="vSlideGroup ">
+                    <button>Play</button>
+                    <label for="mSlider5" class="score">100</label>
+                    <input id="mSlider5" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup6" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider6" class="score">100</label>
+                    <input id="mSlider6" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3></h3>
+                <div class="PresetButtons">                
+                    <button id="startMushra">Start</button>
+                    <button id="nextMushra">Next</button>
+                    <button id="pauseMushra">Pause</button>
+                    <button id="resultsMushra">Results</button>
+                </div>
+                <h3>  </h3>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button class="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
+
+        </div>
+        <div id="mushraResultsModal" class="mushraModal bordered" >
+            <div class="presetHeader">
+                <h3>MUSHRA-like Testing - Results </h3>
+                <div class="PresetButtons">            
+                </div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>The heat map show's where your scores were, the black dots show the mean score. </p>
+                    <p>The thin blue line is the line of best fit. The wide band shows the expected line.</p>
+                    <p>More analysis metrics are being considered....</p>
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
+                </div>
+            </div>
+            <div class="canvasBox">
+                <canvas id="mushraResultCanvas" width ="2000" height="100"></canvas>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button class="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
+        </div>
+    </div>
+
+
+    
+    <!--**********************************************************************-->
+    <!--*****************        Notes               *************************-->
+    <!--**********************************************************************-->
+
     <br>
     <div class="bordered">
         <div class ="previewButtons">
@@ -129,6 +283,10 @@
         </div>
     </div>
     
+    <!--**********************************************************************-->
+    <!--*****************        Setup               *************************-->
+    <!--**********************************************************************-->
+
     <div class="bordered">
         <div class="presetHeader">
             <h3>Setup </h3>
@@ -183,12 +341,11 @@
             </div>
         </div>
     </div>
-
-    <!--**********************************************************************-->
-    <!--*******************  End ABX Setup and Test  *************************-->
-    <!--**********************************************************************-->
     
 
+    <!--**********************************************************************-->
+    <!--*****************        Additive Tone       *************************-->
+    <!--**********************************************************************-->
 
     <div class="bordered" id="CommonSettings">
         <div class="collapsible-header"><span class="header-text">Additive Tone Synthesis</span><span class="chevron">&#x25BC;</span></div>
@@ -353,6 +510,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************        Additive Filter     *************************-->
+    <!--**********************************************************************-->
     <div class="bordered" id="FilterSetup">
         <div class="collapsible-header"><span class="header-text">Additive Filter</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">
@@ -423,6 +583,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************        Additive Phase Shift  ***********************-->
+    <!--**********************************************************************-->
 
     <div class="bordered" id="TestSetup">
         <div class="collapsible-header"><span class="header-text">Additive Phase shifts</span><span class="chevron">&#x25BC;</span></div>
@@ -463,6 +626,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************    Samples and Inharmonics   ***********************-->
+    <!--**********************************************************************-->
     <div class="bordered" id="SampleSetup">
         <div class="collapsible-header"><span class="header-text">Samples and Inharmonic Tones</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">
@@ -564,6 +730,9 @@
     </div>
  
  
+    <!--**********************************************************************-->
+    <!--*****************            Distortion        ***********************-->
+    <!--**********************************************************************-->
 
     <div class="bordered" id="DistortionSetup">
         <div class="collapsible-header"><span class="header-text">Distortion and oversampling</span><span class="chevron">&#x25BC;</span></div>
@@ -751,6 +920,9 @@
     </div>
 
 
+    <!--**********************************************************************-->
+    <!--*****************      Digital conversion      ***********************-->
+    <!--**********************************************************************-->
     <div class="bordered"  id="DigitalSetup">   
         <div class="collapsible-header"><span class="header-text">Digital Converters</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">     
@@ -921,6 +1093,13 @@
             </div>
         </div>
     </div>
+
+
+
+    <!--**********************************************************************-->
+    <!--*****************      Naughty Filter          ***********************-->
+    <!--**********************************************************************-->
+
     <div class="bordered"  id="naughtyFilter">   
         <div class="collapsible-header"><span class="header-text">Naughty Filter</span><span class="chevron">&#x25BC;</span></div>
         <div class="collapsible-content">     
@@ -993,6 +1172,15 @@
         </div>
     </div>
 
+
+
+
+    <!--**********************************************************************-->
+    <!--*****************      Web Audio FFT           ***********************-->
+    <!--**********************************************************************-->
+
+
+
     <div class="canBeSticky">
         <div class="bordered">
             <div class="presetHeader">
@@ -1018,6 +1206,12 @@
             </div>
         </div>
     </div>
+
+
+
+    <!--**********************************************************************-->
+    <!--*****************      Detailed  FFT           ***********************-->
+    <!--**********************************************************************-->
 
     <div class="canBeSticky">
         <div class="bordered">
@@ -1069,39 +1263,13 @@
             </div>
         </div>
     </div>
-<!-- 
-
-    <div class="bordered">
-        <h3>Sound A</h3>
-        <div class="canvasBox">
-            <canvas id="waveformA"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <div class="testSoundControls" id="SoundASetup">
-            <h3 class="stereoLabel hideForMono">Left:</h3>
-        </div>
-        <div class="testSoundControls hideForMono" id="SoundARSetup">
-            <h3 class="stereoLabel hideForMono">Right:</h3>
-        </div>
-        <button class="playSoundA PlayA">Play A</button>
-    </div>
 
 
 
-    <div class="bordered">
-        <h3>Sound B</h3>
-        <div class="canvasBox">
-            <canvas id="waveformB"  class="waveformCanvas fullwave" width ="2000" height="500"></canvas>
-        </div>
-        <div class="testSoundControls" id="SoundBSetup">
-            <h3 class="stereoLabel hideForMono">Left:</h3>
-        </div>
-        <div class="testSoundControls hideForMono" id="SoundBRSetup">
-            <h3 class="stereoLabel hideForMono">Right:</h3>
-        </div>
-        <button class="playSoundB PlayB">Play B</button>
-    </div> -->
 
-
+    <!--**********************************************************************-->
+    <!--*****************         NULL                 ***********************-->
+    <!--**********************************************************************-->
 
     <div class="bordered">
         <div class="presetHeader">
@@ -1119,6 +1287,9 @@
         </div>
     </div>
 
+    <!--**********************************************************************-->
+    <!--*****************         Notes                ***********************-->
+    <!--**********************************************************************-->
 
 
     <div id="Notes1" class="bordered">
@@ -1167,6 +1338,7 @@
     <!-- <script type="module" src="audioWorker.js"></script> -->
     <!-- <script type="module" src="naughtyFilter.js"></script> -->
     <!-- <script type="module" src="audio.js"></script> -->
+    <!-- <script type="module" src="mushraWorklet.js"></script> -->
 
     <!--Painting buffers/FFTs onto Canvas-->
     <!-- <script src="painting.js"></script> -->
