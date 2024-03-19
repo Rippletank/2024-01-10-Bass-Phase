@@ -262,10 +262,10 @@ function sliderFunction(scoreElement, index, value) {
 function shuffleMappings(){
     let newMapping = new Array(numberOfSliders).fill(0);
     newMapping.forEach((v,i)=>newMapping[i]=i);
-    // for (let i = newMapping.length - 1; i > 0; i--) {
-    //     const j = Math.floor(Math.random() * (i + 1));
-    //     [newMapping[i], newMapping[j]] = [newMapping[j], newMapping[i]];
-    // }
+    for (let i = newMapping.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newMapping[i], newMapping[j]] = [newMapping[j], newMapping[i]];
+    }
     mapping = newMapping;
     values = new Array(numberOfSliders).fill(0);
 
