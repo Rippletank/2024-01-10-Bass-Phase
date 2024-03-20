@@ -325,6 +325,12 @@ previewButtons.forEach(function(button) {
             });
             button.isChecked =()=>false;
             break;
+        case 'z'://reset
+            button.addEventListener('click', function() {
+                loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), null, null, []);
+            });
+            button.isChecked =()=>false;
+            break;
 
     }
 });
