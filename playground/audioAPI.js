@@ -113,7 +113,7 @@ function ensureAudioContext(){
     if (!audioContext){
         //Will throw a warning in some browsers if not triggered by a user action
         //On page start up this is called anyway to get the playback samplerate to use for buffer generation
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({sampleRate: 96000});
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate:48000}); 
         console.log('Sample rate: ' + audioContext.sampleRate + 'Hz')
         analyserNode = audioContext.createAnalyser();//blackman window with default smoothing 0.8
         analyserNode.fftSize = 4096*8;

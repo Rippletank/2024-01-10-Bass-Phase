@@ -3,69 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
+    <title>Baryon Beach - Audio Experiments</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
         <nav>
-            <ul>
+            <!-- <ul>
                 <li><a href="#">Home</a></li>
                 <li><a href="#">About</a></li>
                 <li><a href="#">Services</a></li>
                 <li><a href="#">Contact</a></li>
-            </ul>
+            </ul> -->
         </nav>
     </header>
 
     <main>
         <section class="hero">
-            <h1>Welcome to My Website</h1>
-            <p>This is a simple landing page created with HTML and CSS.</p>
-            <a href="#" class="cta-button">Learn More</a>
+            <h1>Audio Experiments</h1>
+            <p>Various browser based audio apps, to satisfy curiosity.</p>
         </section>
 
         <section class="feature">
-            <h2>Feature 1</h2>
-            <p>A brief description of Feature 1.</p>
-        </section>
-
-        <section class="feature">
-            <h2>Feature 2</h2>
-            <p>A brief description of Feature 2.</p>
+            <h2>Bad Audio Playground</h2>
+            <p>Simulations of phase-delay, saturation, inter modulation distortion, over-sampling, jitter, dither and filter pre-ringing. </p>
+            <p>Lots of controls and interactive graphs. Exaggerate settings to help to hear what they sound like.</p>
+            <p>Do ABX or MUSHRA-like testing to test your ears and your setup.</p>
+            <a href="./playground/index.html" class="cta-button">To Bad Audio</a>
             <div class="card-container">
                 <div class="card" onclick="handleCardClick('quantisation')">
-                    <img src="card-image.jpg" alt="Card Image">
+                    <img src="./img/dither.png" alt="Card Image">
                     <div class="card-content">
                         <h3>Quantisation</h3>
                         <p>What difference does dither make as bit depth is reduced and what kinds of dither are there?</p>
                     </div>
                 </div>
                 <div class="card" onclick="handleCardClick('aliasing')">
-                    <img src="card-image.jpg" alt="Card Image">
+                    <img src="./img/aliasing.png" alt="Card Image">
                     <div class="card-content">
                         <h3>Aliasing</h3>
                         <p>At what point does aliasing become audible and what does it sound like?</p>
                     </div>
                 </div>
                 <div class="card" onclick="handleCardClick('default')">
-                    <img src="card-image.jpg" alt="Card Image">
+                    <img src="./img/default.png" alt="Card Image">
                     <div class="card-content">
                         <h3>Bass Phase</h3>
                         <p>Is a delay in the fundamental harmonic of a tone audible? Is this related to "timing" or "speed"?</p>
                     </div>
                 </div>
             </div>
+            <p>Bad Audio is currently set to work at 48000Hz - to reduce processing load.</p>
         </section>
 
         <section class="feature">
             <h2>Feature 3</h2>
             <p>A brief description of Feature 3.</p>
         </section>
+        
+        <section class="band">
+            <div class="notes">
+                <h2>Background</h2>
+                <div class="notes-content">
+                    <p>Built using plain javascript and no frameworks other than built-in browser features like Web Audio Api.</p>
+                    <p>Algorithms and processing worked out from first principles or primary sources, that's part of the fun. </p>
+                    <p>Code is documented with references to educational and academic references, just inspect to find out more.</p>
+                    <p>I am not an expert. Let me know if anything there are any mistakes.</p>
+                    <p>Copilot, Chat-GPT and Claude.ai used to help with mundane tasks like html and css but also to help answer questions about algorithms.</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer>
-        <p>&copy; 2024 My Website. All rights reserved.</p>
+        <!-- <p>&copy; 2024 My Website. All rights reserved.</p> -->
     </footer>
 
     <script>

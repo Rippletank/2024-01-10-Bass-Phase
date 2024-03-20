@@ -152,7 +152,7 @@ function getAudioBuffer(
 
             
             envelopeBuffers.push(envelopeBuffer);
-            filters.push(filter);
+            if (filter)filters.push(filter);
         }
       return {
             buffer:audioBuffer,
