@@ -21,32 +21,7 @@
 import { smallestLevel } from "./defaults.js";
 
 
-let isDarkMode = localStorage.getItem('isDarkMode') === 'true';
-function toLightMode(body, toLightMode){
-    body = body ?? document.body;
-    if (toLightMode) {
-        isDarkMode = false;
-        body.setAttribute('data-theme', 'light');
-    } else {
-        isDarkMode = true;
-        body.setAttribute('data-theme', 'dark');
-    }
-    localStorage.setItem('isDarkMode', isDarkMode);
-    fftFill('fftCanvas');;
-    return isDarkMode;
-}
-    
-toLightMode(null, !isDarkMode)
-
-function getColor(r,g,b){
-    return isDarkMode ?`rgb(${255-r},${255-g},${255-b})` : `rgb(${r},${g},${b})`;
-}
-function getColorA(r,g,b,alpha){
-    return isDarkMode ?`rgba(${255-r},${255-g},${255-b},${alpha})` : `rgba(${r},${g},${b},${alpha})`;
-}
-function getGreyColorA(shade, alpha){
-    return isDarkMode ? `rgba(${255-shade},${255-shade},${255-shade},${alpha})` : `rgba(${shade},${shade},${shade},${alpha})`;
-}
+import { getGreyColorA, getColorA, getColor } from "./colors.js";
 
 let useFFT = true;
 
@@ -58,6 +33,7 @@ function fftFade(canvasId){
     ctx.fillStyle = getGreyColorA(240, 0.05);
     ctx.fillRect(0,0,w,h);  
 }
+
 
 
 function fftFill(canvasId){
@@ -1399,9 +1375,6 @@ function toggleUseFFT(){
 }
 
 export {
-    toLightMode, 
-    getColor,
-    getColorA,
 
     getCanvasTooltips,
 

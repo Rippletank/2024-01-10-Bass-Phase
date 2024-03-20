@@ -26,7 +26,6 @@
 
 import { getDefaultPatch, getDefaultAPatch, getDefaultBPatch, defaultTestSubjectList, getMiniPresets } from './defaults.js';
 import { 
-    toLightMode,
     fftFill, 
     getUseFFT,
     toggleUseFFT,
@@ -35,6 +34,11 @@ import {
     detailedFFTGetMinDb, 
     detailedFFTSetMinDb 
 } from './painting.js';
+
+
+import {
+    toLightMode
+} from './colors.js'
 
 import {disableGroups, setValueFromPatch } from './guiValues.js';
 
@@ -60,7 +64,8 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { setupMushra, initMushra, shutDownMushra, repaintMushra } from './mushra.js';
+import { shutDownMushra, repaintMushra } from './mushra.js';
+import { doStartMushra, doInitMushra } from './badMushra.js';
 
 
 
@@ -319,6 +324,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 let body = document.body;
                 let isDarMode = toLightMode(body, body.getAttribute('data-theme') === 'dark');
+                fftFill('fftCanvas');
                 setModeText(this, isDarMode);
                 updateDisplay();
                 repaintDetailedFFT();
@@ -1345,11 +1351,11 @@ document.getElementById('mushraTest').addEventListener('click', function() {
     document.getElementById('mushraModal').style.display = 'flex';
     document.getElementById('mushraModalBackground').style.display = 'flex';
     document.getElementById('mushraResultsModal').style.display = 'none';
-    initMushra();
+    doInitMushra();
   });
   document.getElementById('startMushra').addEventListener('click', function() {
     let cachedPatches = getCachedPatches();
-    setupMushra(
+    doStartMushra(
         [
             cachedPatches.A, 
             flags.isStereo ? cachedPatches.AR : null, 

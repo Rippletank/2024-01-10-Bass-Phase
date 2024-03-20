@@ -4,13 +4,14 @@ class MyAudioProcessor extends AudioWorkletProcessor {
     constructor() {
       super();
 
-      console.log("MushraPlayer constructor");
+      //console.log("MushraPlayer constructor");
       this.numberOfOutputs = 0;
       this.numberOfOutputChannels = 0;
       this.outputBufferSize = 0;
 
       this.outBufferCount = 0;
       this.processCalls=0;
+      
       this.playList = [];
       this.sounds = [];
 
@@ -176,4 +177,4 @@ class MyAudioProcessor extends AudioWorkletProcessor {
 
   }
   
-  registerProcessor("mushraPlayer", MyAudioProcessor);
+  registerProcessor("wavePlayer", MyAudioProcessor);
