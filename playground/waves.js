@@ -14,7 +14,7 @@
 
 //Duplicated with GUI, but this is the audio engine worker side - allow browser to handle duplication via caching?
 let serverWaveList = [];
-fetch('/waves/waveList.json')
+fetch('./waves/waveList.json')
     .then(response => response.json())
     .then(list => {
         if (!Array.isArray(list)) throw new Error('Wave List is not an array');
@@ -106,7 +106,7 @@ export function fetchWavesByName(names, callback){
         // Fetch the audio file
         let name = names[i];
         if (!waveArray[name]){
-            fetch('/waves/' + name + '.wav')
+            fetch('./waves/' + name + '.wav')
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
                 .then(audioBuffer => {
@@ -133,13 +133,14 @@ export function fetchWavesByName(names, callback){
 export function fetchWaveByName(name, callback){
     if (!name || name=="" || name=="null"){
         callback(null, false);
+        return;
     }
     if (checkHasAllWavesByName([name])){
         callback(getWaveOrNullByName(name), false);
         return;
     }
     if (!waveArray[name]){
-        fetch('/waves/' + name + '.wav')
+        fetch('./waves/' + name + '.wav')
             .then(response => response.arrayBuffer())
             .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
             .then(audioBuffer => {

@@ -357,6 +357,7 @@ function updatePreviewButtonState(){
 let canvases = document.querySelectorAll('canvas');
 window.addEventListener('resize', updateCanvas);
 function updateCanvas() {
+    adjustViewport();
     canvases.forEach((canvas)=>{
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
@@ -366,6 +367,21 @@ function updateCanvas() {
     repaintDetailedFFT();
     repaintMushra();
 }
+
+function adjustViewport() {
+    var viewportMeta = document.getElementById('viewport-meta');
+    var isMobile = window.matchMedia('(max-width: 600px)').matches;
+    
+    if (isMobile) {
+        viewportMeta.setAttribute('content', 'width=600, initial-scale=1'); //basically stop it zooming in on mobile
+    } else {
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateCanvas);
+
+
 updateCanvas();
 
 const pinSVG = '<svg width="100%" height="100%" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">'
@@ -424,6 +440,13 @@ fftFill("fftCanvas");
 //Generally methods for sliders and preset buttons
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+
+
+
+
+
+
 //Ids of div sections that contain sliders and should be checked and loaded
 const commonSectionNames = [
     'CommonSettings', 
@@ -448,7 +471,6 @@ function initSliders(){
     updatePreviewButtonState();
     
     loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), null, null, defaultTestSubjectList);
-
 
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
@@ -757,7 +779,7 @@ function importCombinedPatchFromPatch(patch){
     const notesEdit = document.getElementById('notesEdit');
     notesEdit.value = patch.notes ?? "";
     
-    setSampledWave(patch.sampleWave, false);//If already loaded, will be instant so updateBufferEvenIfInstant=false - allows to avoid calculation but will do calc if fetch is needed since it will be delayed
+    doSetSampledWave(patch.sampleWave, false);//If already loaded, will be instant so updateBufferEvenIfInstant=false - allows to avoid calculation but will do calc if fetch is needed since it will be delayed
 
     loadPatches(patchC, patchA, patchB, patchAR, patchBR, patch.testSubjects ?? defaultTestSubjectList);
     updatePreviewButtonState();
@@ -846,7 +868,7 @@ function n_loadFromClipboard(loadProc) {
 //Server preset Patch list
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let serverPresetList = [];
-fetch('/presets/presetList.json')
+fetch('./presets/presetList.json')
     .then(response => response.json())
     .then(list => {
         if (!Array.isArray(list)) throw new Error('Preset list is not an array');
@@ -856,50 +878,55 @@ fetch('/presets/presetList.json')
             }
     })})
     .then(() => {
-        loadPresetListIntoDropdown('serverPresetList', serverPresetList);
+        loadPresetListIntoDropdown( serverPresetList);
+        loadParamsFromURL();
     })
     .catch((error) => {
         console.error('Error:', error);
     });
 
-function loadPresetListIntoDropdown(id, list) {
-    let select = document.getElementById(id);
-    select.innerHTML = '';
+let presetSelect = document.getElementById('serverPresetList');
+function loadPresetListIntoDropdown(list) {
+    presetSelect.innerHTML = '';
 
     let defOption = document.createElement('option');
     defOption.textContent = "Select Preset (from Server)";
     defOption.value = "";
-    select.appendChild(defOption);
+    presetSelect.appendChild(defOption);
 
     list.forEach(item => {
         let option = document.createElement('option');
         option.textContent = item.name;
         option.value = item.path;
-        select.appendChild(option);
+        presetSelect.appendChild(option);
     });
 
 
-    select.addEventListener('change', () => {
-        if (!select.value || select.value === "") return;
-        fetch(`/presets/${select.value}`)
-            .then(response => response.json())
-            .then(patch => {
-                importCombinedPatchFromPatch(patch)
-                console.log(patch);  
-            })
-            .catch((error) => {
-                console.error('Error fetching Preset List:', error);
-            });
+    presetSelect.addEventListener('change', () => {
+        if (!presetSelect.value || presetSelect.value === "") return;
+        loadPresetFromServer(presetSelect.value);
     });
 
 }
 
+function loadPresetFromServer(name){
+    fetch(`./presets/${name}`)
+    .then(response => response.json())
+    .then(patch => {
+        importCombinedPatchFromPatch(patch)
+        console.log("Patch loaded from server: " + name )
+        presetSelect.value = name;  
+    })
+    .catch((error) => {
+        console.error('Error fetching Preset List:', error);
+    });
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Wave file import 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let serverWaveList = [];
-fetch('/waves/waveList.json')
+fetch('./waves/waveList.json')
     .then(response => response.json())
     .then(list => {
         if (!Array.isArray(list)) throw new Error('Wave List is not an array');
@@ -909,41 +936,63 @@ fetch('/waves/waveList.json')
             }
     })})
     .then(() => {
-        loadWaveListIntoDropdown('serverWaveList', serverWaveList);
+        loadWaveListIntoDropdown(serverWaveList);
+        loadParamsFromURL();
     })
     .catch((error) => {
         console.error('Error fetching Wave List:', error);
     });
 
 
-    function loadWaveListIntoDropdown(id, list) {
-        let select = document.getElementById(id);
-        select.innerHTML = '';
-    
-        let defOption = document.createElement('option');
-        defOption.textContent = "Select Sample wave";
-        defOption.value = "";
-        select.appendChild(defOption);
-    
-        list.forEach(item => {
-            let option = document.createElement('option');
-            option.textContent = item;
-            option.value = item;
-            select.appendChild(option);
-        });
-    
-    
-        select.addEventListener('change', () => {
-            doSetSampledWave(select.value);
-        });
-    
-    }
+let waveSelect = document.getElementById('serverWaveList');
+function loadWaveListIntoDropdown(list) {
+    waveSelect.innerHTML = '';
 
-    let lastSetWave = null;
-    function doSetSampledWave(waveName){
-        lastSetWave = waveName;
-        setSampledWave(waveName);
-    }   
+    let defOption = document.createElement('option');
+    defOption.textContent = "Select Sample wave";
+    defOption.value = "";
+    waveSelect.appendChild(defOption);
+
+    list.forEach(item => {
+        let option = document.createElement('option');
+        option.textContent = item;
+        option.value = item;
+        waveSelect.appendChild(option);
+    });
+
+
+    waveSelect.addEventListener('change', () => {
+        doSetSampledWave(waveSelect.value);
+    });
+
+}
+
+let lastSetWave = null;
+function doSetSampledWave(waveName, updateBufferEvenIfInstant = true){
+    lastSetWave = waveName;
+    setSampledWave(waveName, updateBufferEvenIfInstant);
+    waveSelect.value = waveName;
+}   
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Load Parameters from URL
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let params = new URLSearchParams(window.location.search);
+
+function loadParamsFromURL(){    
+    if (serverWaveList.length>0 && serverPresetList.length>0){//Wait until both lists are loaded  
+        if (params.has('preset')) {
+            let preset = `${params.get("preset")}.json`;
+            if (serverPresetList.some((p)=> p.path === preset )){
+                loadPresetFromServer(preset)
+            }
+        }
+    }
+}
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

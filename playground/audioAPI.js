@@ -584,6 +584,7 @@ function setSampledWave(name, updateBufferEvenIfInstant = true){
     };
     if (!name || name=="" || name==null){
         callback(null, true);
+        return;
     }
     fetchWaveByName(name, callback);
 
