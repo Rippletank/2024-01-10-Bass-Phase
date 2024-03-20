@@ -684,6 +684,7 @@ input[type="range"]:focus {
     position: fixed;
     flex-direction: column;
     max-width: 1000px;
+    min-width: 600px;
     max-height: 800px;
     width: 70%;
     height: 90%;
@@ -692,6 +693,23 @@ input[type="range"]:focus {
     z-index: 1001;
   }
 
+
+  @media(max-width: 1000px){
+    .mushraModal {
+        padding: 5px;
+        margin: 5%;
+        width: 90%;
+    }
+  }
+
+
+  @media(max-width: 800px){
+    .mushraModal {
+        padding: 0px;
+        margin: 0px;
+        width: 100%;
+    }
+  }
 
   
   .mushraModalBackground .presetHeader h3{
@@ -764,6 +782,13 @@ input[type="range"]:focus {
     margin-bottom: 1em;
     width: 100px;
     height: 300px;
+  }
+
+  
+  @media(max-width: 800px){
+    .vSlideGroup {
+        width: 80px;
+    }
   }
 
   .vSlideGroup .score{
