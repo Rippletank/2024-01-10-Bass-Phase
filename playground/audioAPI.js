@@ -65,9 +65,9 @@ import {
     paintTHDGraph
 } from './painting.js';
 
-import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from './jitter.js';
+import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from '../sharedAudio/jitter.js';
 
-import {fetchWaveByName, setAudioContext} from './waves.js';
+import {fetchWaveByName, setAudioContext} from '../sharedGui/waves.js';
 
 
 let flags = {

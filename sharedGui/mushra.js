@@ -1,10 +1,16 @@
 
 
 import {getColor} from "./colors.js";
-
+import { 
+    initPlayerWorklet,
+    getWavePlayer, 
+    doPlaySound,
+    doPause,
+    logStatus,
+    doLoadPlayerWave } from "./wavePlayerLauncher.js";
 
 let audioContext = null;
-let myAudioProcessor = null;
+let myWavePlayer = null;
 
 
 
@@ -40,20 +46,20 @@ export function setNumberOfSliders(n){
 
 
 function playMushraSound(index) {
-    postWorkletMessage("playSound", {index:index});
+    doPlaySound(myWavePlayer, index);
 }
 
 export function reportMushra() {
-    postWorkletMessage("report", null);
+    logStatus(myWavePlayer);
 }
 
 export function shutDownMushra() {
     disableSliders();
     if (audioContext) {
         audioContext.close();
-        myAudioProcessor.disconnect();
+        myWavePlayer.disconnect();
         audioContext = null;
-        myAudioProcessor = null;
+        myWavePlayer = null;
         //cancelAnimationFrame(getfftFrameCall());
         //clearFFTFrameCall();
     }
@@ -63,15 +69,14 @@ export function shutDownMushra() {
 
 
 let waveLabels = [];
-export async function startAudio(buffers, labels) {   
-    myAudioProcessor = await createMyAudioProcessor();
-    if (!myAudioProcessor) {
+export async function startAudio(buffers, labels) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
+    myWavePlayer = await createMyAudioProcessor();
+    if (!myWavePlayer) {
         console.error("Failed to create AudioWorkletNode");
         return;
     }
 
-    //postWorkletMessage("report", null)
-    postWorkletMessage("loadSounds", {sounds:buffers});
+    doLoadPlayerWave(myWavePlayer, buffers);//array of arrays of Float32Arrays, [[L1,R1],[L2,R2]] or [[M1,null],[M2,null]]
 
     enableSliders(); 
     waveLabels = labels;
@@ -83,45 +88,16 @@ export async function startAudio(buffers, labels) {
 async function createMyAudioProcessor() {
     if (!audioContext) {
         try {
-        audioContext = new AudioContext();
-        await audioContext.resume();
-        await audioContext.audioWorklet.addModule("wavePlayerWorklet.js");
+            audioContext = new AudioContext();
+            await audioContext.resume();
+            await initPlayerWorklet(audioContext)
         } catch (e) {
-        return null;
+            return null;
         }
-    }
-    
-    const node = new AudioWorkletNode(audioContext, "wavePlayer",{
-        numberOfInputs: 0,
-        numberOfOutputs: 1,
-        outputChannelCount: [2]
-    
-    });
-    const srParam =  node.parameters.get("sampleRate");
-    srParam.setValueAtTime(audioContext.sampleRate, audioContext.currentTime);
-    node.port.onmessage = (event)=>{
-        switch(event.data.type){
-            case "SoundsOk":
-                enableSliders();
-                break;
-            case "max":
-                updateMinMax(event.data.data);
-                break;
-            default:
-                console.log("Message from AudioWorklet: "+event.data.type+": "+event.data.data);
-                break;
-        }
-    }
-
+    }    
+    const node = getWavePlayer(audioContext, enableSliders, updateMax);
     node.connect(audioContext.destination); 
     return node;
-}
-
-
-function postWorkletMessage(name, data){
-    if (!audioContext) return;
-    let payload = {type:name, data:data};
-    if (myAudioProcessor) myAudioProcessor.port.postMessage(payload);
 }
 
 
@@ -156,7 +132,7 @@ pauseButton.addEventListener('click', function() {
         pauseButton.textContent = "Pause";
         pauseButton.classList.remove('active');
     }
-    postWorkletMessage("pause",isPaused);
+    doPause(myWavePlayer,isPaused);
 });
 document.getElementById('resultsMushra').addEventListener('click', function() {    
     document.getElementById('mushraModal').style.display = 'none';
@@ -498,7 +474,7 @@ function paintResults(analysis){
 
 let frameCall = null;
 let maxValues = [];
-function updateMinMax(maxValue){
+function updateMax(maxValue){
     const variation = 0.6 -maxValue*0.5;
     maxValues.push(maxValue*(variation+Math.random()*((1-variation)*2)));
     if (frameCall) return;

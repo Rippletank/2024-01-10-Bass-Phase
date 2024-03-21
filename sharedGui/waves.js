@@ -14,21 +14,25 @@
 
 //Duplicated with GUI, but this is the audio engine worker side - allow browser to handle duplication via caching?
 let serverWaveList = [];
-fetch('./waves/waveList.json')
+let waveListPromise = fetch('./waveList.json')
     .then(response => response.json())
     .then(list => {
         if (!Array.isArray(list)) throw new Error('Wave List is not an array');
+        let newList = [];
         list.forEach(fileName => {
             if (fileName) {
-                serverWaveList.push(fileName);
-            }
-    })})
-    .then(() => {
-        //loadIntoDropdown('serverPresetList', serverPresetList);
-    })
+                newList.push(fileName);
+            }})
+        serverWaveList = newList;
+        return serverWaveList;})
     .catch((error) => {
         console.error('Error fetching Wave List:', error);
     });
+
+export function fetchWaveListAsync() {
+    return waveListPromise;
+}
+
 
 //MUST be give the audioConext from the main thread so it can produce the correct sample rate etc
 //CAN'T work on workerThread because audioConext is not available there
@@ -106,7 +110,7 @@ export function fetchWavesByName(names, callback){
         // Fetch the audio file
         let name = names[i];
         if (!waveArray[name]){
-            fetch('./waves/' + name + '.wav')
+            fetch('../waves/' + name + '.wav')
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
                 .then(audioBuffer => {

@@ -24,7 +24,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-import { getDefaultPatch, getDefaultAPatch, getDefaultBPatch, defaultTestSubjectList, getMiniPresets } from './defaults.js';
+import { getDefaultPatch, getDefaultAPatch, getDefaultBPatch, defaultTestSubjectList, getMiniPresets } from '../sharedAudio/defaults.js';
 import { 
     fftFill, 
     getUseFFT,
@@ -38,7 +38,7 @@ import {
 
 import {
     toLightMode
-} from './colors.js'
+} from '../sharedGui/colors.js'
 
 import {disableGroups, setValueFromPatch } from './guiValues.js';
 
@@ -64,8 +64,9 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { shutDownMushra, repaintMushra } from './mushra.js';
+import { shutDownMushra, repaintMushra } from '../sharedGui/mushra.js';
 import { doStartMushra, doInitMushra } from './badMushra.js';
+import { fetchWaveListAsync } from '../sharedGui/waves.js';
 
 
 
@@ -932,17 +933,10 @@ function loadPresetFromServer(name){
 //Wave file import 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let serverWaveList = [];
-fetch('./waves/waveList.json')
-    .then(response => response.json())
-    .then(list => {
-        if (!Array.isArray(list)) throw new Error('Wave List is not an array');
-        list.forEach(fileName => {
-            if (fileName) {
-                serverWaveList.push(fileName);
-            }
-    })})
-    .then(() => {
-        loadWaveListIntoDropdown(serverWaveList);
+let serverWavePromise =fetchWaveListAsync();
+serverWavePromise.then(newList => {
+        serverWaveList = newList;
+        loadWaveListIntoDropdown(newList);
         loadParamsFromURL();
     })
     .catch((error) => {

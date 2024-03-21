@@ -18,10 +18,10 @@
 //Handles all of the preview and waveform painting
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-import { smallestLevel } from "./defaults.js";
+import { smallestLevel } from "../sharedAudio/defaults.js";
 
 
-import { getGreyColorA, getColorA, getColor } from "./colors.js";
+import { getGreyColorA, getColorA, getColor } from "../sharedGui/colors.js";
 
 let useFFT = true;
 

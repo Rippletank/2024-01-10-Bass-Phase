@@ -18,7 +18,7 @@
 //Allows for units and non-linear scales etc
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-import { allowedOversampleTimes } from './defaults.js';
+import { allowedOversampleTimes } from '../sharedAudio/defaults.js';
 import { getCanvasTooltips } from './painting.js';
 import { repaintDetailedFFT, getTrueSampleRate } from './audioAPI.js';
 
