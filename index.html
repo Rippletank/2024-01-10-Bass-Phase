@@ -29,7 +29,7 @@
             <p>Simulations of phase-delay, saturation, inter modulation distortion, over-sampling, jitter, dither and filter pre-ringing. </p>
             <p>Lots of controls and interactive graphs. Exaggerate settings to help to hear what they sound like.</p>
             <p>Do ABX or MUSHRA-like testing to test your ears and your setup.</p>
-            <a href="./playground/index.html" class="cta-button">To Bad Audio</a>
+            <a href="./playground" class="cta-button">To Bad Audio</a>
             <div class="card-container">
                 <div class="card" onclick="handleCardClick('quantisation')">
                     <img src="./img/dither.png" alt="Card Image">
@@ -82,7 +82,7 @@
 
     <script>
         function handleCardClick(name) {
-            window.location.href = "./playground/index.html?preset=" + encodeURIComponent(name);
+            window.location.href = "./playground/?preset=" + encodeURIComponent(name);
         }
     </script>
 </body>
