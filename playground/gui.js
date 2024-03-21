@@ -76,24 +76,48 @@ let flags = getFlags();
 //Buttons with specific actions
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+const playButtons =[
+    document.querySelectorAll('.PlayA'),
+    document.querySelectorAll('.PlayB'),
+    document.querySelectorAll('.PlayN'),
+    document.querySelectorAll('.playX'),
+    document.querySelectorAll('.PlayS')
+]
 //Play buttons
-document.querySelectorAll('.PlayA').forEach(el=>el.addEventListener('click', function() {
+playButtons[0].forEach(el=>el.addEventListener('click', function() {
     play(0);
+    colorPlayButtons(0);
 }));
-document.querySelectorAll('.PlayB').forEach(el=>el.addEventListener('click', function() {
+playButtons[1].forEach(el=>el.addEventListener('click', function() {
     play(1);
+    colorPlayButtons(1);
 }));
-document.querySelectorAll('.PlayN').forEach(el=>el.addEventListener('click', function() {
+playButtons[2].forEach(el=>el.addEventListener('click', function() {
     play(2);
+    colorPlayButtons(2);
 }));
-document.querySelectorAll('.PlayS').forEach(el=>el.addEventListener('click', function() {
+playButtons[4].forEach(el=>el.addEventListener('click', function() {
     stop();
 }));
 
 
+
 function play(index){
-    playAudio(index);   
+    playAudio(index);  
 }
+
+function colorPlayButtons(index){ 
+    playButtons.forEach((buttons, i)=>{
+        buttons.forEach((button)=>{
+            if (i==index) {
+                button.classList.add('selected');
+            } else {
+                button.classList.remove('selected');
+            }
+        });});
+
+}
+
 
 //load settings for all of the little green buttons
 let previewButtons = document.querySelectorAll('.previewButton');
@@ -1279,7 +1303,8 @@ function setUpStereo(syncValuesFromLeftToRight){
 let abxTestChoice;
 let abxCount =0;
 let abxScore =0;
-function playABX(){    
+function playABX(){  
+    colorPlayButtons(3);  
     if (abxTestChoice === 0) {
         play(0);
     } else {
@@ -1295,7 +1320,7 @@ document.getElementById('abxTest').addEventListener('click', function() {
     playABX();
 });
 
-document.getElementById('play').addEventListener('click', function() {
+document.querySelector('.playX').addEventListener('click', function() {
     playABX();
 });
 

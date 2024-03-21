@@ -67,7 +67,7 @@ import {
 
 import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from '../sharedAudio/jitter.js';
 
-import {fetchWaveByName, setAudioContext} from '../sharedGui/waves.js';
+import {fetchWaveByName} from '../sharedGui/waves.js';
 
 
 let flags = {
@@ -120,8 +120,6 @@ function ensureAudioContext(){
         analyserNode.smoothingTimeConstant = 0.0;
         analyserNode.minDecibels = -90;
         analyserNode.maxDecibels = 0;
-
-        setAudioContext(audioContext);
     }
 }
 
@@ -194,6 +192,7 @@ function stop() {
         cancelAnimationFrame(getfftFrameCall());
         clearFFTFrameCall();
         fftFade('fftCanvas');
+        document.querySelectorAll('.playButton').forEach(button => button.classList.remove('selected'));
     }
 }
 
@@ -586,7 +585,7 @@ function setSampledWave(name, updateBufferEvenIfInstant = true){
         callback(null, true);
         return;
     }
-    fetchWaveByName(name, callback);
+    fetchWaveByName(audioContext.sampleRate, name, callback);
 
 
 }

@@ -102,6 +102,10 @@ select{
     background-color: var(--background-color);
     color: var(--text-color);
 }
+.bordered button:not(.previewButton).selected{
+    background-color: green;
+    color: white;
+}
 
 .paragraphReport{
     text-align: center;

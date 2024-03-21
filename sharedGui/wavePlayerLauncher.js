@@ -1,5 +1,5 @@
 export async function initPlayerWorklet(audioContext){
-    await audioContext.audioWorklet.addModule("../sharedAudio/wavePlayerWorklet.js");
+    await audioContext.audioWorklet.addModule("../sharedGui/wavePlayerWorklet.js");
 }
 
 
