@@ -279,16 +279,21 @@ setAudioBufferCallback((bufferA, bufferB, bufferNull)=>{
     endBufferUpdate();
 });
 
+
+
+let spinner = document.querySelector('.spinner');
 let fullwaves = document.querySelectorAll('.fullwave');
 function startBufferUpdate() {
     fullwaves.forEach(canvas => {
         canvas.classList.add('blur');
     });
+    spinner.classList.add('busy');
 }
 function endBufferUpdate() {
     fullwaves.forEach(canvas => {
         canvas.classList.remove('blur');
     });
+    spinner.classList.remove('busy');
 }
 
 
