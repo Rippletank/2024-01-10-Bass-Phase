@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
     <title>Baryon Beach - Audio Experiments</title>
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" type="text/css" href="../sharedGui/style.css">
 </head>
 <body>
     <header>
@@ -28,6 +29,15 @@
             <h2>Check for 96kHz sample rate</h2>
             <p>The API is reporting a sample rate of 96kHz, but it there may be sample-rate-conversion happening if the audio interface is being shared. </p>
             <button id="start96kTest" class="cta-button">Test</a>
+        </section>
+
+        <section class="feature">
+                <h2>FFT of Input</h2>
+                <p>Connect the output back through to the input, either via your audio interface mixer app, physical connections on the device or via an external mixer.</p>
+                
+                <div class="canvasBox">
+                    <canvas id="inputFFTCanvas"></canvas>
+                </div>
         </section>
         
         <section class="band">
