@@ -12,6 +12,11 @@ import {
 
 let audioContext = null;
 let myWavePlayer = null;
+let analyserNode = null;
+export function getAnalyserNode(){
+    return analyserNode;
+}
+let fftCanvasId = null;
 
 
 
@@ -73,8 +78,8 @@ export function doSetSampleRateReporting(isReporting) {
 
 
 let waveLabels = [];
-export async function startAudio(sampleRate, buffers, labels) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
-    myWavePlayer = await createMyAudioProcessor(sampleRate);
+export async function startAudio(sampleRate, buffers, labels, fftId=null) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
+    myWavePlayer = await createMyAudioProcessor(sampleRate, fftId);
     if (!myWavePlayer) {
         console.error("Failed to create AudioWorkletNode");
         return;
@@ -88,8 +93,8 @@ export async function startAudio(sampleRate, buffers, labels) {   //buffers is a
     shuffleMappings();
 }
 
-
-async function createMyAudioProcessor(sampleRate) {
+const fftSize = 4096*8;
+async function createMyAudioProcessor(sampleRate, fftId) {
     if (!audioContext) {
         try {
             audioContext = new AudioContext({sampleRate: sampleRate});
@@ -102,7 +107,20 @@ async function createMyAudioProcessor(sampleRate) {
     const node = getWavePlayer(audioContext, enableSliders, updateMax);
     let params = node.parameters;
     params.get("sampleRate").setValueAtTime(audioContext.sampleRate, audioContext.currentTime);
-    node.connect(audioContext.destination); 
+
+    if(fftId){
+        //create an analyser, too
+        analyserNode = audioContext.createAnalyser();//blackman window with default smoothing 0.8
+        analyserNode.fftSize = fftSize;
+        analyserNode.smoothingTimeConstant = 0.0;
+        analyserNode.minDecibels = -120;
+        analyserNode.maxDecibels = 0;
+        node.connect(analyserNode);
+        analyserNode.connect(audioContext.destination);
+    }
+    else{
+        node.connect(audioContext.destination); 
+    }
     
     return node;
 }

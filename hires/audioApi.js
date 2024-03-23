@@ -1,5 +1,5 @@
 import { startFFT } from "./painting.js";
-import {initMushra, setNumberOfSliders, startMushra, startAudio, doSetSampleRateReporting } from "../sharedGui/mushra.js"; 
+import {initMushra, setNumberOfSliders, startMushra, startAudio, getAnalyserNode } from "../sharedGui/mushra.js"; 
 import {setMushraBufferCallback, calculateMushraBuffer, setAudioEngineSampleBuffers} from "../sharedAudio/workerLauncher.js"; 
 import {getDefaultPatch} from "../sharedAudio/defaults.js";
 import {fetchWaveByName} from "../sharedGui/waves.js";
@@ -94,14 +94,14 @@ export function doStartMushra() {
     ensureAudioContext();
     startMushra();
     
-    setSampledWave(sampleName, ()=>{//load the sample then builld the buffers
-        calculateMushraBuffer(getPatches(), audioContext.sampleRate, false  );
+    setSampledWave(sampleName, audioContext.sampleRate, (sampleTime)=>{//load the sample then builld the buffers
+        calculateMushraBuffer(getPatches(sampleTime), audioContext.sampleRate, false  );
     }); 
 }
 
-setMushraBufferCallback((buffers)=>{
-    startAudio(audioContext.sampleRate, buffers, getLabels());
-    //buffers are now gone to worklet, do not access again!
+setMushraBufferCallback(async (buffers)=>{
+    await startAudio(audioContext.sampleRate, buffers, getLabels(), "outputFFTCanvas");
+    startFFT(audioContext, getAnalyserNode(), "outputFFTCanvas");
 })
 
 
@@ -111,7 +111,7 @@ setMushraBufferCallback((buffers)=>{
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-let sampleName = "piano";
+let sampleName = "Vocal";
 
 
 function getLabels(){
@@ -132,11 +132,12 @@ function getCorePatch(){
 
 
 
-function setSampledWave(name, callback){
+function setSampledWave(name,sampleRate, callback){
     let loadingCallback = (wave)=>{
         if (wave){
-            setAudioEngineSampleBuffers(wave);
-            callback();
+            let sampleTime = wave[0].length/sampleRate;
+            setAudioEngineSampleBuffers(wave);//NEVER USE WAVE AGAIN, BUFFER HAS GONE TO Worker
+            callback(sampleTime);//return the duration of the sample
         }
     };
     if (!name || name=="" || name==null){
@@ -149,33 +150,31 @@ function setSampledWave(name, callback){
 
     
 let lastInterpolations = [];
-function getPatches(){
+function getPatches(sampleTime){
     const patches = new Array(numberOfSliders);
     let defaultP = getCorePatch();
-    patches[0]=[
-        {...defaultP},
-        {...defaultP}
-    ];
-    patches[1]=[
-        {...defaultP},
-        {...defaultP}
-    ];
-    patches[2]=[
-        {...defaultP},
-        {...defaultP}
-    ];
-    patches[3]=[
-        {...defaultP},
-        {...defaultP}
-    ];
-    patches[4]=[
-        {...defaultP},
-        {...defaultP}
-    ];
-    patches[5]=[
-        {...defaultP},
-        {...defaultP}
-    ];
+    for (let i=0; i<numberOfSliders; i++){
+        patches[i]=[ {...defaultP}, null];
+        if (i>0 && i<numberOfSliders){
+            for(let j=0; j<2; j++){
+                let p =patches[i][j]
+                if (!p) continue;
+                p.sampleMix = 1;
+                p.attack=Math.min(sampleTime*0.1, 0.5);
+                p.decay = Math.min(sampleTime*0.2, 1);
+                p.hold = (sampleTime - p.attack - p.decay) *0.98 ;
+                p.ultraSonicReferenceLevel = 1;
+                p.ultraSonicCutlevel = 10;
+                p.ultraSonicCutOff = 22000;
+                p.tanhDistortion = 0.5;
+                p.distortion =1;
+                p.oversampleTimes =0;
+                //p.inharmonicNoiseLevel = -10;
+            }
+        }
+    }
+
+    
 
     return patches;
 }

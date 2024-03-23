@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams, do12dbFilter, doLinearLowpass} from './naughtyFilter.js';
+import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams, do12dbFilter, doLinearLowpass, doHighSampleRateMix} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -246,6 +246,32 @@ function scaleBufferList(audioBuffers, sampleRate, isNormToLoudest){
         }
     });
 }
+
+
+function doUltraSonicMixing(fullBuffers, sampleRate){
+    let reference = fullBuffers[0].buffer;
+    for(let i=1;i<fullBuffers.length;i++){
+        let audioBuffer = fullBuffers[i].buffer;
+        for(let chan=0;chan<audioBuffer.numberOfChannels;chan++){            
+                let b = audioBuffer.data[chan];
+                let patch = fullBuffers[i].patches[chan];
+                if (patch.ultraSonicCutOff==0) continue;
+                doHighSampleRateMix(
+                    reference.data[chan], 
+                    b, 
+                    sampleRate, 
+                    patch.ultraSonicReferenceLevel, 
+                    patch.ultraSonicCutlevel,
+                    patch.ultraSonicCutOff);
+            }
+    }
+}
+
+
+
+
+
+
 
 
 
@@ -900,6 +926,7 @@ export {
     getAudioBuffer, 
     scaleAndGetNullBuffer,
     scaleBufferList,
+    doUltraSonicMixing,
     preMaxCalcStartDelay,
     preMaxFilterDelay,
 

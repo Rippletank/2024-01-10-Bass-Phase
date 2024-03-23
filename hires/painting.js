@@ -24,22 +24,14 @@ function fftFill(canvasId){
 }
 
 
-let fftFrameCall = null;
-function getfftFrameCall(){
-    return fftFrameCall;
-}
-function clearFFTFrameCall(){
-    fftFrameCall = null;
-}
-
-
-let ultrasonicContent = [];
+let fftFrameCall ={};
+let ultrasonicContent = {};
 
 
 const fftStartF = 200;
 const fftEndF = 48000;
 export function startFFT(context, analyser, canvasId){
-    if (fftFrameCall) return;
+    if (fftFrameCall[canvasId]) return;
     if (!useFFT) {
         fftFade();
         return;
@@ -62,7 +54,7 @@ export function startFFT(context, analyser, canvasId){
     let fftCanvasHeight = 0;
     let octaveStep = 0;
     const fftDraw =()=>{
-        fftFrameCall =useFFT? requestAnimationFrame(fftDraw): null;
+        fftFrameCall[canvasId] =useFFT? requestAnimationFrame(fftDraw): null;
         
         const w = canvas.width;
         const h = canvas.height;
@@ -135,7 +127,7 @@ export function startFFT(context, analyser, canvasId){
             }
             ultrasonic[i] = max;
         }
-        ultrasonicContent = ultrasonic;
+        ultrasonicContent[canvasId] = ultrasonic;
     }
     fftDraw();
 }

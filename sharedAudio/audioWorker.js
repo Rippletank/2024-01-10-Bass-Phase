@@ -21,6 +21,7 @@ import {
     
     scaleAndGetNullBuffer,
     scaleBufferList,
+    doUltraSonicMixing,
 
     getPreview,   
     getDigitalPreview, 
@@ -172,7 +173,6 @@ function doMushraBuffers(patchList, sampleRate, isNormToLoudest) {
     //let t = performance.now();
 
     const fullBuffers = [];
-    let transferList = [    ];
     patchList.forEach((patchPair)=>{
         let b = getAudioBuffer(
             sampleRate, 
@@ -186,9 +186,13 @@ function doMushraBuffers(patchList, sampleRate, isNormToLoudest) {
     });
 
 
+    doUltraSonicMixing(fullBuffers, sampleRate);
+
+
     scaleBufferList(fullBuffers, sampleRate, isNormToLoudest)
 
     let buffers =[]
+    let transferList = [    ];
     fullBuffers.forEach((b)=>{ 
         buffers.push(b.buffer.data)
         b.buffer.data.forEach((b)=>transferList.push(b.buffer));
