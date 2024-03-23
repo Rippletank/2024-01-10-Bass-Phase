@@ -32,6 +32,10 @@ function clearFFTFrameCall(){
     fftFrameCall = null;
 }
 
+
+let ultrasonicContent = [];
+
+
 const fftStartF = 200;
 const fftEndF = 48000;
 export function startFFT(context, analyser, canvasId){
@@ -79,7 +83,7 @@ export function startFFT(context, analyser, canvasId){
         ctx.lineWidth = 1;
         ctx.strokeStyle = getColor(210, 210, 210);
         ctx.fillStyle = getColor(0, 0, 0); // color of the text
-        ctx.font = "12px Arial"; // font of the text
+        ctx.font = "14px Arial"; // font of the text
         ctx.textAlign = "center"; // horizontal alignment
         [1,5,10,20,30,40].forEach((i)=>{
             let x = Math.log2(i*1000/fftStartF) / octaveStep;
@@ -118,30 +122,20 @@ export function startFFT(context, analyser, canvasId){
         }
         ctx.stroke();
 
-
+        //Check for ultrasonic content
+        let ultrasonic = new Float32Array(28);
+        for (let i = 0; i < 28; i++) {
+            let startF = (20000 + 1000 * i) * octaveStep;
+            let endF = (20000 + 1000 * (i+1)) * octaveStep;
+            let startBin = Math.round(startF * freqStep );
+            let endBin = Math.min(fft.length-1, Math.round(endF * freqStep ));
+            let max = 0;
+            for (let j = startBin; j < endBin; j++) {
+                max = Math.max(max,fft[j]);
+            }
+            ultrasonic[i] = max;
+        }
+        ultrasonicContent = ultrasonic;
     }
     fftDraw();
-    canvasTooltips.fftCanvas = {
-        visible: ()=>useFFT && fftCanvasWidth>0,
-        text:(x,y)=>{//x,y are 0-1
-            if (!useFFT || fftCanvasWidth==0) return '';
-            x*=fftCanvasWidth;
-            y*=fftCanvasHeight;
-            x-=fftL;
-            y-=fftT;
-            let amplitude = ' - '
-            let frequency = ' - '
-            if (x>=0 && x<=ffrW )
-            {
-                frequency = (fftStartF * Math.pow(2,x*octaveStep)).toFixed(1) + 'Hz';
-            };
-            if (y>=0 && y<=fftH) {
-                amplitude = (maxdb - y * (maxdb-mindb)/fftH).toFixed(1) + 'dB';
-            };
-            return frequency + '<br>' + amplitude;
-        }
-    }
-
 }
-
-let canvasTooltips = {};

@@ -1,5 +1,6 @@
 
-import { startListening } from "./audioApi.js";
+import { startListening, doInitMushra,doStartMushra} from "./audioApi.js";
+import { shutDownMushra, repaintMushra } from '../sharedGui/mushra.js';
 
 
 
@@ -11,6 +12,32 @@ document.getElementById("start96kTest").addEventListener("click", function() {
     startListening()
 });
 
+document.getElementById('mushraTest').addEventListener('click', function() {
+    document.getElementById('mushraModal').style.display = 'flex';
+    document.getElementById('mushraModalBackground').style.display = 'flex';
+    document.getElementById('mushraResultsModal').style.display = 'none';
+    doInitMushra();
+  });
+
+  document.getElementById('startMushra').addEventListener('click', function() {
+    doStartMushra();
+  });
+  
+  document.querySelectorAll('.closeMushra').forEach(b=>{
+        b.addEventListener('click', function() {
+            shutDownMushra();
+            document.getElementById('mushraModal').style.display = 'none';
+            document.getElementById('mushraModalBackground').style.display = 'none';
+            document.getElementById('mushraResultsModal').style.display = 'none';
+        });
+    });
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Resize and document level control
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 //Canvas resize handler
@@ -22,6 +49,7 @@ function updateCanvas() {
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
     });
+    repaintMushra();
 }
 
 function adjustViewport() {

@@ -7,7 +7,8 @@ import {
     doPlaySound,
     doPause,
     logStatus,
-    doLoadPlayerWave } from "./wavePlayerLauncher.js";
+    doLoadPlayerWave,
+    setSampleRateReporting } from "./wavePlayerLauncher.js";
 
 let audioContext = null;
 let myWavePlayer = null;
@@ -66,11 +67,14 @@ export function shutDownMushra() {
 
 }
 
+export function doSetSampleRateReporting(isReporting) {
+    setSampleRateReporting(myWavePlayer, isReporting);
+}   
 
 
 let waveLabels = [];
-export async function startAudio(buffers, labels) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
-    myWavePlayer = await createMyAudioProcessor();
+export async function startAudio(sampleRate, buffers, labels) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
+    myWavePlayer = await createMyAudioProcessor(sampleRate);
     if (!myWavePlayer) {
         console.error("Failed to create AudioWorkletNode");
         return;
@@ -85,10 +89,10 @@ export async function startAudio(buffers, labels) {   //buffers is array of two 
 }
 
 
-async function createMyAudioProcessor() {
+async function createMyAudioProcessor(sampleRate) {
     if (!audioContext) {
         try {
-            audioContext = new AudioContext();
+            audioContext = new AudioContext({sampleRate: sampleRate});
             await audioContext.resume();
             await initPlayerWorklet(audioContext)
         } catch (e) {
@@ -96,7 +100,10 @@ async function createMyAudioProcessor() {
         }
     }    
     const node = getWavePlayer(audioContext, enableSliders, updateMax);
+    let params = node.parameters;
+    params.get("sampleRate").setValueAtTime(audioContext.sampleRate, audioContext.currentTime);
     node.connect(audioContext.destination); 
+    
     return node;
 }
 

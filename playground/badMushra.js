@@ -1,5 +1,5 @@
 import {initMushra, setNumberOfSliders, startMushra, startAudio } from "../sharedGui/mushra.js"; 
-import {setMushraBufferCallback, calculateMushraBuffer} from "./workerLauncher.js"; 
+import {setMushraBufferCallback, calculateMushraBuffer} from "../sharedAudio/workerLauncher.js"; 
 
 
 const numberOfSliders=6;

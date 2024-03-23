@@ -40,20 +40,182 @@
                 </div>
         </section>
         
-        <section class="band">
+
+
+        <section class="feature" id="showMushra">
+            <h2>Start testing</h2>
+            <p>Great, you have audio above audio range.</p>
+            <p>Now test the audibility of some high frequency content audio files.</p>
+            <button id="mushraTest" class="cta-button">Start</button>
+        </section>
+
+
+
+        <!-- <section class="band">
             <div class="notes">
                 <h2>Background</h2>
                 <div class="notes-content">
-                    <p>Is hi-res audio.</p>
+                    <p>This page was created...</p>
                 </div>
             </div>
-        </section>
+        </section> -->
     </main>
+
+    <div id="mushraModalBackground" class="mushraModalBackground">
+
+
+        <!--*******************Mushra Test form********************-->
+        <div id="mushraModal" class="mushraModal bordered">
+            <div class="presetHeader">
+                <h3>MUSHRA-like Testing</h3>
+                <div class="PresetButtons">            
+                </div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>Sound A is considered the reference and Sound B should be set so that the quality difference is clearly but just audible.</p>
+                    <p>Several sounds are created varying between A and b, as well as an "anchor" sound that is reduce quality.</p>
+                    <p>Rank each sound according to the perceived quality.</p>
+                    <p>The graph is for feedback that a sound is playing but noise is deliberately added to obscure the waveforms, so they won't match.</p>
+                    <p>This is only a proof of concept and isn't meant for serious scientific research.</p>
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
+                </div>
+            </div>
+            <div class="canvasBox">
+                <canvas id="mushraOutputCanvas" width ="2000" height="100"></canvas>
+            </div>
+            <div class="vertical-slider-container blurredDisabled">
+                <div id="mGroup0" class="vSlideGroup">
+                    <button>A</button>
+                    <p class="score">Score</p>
+                    <div class="mScale">
+                        <p class="mValue"><span>100</span></p>
+                        <p>Excellent</p>
+                        <p class="mValue"><span>80</span></p>
+                        <p>Good</p>
+                        <p class="mValue"><span>60</span></p>
+                        <p>Fair</p>
+                        <p class="mValue"><span>40</span></p>
+                        <p>Poor</p>
+                        <p class="mValue"><span>20</span></p>
+                        <p>Bad</p>
+                        <p class="mValue"><span>0</span></p>
+                    </div>
+                </div>
+                <div id="mGroup1" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider1" class="score">100</label>
+                    <input id="mSlider1" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup2" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider2" class="score">100</label>
+                    <input id="mSlider2" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup3" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider3" class="score">100</label>
+                    <input id="mSlider3" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup4" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider4" class="score">100</label>
+                    <input id="mSlider4" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup5" class="vSlideGroup ">
+                    <button>Play</button>
+                    <label for="mSlider5" class="score">100</label>
+                    <input id="mSlider5" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup6" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider6" class="score">100</label>
+                    <input id="mSlider6" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3></h3>
+                <div class="PresetButtons">                
+                    <button id="startMushra">Start</button>
+                    <button id="nextMushra">Next</button>
+                    <button id="pauseMushra">Pause</button>
+                    <button id="resultsMushra">Results</button>
+                </div>
+                <h3>  </h3>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button class="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
+
+        </div>
+
+
+
+        <!--*******************Mushra results analysis********************-->
+        <div id="mushraResultsModal" class="mushraModal bordered" >
+            <div class="presetHeader">
+                <h3>MUSHRA-like Testing - Results </h3>
+                <div class="PresetButtons">            
+                </div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>The heat map show's where your scores were, the black dots show the mean score. </p>
+                    <p>The thin blue line is the line of best fit. The wide band shows the expected line.</p>
+                    <p>More analysis metrics are being considered....</p>
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
+                </div>
+            </div>
+            <div class="canvasBox">
+                <canvas id="mushraResultCanvas" width ="2000" height="100"></canvas>
+            </div>
+            <div id="mushraTableContainer" class="spaceTop">
+                <table id="mushraResultsTable">
+                    <tr>
+                        <th scope="row">Sound</th>
+                    </tr>
+                    <tr>
+                        <th scope="row">P-Value</th>
+                    </tr>
+                    <tr>
+                        <th scope="row">Meaning</th>
+                    </tr>
+                </table>  
+                <div id="mushraTextAnalysis">
+
+                </div> 
+            </div>
+            
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button class="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
+        </div>
+
+
+    </div>
+
+
+
+
+
 
     <footer>
         <!-- <p>&copy; 2024 My Website. All rights reserved.</p> -->
     </footer>
     
+    <!-- <script type="module" src="../sharedGui/wavePlayerWorklet.js"></script> -->
     <script type="module" src="gui.js"></script>
 </body>
 </html>

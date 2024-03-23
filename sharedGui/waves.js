@@ -84,7 +84,7 @@ export function fetchWaveByName(sampleRate, name, callback){
                     data.push(audioBuffer.getChannelData(i));
                 }
                 waveArray[name] = data;
-                console.log("audioBuffer for " + name + " loaded.");
+                console.log("audioBuffer for " + name + " loaded.("+data[0].length+"samples)");
                 callback(getWaveOrNullByName(name), true);
             })
             .catch(e => {

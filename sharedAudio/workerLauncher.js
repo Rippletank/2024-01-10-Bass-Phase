@@ -192,9 +192,9 @@ export function setMushraBufferCallback( callback ) {
     mushraBufferCallback = callback;
 }
 let audioBufferCached = null;
-export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest, sampleName ) {
+export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest ) {
     if (audioBufferWorkerBusy){
-        audioBufferCached = {patchesToUse, sampleRate, isStereo, isNormToLoudest, sampleName};
+        audioBufferCached = {patchesToUse, sampleRate, isStereo, isNormToLoudest};
         return;
     }
     audioBufferCached=null;
@@ -204,8 +204,7 @@ export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNorm
         patchesToUse:patchesToUse,
         sampleRate:sampleRate,
         isStereo:isStereo,
-        isNormToLoudest:isNormToLoudest,
-        sampleName:sampleName
+        isNormToLoudest:isNormToLoudest
       });
 }
 
@@ -231,8 +230,7 @@ function checkForCachedAudioBuffer(){
             audioBufferCached.patchesToUse, 
             audioBufferCached.sampleRate, 
             audioBufferCached.isStereo,
-            audioBufferCached.isNormToLoudest,
-            audioBufferCached.sampleName);
+            audioBufferCached.isNormToLoudest);
     }
     else if (mushraBufferCached){
         calculateMushraBuffer(

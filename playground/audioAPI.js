@@ -267,7 +267,7 @@ function updateBuffers(patchesToUse) {
     startBufferUpdate();
     //Allow the UI to update
     setTimeout(function() {
-        calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest, "Drums" );
+        calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest );
     },0);
 }
 

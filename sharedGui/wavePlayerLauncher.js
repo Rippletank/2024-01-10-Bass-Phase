@@ -18,7 +18,16 @@ export function getWavePlayer(audioContext, enableSlidersFunc, updateMaxFunc){
                 enableSlidersFunc();
                 break;
             case "max":
-                updateMaxFunc(event.data.data);
+                updateMaxFunc(event.data.data.max);
+                if (sampleRateReporting)
+                {
+                    let now = performance.now();
+                    if (now-lastReport>1000){
+                        console.log("Sample rate: "+(event.data.data.count/(now-lastReport)*1000).toFixed(2)+"kHz");
+                        lastReport = now;
+                        logStatus(node);
+                    }
+                }
                 break;
             default:
                 console.log("Message from AudioWorklet: "+event.data.type+": "+event.data.data);
@@ -34,6 +43,13 @@ export function doPlaySound(node, index){
 
 export function logStatus(node){
     doPostPlayerMessage(node,"report", null);
+}
+
+let lastReport = 0;
+let sampleRateReporting = false;
+export function setSampleRateReporting(isReporting){
+    sampleRateReporting = isReporting;
+    lastReport = performance.now();
 }
 
 function doPostPlayerMessage(node, name, data){
