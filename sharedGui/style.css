@@ -977,3 +977,8 @@ input[type="range"]:focus {
     margin-top: 40px;
     margin-bottom: 40px;
 }
+
+#mushraTextAnalysis .warning{
+    color: red;
+    font-weight: bold;
+}

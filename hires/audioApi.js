@@ -1,5 +1,6 @@
 import { startFFT, fftFill, stopFFT } from "./painting.js";
-import {initMushra, setNumberOfSliders, startMushra, startAudio, getAnalyserNode, shutDownMushra ,setResultsStyle} from "../sharedGui/mushra.js"; 
+import {initMushra, setNumberOfSliders, startMushra, startAudio, 
+    getAnalyserNode, shutDownMushra ,setResultsStyle, SetSpecialResultsText} from "../sharedGui/mushra.js"; 
 import {initWorkers, setMushraBufferCallback, calculateMushraBuffer, setAudioEngineSampleBuffers} from "./workerLauncher.js"; 
 import {getDefaultPatch} from "../sharedAudio/defaults.js";
 import {fetchWaveByName} from "../sharedGui/waves.js";
@@ -126,15 +127,20 @@ function getNoiseChuff(audioContext, playLength, silenceLength){
 //SampleRate Check
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+let isSampleRateOk = false;
 export function checkSampleRateStatus(){
     ensureAudioContext();
     if (!audioContext) return "Error: No Audio Context";
     let tempAudioContext = new (window.AudioContext || window.webkitAudioContext)(); //Default sample rate
     let sampleRate = tempAudioContext.sampleRate;
-    if (sampleRate != audioContext.sampleRate){
-        return "<p class ='warning_text'>Possible Problem: Default sample rate  is not " + requestedSampleRate + "Hz</p>" +
-        "<p>Please use the sample rate checker below to check that your interface is correctly set to 96kHz.</p>"
+    isSampleRateOk = sampleRate == requestedSampleRate;
+    if (!isSampleRateOk){
+        SetSpecialResultsText("Warning: Interface probably NOT at 96kHz.");
+        return "<p class ='warning_text'>Problem: Default sample rate is not " + requestedSampleRate + "Hz</p>" +
+        "<p>Use the sample rate checker below to confirm when you interface is correctly set to 96kHz.</p>"
     }   
+    SetSpecialResultsText("Interface sample rate appears to be 96kHz");
     return "<p>Sample rate appears to be correctly set to 96kHz. You can confirm this below.</p>";
 }
 

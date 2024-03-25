@@ -33,6 +33,9 @@ export function fftFill(canvasId){
 let fftFrameCall ={};
 let ultrasonicContent = {};
 
+export function getUltrasonicContent(canvasId){
+    return ultrasonicContent[canvasId];
+}
 
 const fftStartF = 200;
 const fftEndF = 48000;
@@ -59,6 +62,8 @@ export function startFFT(context, analyser, canvasId){
     let fftCanvasWidth = 0;
     let fftCanvasHeight = 0;
     let octaveStep = 0;
+    
+    ultrasonicContent[canvasId] = new Float32Array(28);
     const fftDraw =()=>{
         fftFrameCall[canvasId] =useFFT? requestAnimationFrame(fftDraw): null;
         
@@ -133,7 +138,19 @@ export function startFFT(context, analyser, canvasId){
             }
             ultrasonic[i] = max;
         }
-        ultrasonicContent[canvasId] = ultrasonic;
+        const uc = ultrasonicContent[canvasId];
+        for(let i = 0; i<28; i++){
+            uc[i] = Math.min(255, Math.max( ultrasonic[i]*4, uc[i] ));
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = getColor(255-uc[i], uc[i], 0);
+            let x1 = Math.log2((20000 + 1000 * (i-0.5))/fftStartF) / octaveStep;
+            let x = Math.log2((20000 + 1000 * (i+0.5))/fftStartF) / octaveStep;
+            let y = fftT;
+            ctx.moveTo(x1, y);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
     }
     fftDraw();
 }

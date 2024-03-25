@@ -359,6 +359,10 @@ function createTextReport(analysis) {
     for (let i=0; i<analysis.qualityChecks.length; i++) {
             let p = document.createElement('p');
             p.textContent = analysis.qualityChecks[i] ;
+            if (p.textContent.startsWith("Warning"))
+            {
+                p.classList.add('warning');
+            }
             div.appendChild(p);
     }
 }
@@ -617,6 +621,12 @@ function analyseResults(){
     return analysis;
 }
 
+
+let specialResultsText="";
+export function SetSpecialResultsText(text){
+    specialResultsText = text;
+}
+
 function showResultsCount(){
     document.getElementById('resultsCount').textContent = "Tests Taken: " + (results.length);
 }
@@ -671,6 +681,7 @@ function getChecks(r){
     const AnchorTooHigh=AnchorGreaterThan90/r.length;
 
     let report =[];
+    if (specialResultsText && specialResultsText.length>0) report.push(specialResultsText);
     if (r.length<3) report.push("Too few tests to be reliable.");
     if (ATooLow>0.15) report.push("Too many low scores for reference A: "+(ATooLow*100).toFixed(0)+"%");
     if (doReportOnB){
