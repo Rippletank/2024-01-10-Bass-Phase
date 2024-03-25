@@ -322,5 +322,41 @@ function doSetSampledWave(waveName){
     waveSelect.value = waveName;
 }  
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Help pop up trigger code
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let helpIcons = document.querySelectorAll('.help-icon');
+
+helpIcons.forEach(function(helpIcon) {
+    helpIcon.addEventListener('click', helpClickHandler);
+});
+
+function helpClickHandler(event) {
+    event.stopPropagation();
+    clearHelp();
+    let helpPopup = this.nextElementSibling;
+    helpPopup.style.display = 'block';
+    let rect = helpPopup.getBoundingClientRect();
+    if (rect.top < 0) {
+        helpPopup.style.top = 10 + 'px'; // Add 10px for a small margin
+    }
+}
+
+document.addEventListener('click', function() {
+    clearHelp();
+});
+
+function clearHelp(){
+    let helpPopups = document.querySelectorAll('.help-popup');
+    helpPopups.forEach(function(helpPopup) {
+        helpPopup.style.display = 'none';
+    });
+}
+
+
+
+
+
 
 export {}

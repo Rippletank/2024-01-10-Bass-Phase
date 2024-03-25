@@ -173,9 +173,11 @@
                     <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
                 </div>
             </div>
+            <p>Criterion: Closest to A (best quality)</p>
             <div class="canvasBox">
                 <canvas id="mushraOutputCanvas" width ="2000" height="100"></canvas>
             </div>
+            <p id="mushraCount">Test</p>
             <div class="vertical-slider-container blurredDisabled">
                 <div id="mGroup0" class="vSlideGroup">
                     <button>A</button>
@@ -229,9 +231,9 @@
                 <h3></h3>
                 <div class="PresetButtons">                
                     <button id="startMushra">Start</button>
-                    <button id="nextMushra">Next</button>
-                    <button id="pauseMushra">Pause</button>
-                    <button id="resultsMushra">Results</button>
+                    <button id="nextMushra">Next Test</button>
+                    <button id="pauseMushra">Pause Sound</button>
+                    <button id="resultsMushra">Show Results</button>
                 </div>
                 <h3>  </h3>
             </div>
@@ -267,18 +269,20 @@
             <div class="canvasBox">
                 <canvas id="mushraResultCanvas" width ="2000" height="100"></canvas>
             </div>
-            <div id="mushraTableContainer" class="spaceTop">
+            <p id="resultsCount"></p>
+            <div id="mushraTableContainer">
                 <table id="mushraResultsTable">
                     <tr>
                         <th scope="row">Sound</th>
                     </tr>
                     <tr>
-                        <th scope="row">P-Value</th>
+                        <th scope="row">P-Value </th>
                     </tr>
                     <tr>
                         <th scope="row">Meaning</th>
                     </tr>
                 </table>  
+                <p class="small">*Probability that "The sound is indistinguishable from reference A" (Null Hypothesis)</p>
                 <div id="mushraTextAnalysis">
 
                 </div> 

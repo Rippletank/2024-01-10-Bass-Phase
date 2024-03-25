@@ -64,7 +64,7 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { shutDownMushra, repaintMushra } from '../sharedGui/mushra.js';
+import { shutDownMushra, repaintMushra, setResultsStyle } from '../sharedGui/mushra.js';
 import { doStartMushra, doInitMushra } from './badMushra.js';
 import { fetchWaveListAsync } from '../sharedGui/waves.js';
 
@@ -1395,8 +1395,8 @@ document.getElementById('mushraTest').addEventListener('click', function() {
         });
     });
 
-
-
+    setResultsStyle(true, true, true);
+ 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Help pop up trigger code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1412,6 +1412,10 @@ function helpClickHandler(event) {
     clearHelp();
     let helpPopup = this.nextElementSibling;
     helpPopup.style.display = 'block';
+    let rect = helpPopup.getBoundingClientRect();
+    if (rect.top < 0) {
+        helpPopup.style.top = 10 + 'px'; // Add 10px for a small margin
+    }
 }
 
 document.addEventListener('click', function() {

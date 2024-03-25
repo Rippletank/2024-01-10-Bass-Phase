@@ -1,5 +1,5 @@
 import { startFFT, fftFill, stopFFT } from "./painting.js";
-import {initMushra, setNumberOfSliders, startMushra, startAudio, getAnalyserNode, shutDownMushra } from "../sharedGui/mushra.js"; 
+import {initMushra, setNumberOfSliders, startMushra, startAudio, getAnalyserNode, shutDownMushra ,setResultsStyle} from "../sharedGui/mushra.js"; 
 import {initWorkers, setMushraBufferCallback, calculateMushraBuffer, setAudioEngineSampleBuffers} from "./workerLauncher.js"; 
 import {getDefaultPatch} from "../sharedAudio/defaults.js";
 import {fetchWaveByName} from "../sharedGui/waves.js";
@@ -12,6 +12,10 @@ let audioContext = null;
 export function getTrueSampleRate(){
     return audioContext ? audioContext.sampleRate: requestedSampleRate;
 }
+
+setResultsStyle(true, false, false)
+
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Input monitoring to check samplerate is correctly implemented 
@@ -192,9 +196,11 @@ setMushraBufferCallback(async (index, buffers, id)=>{
 
 function getLabels(){
     return [
-        "A",
-        ...lastInterpolations.map((x)=>x.toFixed(2)), 
-        "B",
+        "Reference",
+        "1 Tone",
+        "2 Tone",
+        "Noise",
+        "Distortion",
         "Anchor"];
     }
 

@@ -142,7 +142,7 @@ if (reportButton) reportButton.addEventListener('click', function() {
 document.getElementById('nextMushra').addEventListener('click', function() {    
     results.push({mapping,values});
     shuffleMappings();
-    
+    showCount();
 });
 
 let isPaused=false;
@@ -201,6 +201,10 @@ function sliderFunction(scoreElement, index, value) {
     scoreElement.textContent = value;
 }
 
+function showCount(){
+    document.getElementById('mushraCount').textContent = "Test number " + (results.length+1);
+}
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  Hidden mappings and results
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -233,6 +237,7 @@ function shuffleMappings(){
     });
 }
 
+showCount();
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -363,6 +368,17 @@ function createTextReport(analysis) {
 // Draw Results
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+let paintShowLOBF = true;
+let paintShowExpected = false;
+let doReportOnB = false;
+export function setResultsStyle(showLOBF, showExpected, reportOnB){
+    paintShowLOBF = showLOBF;
+    paintShowExpected = showExpected;
+    doReportOnB = reportOnB;
+    repaintMushra();
+}
+
+
 const resCanvas = document.getElementById("mushraResultCanvas");
 const resCtx = resCanvas.getContext("2d");
 
@@ -435,42 +451,46 @@ function paintResults(analysis){
         ctx.textAlign = "center";
         ctx.fillText(labels[i], columnX + columnWidth / 2, gB + 18);
     }
-    // Draw Ideal Line
-    ctx.beginPath();
-    ctx.lineWidth = columnWidth*0.8;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(0,0,128,0.1)';
-    const startY = gy0 - (100 / 100) * gyh; // Start at a value of 100
-    const endY = gy0 - (0 / 100) * gyh; // End at a value of 0
-    ctx.moveTo(gL + 0.5 * columnWidth, startY); // Start at column zero
-    ctx.lineTo(gL + (0.5 + heatMap.length - 2) * columnWidth, endY); // End at the last column (the one before the ignored one)
-    ctx.stroke();
 
-
-    //Draw quadratic fit
-    const pointsPerColumn = 5;
-    const length = (heatMap.length-2)*pointsPerColumn +1;// Ignore the last column, plot centre of first to centre of last, 
-    
-    ctx.beginPath();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(0,0,255,0.5)';
-    for (let i = 0; i < length; i++) { 
-        const x = i/pointsPerColumn;
-        const columnX = gL + (0.5+x) * columnWidth;    
-        
-        // Draw quadratic fit
-        const y = gy0 - (((fit.a * x  + fit.b) * x + fit.c) / 100) * gyh;
-        if (i==0){
-            ctx.moveTo(columnX , y);
-        }
-        else{
-            ctx.lineTo(columnX, y);
-        }
+    if (paintShowExpected){
+        // Draw Ideal Line
+        ctx.beginPath();
+        ctx.lineWidth = columnWidth*0.8;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(0,0,128,0.1)';
+        const startY = gy0 - (100 / 100) * gyh; // Start at a value of 100
+        const endY = gy0 - (0 / 100) * gyh; // End at a value of 0
+        ctx.moveTo(gL + 0.5 * columnWidth, startY); // Start at column zero
+        ctx.lineTo(gL + (0.5 + heatMap.length - 2) * columnWidth, endY); // End at the last column (the one before the ignored one)
+        ctx.stroke();
     }
-    ctx.stroke();
 
-    ctx.lineCap = 'butt';
 
+    if (paintShowLOBF){
+        //Draw quadratic fit
+        const pointsPerColumn = 5;
+        const length = (heatMap.length-2)*pointsPerColumn +1;// Ignore the last column, plot centre of first to centre of last, 
+        
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(0,0,255,0.5)';
+        for (let i = 0; i < length; i++) { 
+            const x = i/pointsPerColumn;
+            const columnX = gL + (0.5+x) * columnWidth;    
+            
+            // Draw quadratic fit
+            const y = gy0 - (((fit.a * x  + fit.b) * x + fit.c) / 100) * gyh;
+            if (i==0){
+                ctx.moveTo(columnX , y);
+            }
+            else{
+                ctx.lineTo(columnX, y);
+            }
+        }
+        ctx.stroke();
+
+        ctx.lineCap = 'butt';
+    }
 
     //Labels
     ctx.fillStyle = getColor(0,0,0);
@@ -569,6 +589,7 @@ function generateReport(){
     paintResults(analysis)
     createResultsTable(analysis);
     createTextReport(analysis);
+    showResultsCount();
     lastAnalysis = analysis;
 }
 
@@ -596,7 +617,9 @@ function analyseResults(){
     return analysis;
 }
 
-
+function showResultsCount(){
+    document.getElementById('resultsCount').textContent = "Tests Taken: " + (results.length);
+}
 
 //Turn mapping and values list into one list of values in the correct order
 function unShuffleMapping(mapping, values){
@@ -649,9 +672,11 @@ function getChecks(r){
 
     let report =[];
     if (r.length<3) report.push("Too few tests to be reliable.");
-    if (ATooLow>0.15) report.push("Too many low scores for A: "+(ATooLow*100).toFixed(0)+"%");
-    if (BTooHigh>0.15) report.push("Too many high score for B: "+(ATooLow*100).toFixed(0)+"%");
-    if (BTooHigh>0.25) report.push("B probably too similar to A.");
+    if (ATooLow>0.15) report.push("Too many low scores for reference A: "+(ATooLow*100).toFixed(0)+"%");
+    if (doReportOnB){
+        if (BTooHigh>0.15) report.push("Too many high score for B: "+(ATooLow*100).toFixed(0)+"%");
+        if (BTooHigh>0.25) report.push("B probably too similar to A.");
+    }
     if (AnchorTooHigh>0.15) report.push("Too many high scores for Anchor: "+(ATooLow*100).toFixed(0)+"%");
     if (AnchorTooHigh>0.25) report.push("Anchor may be too similar to do its job.");
     return report;

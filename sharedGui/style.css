@@ -735,16 +735,17 @@ input[type="range"]:focus {
   
   .mushraModal {
     display: none;
-    position: fixed;
+    /* position: fixed; */
     flex-direction: column;
     max-width: 1000px;
     min-width: 600px;
-    max-height: 800px;
+   
     width: 70%;
     height: 90%;
     top:5%;
     background-color: var(--background-color);
     z-index: 1001;
+    overflow-y: auto;
   }
 
 
@@ -784,6 +785,9 @@ input[type="range"]:focus {
     padding-right: 20px;
   }
 
+  .mushraModal #resultsCount{
+    margin-top: 30px;
+  }
   .mushraModal button.active{
     background-color: #007b008e;
     color: white;
@@ -797,6 +801,24 @@ input[type="range"]:focus {
     pointer-events: none !important;
     opacity: 0.3;
   }
+
+  .mushraModal p{
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .mushraModal p.small{
+    font-size: small;
+    text-align: right;
+  }
+
+
+  #mushraResultsModal{
+    height: 90%;
+    /* overflow: scroll; */
+  }
+
+
 .vertical-slider-container {
     display: flex;
     justify-content: center;
@@ -929,7 +951,10 @@ input[type="range"]:focus {
 }
 
 #mushraTableContainer{
-    margin:10px;
+    margin-left:20px ;
+    margin-right:20px;
+    margin-top: 00px;
+    margin-bottom: 20px;
 }
 
 #mushraResultsTable {
@@ -949,5 +974,6 @@ input[type="range"]:focus {
 }
 
 #mushraTextAnalysis{
-    overflow: scroll;
+    margin-top: 40px;
+    margin-bottom: 40px;
 }
