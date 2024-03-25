@@ -1,5 +1,5 @@
 import {initMushra, setNumberOfSliders, startMushra, startAudio } from "../sharedGui/mushra.js"; 
-import {setMushraBufferCallback, calculateMushraBuffer} from "../sharedAudio/workerLauncher.js"; 
+import {setMushraBufferCallback, calculateMushraBuffer} from "./workerLauncher.js"; 
 
 
 const numberOfSliders=6;
@@ -9,7 +9,9 @@ export function doInitMushra(){
     initMushra();
 }
 
+let lastSetSampleRate =0;
 export function doStartMushra(patches,subjectList, sampleRate, isNormToLoudest) {
+    lastSetSampleRate = sampleRate;
     startMushra();
     
     const patchList = [[patches[0],patches[1]], [patches[2],patches[3]]]
@@ -17,7 +19,7 @@ export function doStartMushra(patches,subjectList, sampleRate, isNormToLoudest) 
 }
 
 setMushraBufferCallback((buffers)=>{
-    startAudio(buffers, getLabels());
+    startAudio(lastSetSampleRate, buffers, getLabels());
     //buffers are now gone to worklet, do not access again
 })
 

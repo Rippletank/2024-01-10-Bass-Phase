@@ -255,7 +255,7 @@ function doUltraSonicMixing(fullBuffers, sampleRate){
         for(let chan=0;chan<audioBuffer.numberOfChannels;chan++){            
                 let b = audioBuffer.data[chan];
                 let patch = fullBuffers[i].patches[chan];
-                if (patch.ultraSonicCutOff==0) continue;
+                if (!patch.ultraSonicCutOff || patch.ultraSonicCutOff==0) continue;
                 doHighSampleRateMix(
                     reference.data[chan], 
                     b, 

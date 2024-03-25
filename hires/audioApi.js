@@ -1,6 +1,6 @@
 import { startFFT } from "./painting.js";
 import {initMushra, setNumberOfSliders, startMushra, startAudio, getAnalyserNode } from "../sharedGui/mushra.js"; 
-import {setMushraBufferCallback, calculateMushraBuffer, setAudioEngineSampleBuffers} from "../sharedAudio/workerLauncher.js"; 
+import {initWorkers, setMushraBufferCallback, calculateMushraBuffer, setAudioEngineSampleBuffers} from "./workerLauncher.js"; 
 import {getDefaultPatch} from "../sharedAudio/defaults.js";
 import {fetchWaveByName} from "../sharedGui/waves.js";
 
@@ -38,6 +38,7 @@ function ensureAudioContext(){
         //On page start up this is called anyway to get the playback samplerate to use for buffer generation
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate:requestedSampleRate}); 
         console.log('Sample rate: ' + audioContext.sampleRate + 'Hz')
+        initWorkers(numberOfSliders);
 
     }    
     if (!audioContext) {
@@ -94,14 +95,31 @@ export function doStartMushra() {
     ensureAudioContext();
     startMushra();
     
-    setSampledWave(sampleName, audioContext.sampleRate, (sampleTime)=>{//load the sample then builld the buffers
-        calculateMushraBuffer(getPatches(sampleTime), audioContext.sampleRate, false  );
-    }); 
+setSampledWave(sampleName, audioContext.sampleRate, (sampleTime)=>{//load the sample then builld the buffers
+    let patches = getPatches(sampleTime);
+    returnedBuffers =new Array(numberOfSliders).fill(null);
+    returnedIds =new Array(numberOfSliders).fill(0);
+    lastId++;
+    for (let i=0; i<numberOfSliders; i++){
+        let patchList = [];
+        if (i>0)patchList.push(patches[0]);
+        patchList.push(patches[i]);
+        calculateMushraBuffer(i, patchList, audioContext.sampleRate, false, lastId  );
+    }
+}); 
 }
 
-setMushraBufferCallback(async (buffers)=>{
-    await startAudio(audioContext.sampleRate, buffers, getLabels(), "outputFFTCanvas");
-    startFFT(audioContext, getAnalyserNode(), "outputFFTCanvas");
+let lastId = 1;
+let returnedBuffers =[];
+let returnedIds =[];
+setMushraBufferCallback(async (index, buffers, id)=>{
+    //Wait for all buffers to return before starting the audio
+    returnedIds[index] = id;
+    returnedBuffers[index] = buffers[index==0?0:1];
+    if (returnedBuffers.every((x)=>x!=null) && returnedIds.every((x)=>x==lastId)){
+        await startAudio(audioContext.sampleRate, returnedBuffers, getLabels(), "outputFFTCanvas");
+        startFFT(audioContext, getAnalyserNode(), "outputFFTCanvas");
+    };
 })
 
 
