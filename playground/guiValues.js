@@ -22,7 +22,6 @@ import { allowedOversampleTimes } from '../sharedAudio/defaults.js';
 import { getCanvasTooltips } from './painting.js';
 import { repaintDetailedFFT, getTrueSampleRate } from './audioAPI.js';
 
-
 const disableGroups =[
     {
         mains:[

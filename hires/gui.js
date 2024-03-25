@@ -1,5 +1,5 @@
 
-import { doShutDownMushra, startListening, stopListening, doInitMushra,doStartMushra} from "./audioApi.js";
+import { doShutDownMushra, startListening, stopListening, doInitMushra,doStartMushra, checkSampleRateStatus} from "./audioApi.js";
 import { repaintMushra } from '../sharedGui/mushra.js';
 import { setValueFromPatch } from "./guiValues.js";
 import { getDefaultPatch } from "../sharedAudio/defaults.js";
@@ -31,6 +31,7 @@ document.getElementById('mushraTest').addEventListener('click', function() {
     document.getElementById('mushraModalBackground').style.display = 'flex';
     document.getElementById('mushraResultsModal').style.display = 'none';
     doInitMushra();
+    doStartMushra(lastSetWave,cachedPatch);
   });
 
   document.getElementById('startMushra').addEventListener('click', function() {
@@ -47,6 +48,7 @@ document.getElementById('mushraTest').addEventListener('click', function() {
     });
 
 
+    document.getElementById('status96k').innerHTML = checkSampleRateStatus();
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -310,7 +312,7 @@ function loadWaveListIntoDropdown(list) {
     waveSelect.addEventListener('change', () => {
         doSetSampledWave(waveSelect.value);
     });
-    doSetSampledWave('Vocal');
+    doSetSampledWave('Drums');
 }
 
 let lastSetWave = null;

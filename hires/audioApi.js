@@ -118,7 +118,21 @@ function getNoiseChuff(audioContext, playLength, silenceLength){
     return buffer;
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//SampleRate Check
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+export function checkSampleRateStatus(){
+    ensureAudioContext();
+    if (!audioContext) return "Error: No Audio Context";
+    let tempAudioContext = new (window.AudioContext || window.webkitAudioContext)(); //Default sample rate
+    let sampleRate = tempAudioContext.sampleRate;
+    if (sampleRate != audioContext.sampleRate){
+        return "<p class ='warning_text'>Possible Problem: Default sample rate  is not " + requestedSampleRate + "Hz</p>" +
+        "<p>Please use the sample rate checker below to check that your interface is correctly set to 96kHz.</p>"
+    }   
+    return "<p>Sample rate appears to be correctly set to 96kHz. You can confirm this below.</p>";
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Connect mushra and the WavePlayer

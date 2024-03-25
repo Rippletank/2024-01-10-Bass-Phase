@@ -66,6 +66,7 @@ select{
     color: var(--text-color);
     background-color: var(--background-color);
     border-color: var(--border-color);
+    min-width: 15em;
 }
 
 
@@ -504,7 +505,25 @@ input[type="range"]:focus {
     border-radius: 5px;
 }
 
+/* ************************************************* */
+/*       Text colour                                 */
+/* ************************************************* */
 
+.warning_text {
+    color: rgb(209, 0, 0);
+    font-weight: bold;
+}  
+
+.centerBox {
+    margin-left:25%;
+    margin-right:25%;
+}
+.centerBox p{
+    text-align: left;
+}
+.centerBox li{
+    text-align: left;
+}
 
 
 
