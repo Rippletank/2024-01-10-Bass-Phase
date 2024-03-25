@@ -559,11 +559,13 @@ function getTrueDefaultPatch(){
         inharmonicBLevel:-91,//-91..0, in db -91 is off
         inharmonicCLevel:-91,//-91..0, in db -91 is off
         inharmonicDLevel:-91,//-91..0, in db -91 is off -  used for high samplerate tests only
+        inharmonicELevel:-91,//-91..0, in db -91 is off -  used for high samplerate tests only
         inharmonicNoiseLevel:-91,//-91..0, in db -91 is off
         inharmonicAFrequency:1000,//Hz (for now?)
         inharmonicBSemitones:1,//semitones above root
         inharmonicBSemitones:1,//semitones above root
         inharmonicDFrequency:1000,//Hz (for now?) -  used for high samplerate tests only
+        inharmonicEFrequency:1000,//Hz (for now?) -  used for high samplerate tests only
         inharmonicNoiseColour:0,//0=white, 1=pink
 
         naughtyFilterFreq:0.5,// 0..1 0 = off, 1 = max frequency log scale

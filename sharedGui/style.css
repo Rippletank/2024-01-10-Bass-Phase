@@ -415,9 +415,16 @@ input[type="range"]:focus {
 .presetHeader h4{
     flex-basis: 20%;
 }
+
 .presetHeader h3{
     flex-basis: 20%;
 }
+.presetHeader h4.wide{
+    flex-basis: 90%;
+    text-align: left;
+    margin-left: 1em;
+}
+
 
 .presetHeader .center{
     flex-basis: 70%;

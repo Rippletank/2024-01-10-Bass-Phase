@@ -14,6 +14,8 @@
 
 
 export function initWorkers(count){
+    if (audioBufferWorker.length===count) return;
+    if (audioBufferWorker.length>0) audioBufferWorker.forEach((worker)=>worker.terminate());
     let newWorkers = [];
     for (let i=0; i<count; i++){
         let worker = new Worker('../sharedAudio/audioWorker.js', { type: 'module' });

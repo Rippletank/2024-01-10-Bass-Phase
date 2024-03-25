@@ -28,21 +28,10 @@
         <section class="feature">
             <h2>Check for 96kHz sample rate</h2>
             <p>The API is reporting a sample rate of 96kHz, but it there may be sample-rate-conversion happening if the audio interface is being shared. </p>
-            <button id="start96kTest" class="cta-button">Test</a>
+            <p id="status96k"></p>
+            <button id="start96kTest" class="cta-button">Go to Tests</a>
         </section>
 
-        <section class="feature">
-                <h2>FFT of Input</h2>
-                <p>Connect the output back through to the input, either via your audio interface mixer app, physical connections on the device or via an external mixer.</p>
-                
-                <div class="canvasBox">
-                    <canvas id="inputFFTCanvas"></canvas>
-                </div>
-                
-                <div class="canvasBox">
-                    <canvas id="outputFFTCanvas"></canvas>
-                </div>
-        </section>
         
 
 
@@ -53,7 +42,162 @@
             <button id="mushraTest" class="cta-button">Start</button>
         </section>
 
+        <section class="feature">
+            <div class="bordered" id="testSetup">
+                <div class="collapsible-header"><span class="header-text">Test Waves Setup</span><span class="chevron">&#x25BC;</span></div>
+                    <div class="collapsible-content">
+                        <div class="presetHeader">
+                            <h3>Test Waves Setup</h3>
+                            <div id="samplePresets" class="PresetButtons"></div>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Selection of sampled waveform to use as reference.</p>
+                            </div>
+                        </div>
+                        <div class ="previewButtons bottomSpaced">
+                            <div class="previewButtons previewL">
+                                <h4>Reference</h4>
+                            </div>
+                            <div class="previewButtons previewC">
+                                <select id="serverWaveList" title="Select Sample wave"></select>
+                            </div>
+                            <div class="previewButtons">
+                            </div>
+                        </div>
+            
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 1 - Single Tone</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>First test wave, adds a single sine wave at the specified frequency. Investigate basics of audibility and intermodulation. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicAFrequency">Sine wave 1:</label>
+                            <input type="range" id="inharmonicAFrequency" name="inharmonicAFrequency" min="10000" max="48000" step="1" value="20000" class="mid-slider" list="ticksPlus1Zero">
+                            <label for="inharmonicALevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicALevel" name="inharmonicALevel" min="-91" max="-20" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicA">-1</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Level and frequency of a sine wave, mixed in to the main sound. Frequency set directly.</div>
+                        </div>
 
+
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 2 - Double Tone</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Second test wave, adds two sine waves at the specified frequencies. Investigate more complex intermodulation components. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicDFrequency">Sine wave 1:</label>
+                            <input type="range" id="inharmonicDFrequency" name="inharmonicDFrequency" min="10000" max="48000" step="1" value="20000" class="mid-slider" list="ticksPlus1Zero">
+                            <label for="inharmonicDLevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicDLevel" name="inharmonicDLevel" min="-91" max="-20" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicD">-1</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Level and frequency of a first sine wave, mixed in to the main sound. Frequency set directly. </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicEFrequency">Sine wave 2:</label>
+                            <input type="range" id="inharmonicEFrequency" name="inharmonicEFrequency" min="10000" max="48000" step="1" value="21000" class="mid-slider" list="ticksPlus1Zero">
+                            <label for="inharmonicELevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicELevel" name="inharmonicELevel" min="-91" max="-20" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicE">-1</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Level and frequency of a second sine wave, mixed in to the main sound. Frequency set directly. </div>
+                        </div>
+            
+                        
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 3 - Noise</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Third test wave, adds noise to the signal above the ultrasonic threshold set below. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicNoiseColour">Noise (white/pink):</label>
+                            <input type="range" id="inharmonicNoiseColour" name="inharmonicNoiseColour" min="0" max="1" step="0.1" value="0" class="mid-slider" list="ticksPlus1ZeroMinus1">
+                            <label for="inharmonicNoiseLevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicNoiseLevel" name="inharmonicNoiseLevel" min="-91" max="-20" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicNoise">off</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Amount of noise to add.</p>
+                                <p>Colour varies from white (0db) to pink (-3db).</p>
+                                <p>The level at 1Khz is about the same for each.</p>
+                                <p>Uses the main pitch envelope.</p>
+                            </div>
+                        </div>
+
+                        
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 4 - Saturation</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Fourth test wave, creates harmonics using Tanh distortion of the signal, added above the ultrasonic threshold set below. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="tanhDistortion">Tanh Saturation:</label>
+                            <input type="range" id="tanhDistortion" name="tanhDistortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+                            <output class="valueSpan" name="tanhDistortion">0%</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Tanh distortion, commonly used in Saturation modelling</div>
+                        </div>
+
+
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">High-Pass</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>The noise and distortion test waves are synthesised by high-pass filtering the added components and mixing them in with the reference sample. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="ultraSonicCutOff">Frequency:</label>
+                            <input type="range" id="ultraSonicCutOff" name="ultraSonicCutOff" min="5000" max="30000" step="1000" value="22000"  list="ticksPlus1Zero">
+                            <output class="valueSpan" name="ultraSonicCutOff">0%</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Cut off frequency of the high pass filter</div>
+                        </div>
+
+                    </div>        
+                </div>
+            </div> 
+        </section>
+
+        <section class="feature" >
+
+            <div class="bordered" id="ffts">
+                <div id="testInterface" class="collapsible-header"><span class="header-text">FFT and Test</span><span class="chevron">&#x25BC;</span></div>
+                    <div class="collapsible-content">
+                        <h2>FFT of Input</h2>
+                        <p>Connect the output back through to the input, either via your audio interface mixer app, physical connections on the device or via an external mixer.</p>
+                        
+                        <div class="presetHeader topSpaced">
+                            <div class="PresetButtons">
+                                <h3></h3>
+                                <button id="listenInterfaceTest">Listen</button>
+                                <button id="stopInterfaceTest">Stop</button>
+                            </div>
+                     
+                        </div>
+                        
+                        <div class="canvasBox">
+                            <canvas id="inputFFTCanvas"></canvas>
+                        </div>
+                        
+                        <h2>FFT of Output</h2>
+                        <div class="canvasBox">
+                            <canvas id="outputFFTCanvas"></canvas>
+                        </div>
+                    </div>        
+                </div>
+            </div>         
+        </section>
 
         <!-- <section class="band">
             <div class="notes">

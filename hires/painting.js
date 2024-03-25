@@ -13,8 +13,14 @@ function fftFade(canvasId){
 }
 
 
+export function stopFFT(canvasId){
+    if (fftFrameCall[canvasId]){
+        cancelAnimationFrame(fftFrameCall[canvasId]);
+        fftFrameCall[canvasId] = null;
+    }
+}
 
-function fftFill(canvasId){
+export function fftFill(canvasId){
     let canvas = document.getElementById(canvasId);
     let ctx = canvas.getContext("2d");
     const w = canvas.width;

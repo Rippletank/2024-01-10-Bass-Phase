@@ -215,6 +215,9 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
 
 const badFilterCutoff = 3500;//Hz
 function scaleBufferList(audioBuffers, sampleRate, isNormToLoudest){
+
+
+    
     let scale = 10000;
     audioBuffers.forEach((audioBuffer)=>{
         audioBuffer.scale =0.99 /Math.max(audioBuffer.maxValue, 0.000001);
@@ -264,6 +267,7 @@ function doUltraSonicMixing(fullBuffers, sampleRate){
                     patch.ultraSonicCutlevel,
                     patch.ultraSonicCutOff);
             }
+        fullBuffers[i].maxValue = getBufferMax(audioBuffer);// Recalculate max values after mixing etc
     }
 }
 
@@ -828,6 +832,16 @@ function AddInharmonics(patch, sampleRate, b, envelopeBuffer, delayN){
     if (patch.inharmonicALevel>-91){
         let level = Math.pow(10,patch.inharmonicALevel/20); 
         let w = patch.inharmonicAFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+    if (patch.inharmonicDLevel>-91){//Ony used in Hires tests
+        let level = Math.pow(10,patch.inharmonicDLevel/20); 
+        let w = patch.inharmonicDFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+    if (patch.inharmonicELevel>-91){//Ony used in Hires tests
+        let level = Math.pow(10,patch.inharmonicELevel/20); 
+        let w = patch.inharmonicEFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
         mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
     }
     if (patch.inharmonicBLevel>-91){
