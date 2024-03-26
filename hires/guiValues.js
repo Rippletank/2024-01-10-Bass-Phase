@@ -263,9 +263,10 @@ function setValueFromPatch(ve, patch){
                     )+'</span></div>';break;
         case "inharmonicA":
             ve.innerHTML =
+            '<div class=""><span class="tinyLabelFull">'+
                 toInharmonicString(
                     patch.inharmonicALevel, 
-                    patch.inharmonicAFrequency.toFixed(0)+'Hz');
+                    patch.inharmonicAFrequency.toFixed(0)+'Hz')+'</span></div>';
             break;
         case "inharmonicB":
             ve.innerHTML =
@@ -281,15 +282,17 @@ function setValueFromPatch(ve, patch){
             break;
         case "inharmonicD": //Only used in high sample rate tests
                 ve.innerHTML =
+                '<div class=""><span class="tinyLabelFull">'+
                     toInharmonicString(
                         patch.inharmonicDLevel, 
-                        patch.inharmonicDFrequency.toFixed(0)+'Hz');
+                        patch.inharmonicDFrequency.toFixed(0)+'Hz')+'</span></div>';
                 break;
         case "inharmonicE": //Only used in high sample rate tests
                 ve.innerHTML =
+                '<div class=""><span class="tinyLabelFull">'+
                     toInharmonicString(
                         patch.inharmonicELevel, 
-                        patch.inharmonicEFrequency.toFixed(0)+'Hz');
+                        patch.inharmonicEFrequency.toFixed(0)+'Hz')+'</span></div>';
                 break;
         case "ultrasonic":
             ve.innerHTML =patch.oversampleTimes==0?"<b>off</b>":
@@ -366,7 +369,7 @@ function toFilterFreq(x){
 
 function toPatchDistortion(value, distortion){
     if (distortion==0) return "off";
-    return '<div class="tinyLabelDiv">'+(value*100).toFixed(0) +'% <span class="tinyLabel">x level</span></div>';
+    return '<div >'+(value*100).toFixed(0) +'% <span class="tinyLabel"></span></div>';
     //return '<small>'+ (value*100).toFixed(0) +' ('+(value * distortion).toFixed(Math.max(2,Math.min(4,-Math.round(Math.log(distortion)*2)))) +')</small>';
 }
 

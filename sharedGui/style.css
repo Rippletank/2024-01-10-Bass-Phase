@@ -431,6 +431,12 @@ input[type="range"]:focus {
     flex-basis: 70%;
     text-align: center;
 }
+.presetHeader .right{
+    flex-basis: 10%;
+    text-align: right;
+    margin-top: 0em;
+    margin-bottom: 0.5em;
+}
 .PresetButtons {
     flex-basis: 70%;
     display: flex;
@@ -511,6 +517,11 @@ input[type="range"]:focus {
 
 .warning_text {
     color: rgb(209, 0, 0);
+    font-weight: bold;
+}  
+
+.good_text {
+    color: rgb(0, 156, 65);
     font-weight: bold;
 }  
 

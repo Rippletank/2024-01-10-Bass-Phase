@@ -57,6 +57,9 @@ class MyAudioProcessor extends AudioWorkletProcessor {
             case "pause":
                 this.isPaused = payload.data;
             break;
+            case "stop":
+                this.stopPlaying();
+            break;
 
         }
       }
@@ -163,9 +166,7 @@ class MyAudioProcessor extends AudioWorkletProcessor {
     }
 
     startPlayingSound(index){
-        this.playList.forEach((item)=>{
-            item.isFading = true; 
-        });
+        this.stopPlaying()
         this.playList.push({
             index: index,
             position: 0,
@@ -173,6 +174,11 @@ class MyAudioProcessor extends AudioWorkletProcessor {
         });
     }
 
+    stopPlaying(){
+        this.playList.forEach((item)=>{
+            item.isFading = true; 
+        });
+    }
     loadSounds(sounds){
         this.sounds = new Array(sounds.length);
         sounds.forEach((sound,index) => {

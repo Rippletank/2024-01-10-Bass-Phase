@@ -1,6 +1,6 @@
 import { startFFT, fftFill, stopFFT } from "./painting.js";
-import {initMushra, setNumberOfSliders, startMushra, startAudio, 
-    getAnalyserNode, shutDownMushra ,setResultsStyle, SetSpecialResultsText} from "../sharedGui/mushra.js"; 
+import {initMushra, setNumberOfSliders, startMushra, enableMusraAndStartAudio, 
+    getAnalyserNode, shutDownMushraAndStopAudio ,setResultsStyle, SetSpecialResultsText, stopPlayingMushraSound, playMushraSound} from "../sharedGui/mushra.js"; 
 import {initWorkers, setMushraBufferCallback, calculateMushraBuffer, setAudioEngineSampleBuffers} from "./workerLauncher.js"; 
 import {getDefaultPatch} from "../sharedAudio/defaults.js";
 import {fetchWaveByName} from "../sharedGui/waves.js";
@@ -141,7 +141,7 @@ export function checkSampleRateStatus(){
         "<p>Use the sample rate checker below to confirm when you interface is correctly set to 96kHz.</p>"
     }   
     SetSpecialResultsText("Interface sample rate appears to be 96kHz");
-    return "<p>Sample rate appears to be correctly set to 96kHz. You can confirm this below.</p>";
+    return "<p class='good_text'>Sample rate appears to be correctly set to 96kHz. You can confirm this below.</p>";
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -155,15 +155,26 @@ export function doInitMushra(){
     initMushra();
 }
 
-
-export function doShutDownMushra(){
-    stopFFT("outputFFTCanvas");
-    shutDownMushra();
+export function doStop(){
+    stopPlayingMushraSound()
 }
 
+export function playSound(index){
+    playMushraSound(index)
+}
+
+export function doShutDownMushra(){
+    stopFFT("previewFFTCanvas");
+    shutDownMushraAndStopAudio();
+}
+
+
+
+
+
 export function doStartMushra(waveName,cachedPatch) {
-    ensureAudioContext();
     startMushra();
+    setBusy(true)
     
     setSampledWave(waveName, audioContext.sampleRate, (sampleTime)=>{//load the sample then builld the buffers
         let patches = getPatches(sampleTime, cachedPatch);
@@ -176,6 +187,19 @@ export function doStartMushra(waveName,cachedPatch) {
     }); 
 }
 
+let spinner = document.querySelector('.spinner');
+function setBusy(isOne){
+    if (isOne){
+        spinner.classList.add('busy');
+    }
+    else{
+        spinner.classList.remove('busy');
+    }
+}
+
+
+
+
 
 let lastId = 1;
 let returnedBuffers =[];
@@ -186,8 +210,10 @@ setMushraBufferCallback(async (index, buffers, id)=>{
     returnedBuffers[index] = buffers[buffers.length-1];//Take the last one, the first may be a dummy reference for when high pass filtering is used
 
     if (returnedBuffers.every((x)=>x!=null) && returnedIds.every((x)=>x==lastId)){
-        await startAudio(audioContext.sampleRate, returnedBuffers, getLabels(), "outputFFTCanvas");
-        startFFT(audioContext, getAnalyserNode(), "outputFFTCanvas");
+        await enableMusraAndStartAudio(audioContext.sampleRate, returnedBuffers, getLabels(), "previewFFTCanvas");
+        startFFT(audioContext, getAnalyserNode(), "previewFFTCanvas");
+        
+        setBusy(false)
     };
 })
 

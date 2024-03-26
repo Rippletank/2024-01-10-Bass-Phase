@@ -70,10 +70,10 @@ export function calculateMushraBuffer(index, patchList, sampleRate, isNormToLoud
 function checkForCachedAudioBuffer(index){
    if (mushraBufferCached[index]){
         calculateMushraBuffer(index,
-            mushraBufferCached.patchList, 
-            mushraBufferCached.sampleRate, 
-            mushraBufferCached.isNormToLoudest,
-            mushraBufferCached.id);
+            mushraBufferCached[index].patchList, 
+            mushraBufferCached[index].sampleRate, 
+            mushraBufferCached[index].isNormToLoudest,
+            mushraBufferCached[index].id);
     }
 }
 

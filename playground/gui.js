@@ -64,7 +64,7 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { shutDownMushra, repaintMushra, setResultsStyle } from '../sharedGui/mushra.js';
+import { shutDownMushraAndStopAudio, repaintMushra, setResultsStyle } from '../sharedGui/mushra.js';
 import { doStartMushra, doInitMushra } from './badMushra.js';
 import { fetchWaveListAsync } from '../sharedGui/waves.js';
 
@@ -1388,7 +1388,7 @@ document.getElementById('mushraTest').addEventListener('click', function() {
   
   document.querySelectorAll('.closeMushra').forEach(b=>{
         b.addEventListener('click', function() {
-            shutDownMushra();
+            shutDownMushraAndStopAudio();
             document.getElementById('mushraModal').style.display = 'none';
             document.getElementById('mushraModalBackground').style.display = 'none';
             document.getElementById('mushraResultsModal').style.display = 'none';

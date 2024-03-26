@@ -62,6 +62,10 @@ export function doPause(node, isPaused){
     doPostPlayerMessage(node,"pause", isPaused);
 }
 
+export function doStop(node){
+    doPostPlayerMessage(node,"stop",null);
+}
+
 //array of arrays of Float32Arrays, [[L1,R1],[L2,R2]] or [[M1,null],[M2,null]]
 export function doLoadPlayerWave(node,buffers){
     let payload = {type:"loadSounds", data:{sounds:buffers}};

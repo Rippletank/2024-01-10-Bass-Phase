@@ -1,5 +1,5 @@
 
-import { doShutDownMushra, startListening, stopListening, doInitMushra,doStartMushra, checkSampleRateStatus} from "./audioApi.js";
+import { doShutDownMushra, startListening, stopListening, doInitMushra,doStartMushra, doStop, playSound, checkSampleRateStatus} from "./audioApi.js";
 import { repaintMushra } from '../sharedGui/mushra.js';
 import { setValueFromPatch } from "./guiValues.js";
 import { getDefaultPatch } from "../sharedAudio/defaults.js";
@@ -31,10 +31,12 @@ document.getElementById('mushraTest').addEventListener('click', function() {
     document.getElementById('mushraModalBackground').style.display = 'flex';
     document.getElementById('mushraResultsModal').style.display = 'none';
     doInitMushra();
+    changed=false;
     doStartMushra(lastSetWave,cachedPatch);
   });
 
   document.getElementById('startMushra').addEventListener('click', function() {
+    changed=false;
     doStartMushra(lastSetWave,cachedPatch);
   });
   
@@ -49,6 +51,19 @@ document.getElementById('mushraTest').addEventListener('click', function() {
 
 
     document.getElementById('status96k').innerHTML = checkSampleRateStatus();
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//PreviewButtons
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+document.getElementById("previewR").addEventListener("click", function() {playSound(0);});
+document.getElementById("preview1").addEventListener("click", function() {playSound(1);});
+document.getElementById("preview2").addEventListener("click", function() {playSound(2);});
+document.getElementById("preview3").addEventListener("click", function() {playSound(3);});
+document.getElementById("preview4").addEventListener("click", function() {playSound(4);});
+document.getElementById("previewA").addEventListener("click", function() {playSound(5);});
+document.getElementById("previewStop").addEventListener("click", function() {doStop();});
+
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -89,22 +104,46 @@ document.addEventListener('DOMContentLoaded', updateCanvas);
 const headers = document.querySelectorAll('.collapsible-header');
 const globalToggle = document.getElementById('globalToggle');
 
+let hasSetupMusrhaPlayer = false;
+let setupWindowIsOpen = false;
 const toggleSection = (header) => {
     const content = header.nextElementSibling;
     const chevron = header.querySelector('.chevron');
     const headerText = header.querySelector('.header-text');
 
+    let didCollapsed =false;
     if (content.style.maxHeight) {
         //Collapse the section
         content.style.maxHeight = null;
         chevron.classList.remove('rotate'); // Rotate chevron back
         headerText.classList.remove('fade-out'); // Restore text opacity
+        didCollapsed =true;
     } else {
         //Expand the section
         content.style.maxHeight = content.scrollHeight + "px";
         chevron.classList.add('rotate'); // Rotate chevron to indicate open
         headerText.classList.add('fade-out'); // Fade out the header text
     } 
+
+    if (header.parentNode.id=="testSetup"){
+        if (!hasSetupMusrhaPlayer){
+            hasSetupMusrhaPlayer=true;
+            changed=false;
+            doStartMushra(lastSetWave,cachedPatch);//Load up waveplayer so it can be used for previewing
+            startPreviewUpdating();
+        }
+        if (didCollapsed){
+            doShutDownMushra();
+        }
+        setupWindowIsOpen = !didCollapsed;
+    }
+
+    if (header.parentNode.id=="ffts"){
+        if (didCollapsed){
+            stopListening()
+            document.getElementById("listenInterfaceTest").classList.remove('selected');
+        }   
+    }
 };
 
 
@@ -186,7 +225,6 @@ function handleValueChange() {
     updateAllLabelsAndCachePatches();
     changed = true;
     lastUpdate = Date.now();
-    updateAllPreviews();
 }
 
 
@@ -212,6 +250,20 @@ function updateAllLabelsAndCachePatches()
     cachedPatch = patch;
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Update previews
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function startPreviewUpdating(){
+    setInterval(()=>{
+        if (changed && Date.now()-lastUpdate>1000){
+            changed=false;
+            if (setupWindowIsOpen){
+                doStartMushra(lastSetWave,cachedPatch);
+            }
+        }
+    } , 200);
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Handling Patch holding parameters 

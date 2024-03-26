@@ -6,6 +6,7 @@ import {
     getWavePlayer, 
     doPlaySound,
     doPause,
+    doStop,
     logStatus,
     doLoadPlayerWave,
     setSampleRateReporting } from "./wavePlayerLauncher.js";
@@ -51,16 +52,32 @@ export function setNumberOfSliders(n){
 }
 
 
-function playMushraSound(index) {
+export function playMushraSound(index) {
     doPlaySound(myWavePlayer, index);
 }
 
-export function reportMushra() {
-    logStatus(myWavePlayer);
+export function stopPlayingMushraSound() {
+    doStop(myWavePlayer);
 }
 
-export function shutDownMushra() {
+export function shutDownMushraAndStopAudio() {
+    stopPlayingMushraSound();
     disableSliders();
+    stopAudio()
+}
+
+export async function startAudio(sampleRate, buffers, fftId=null){
+    if (!myWavePlayer) myWavePlayer = await createMyAudioProcessor(sampleRate, fftId);
+    if (!myWavePlayer) {
+        console.error("Failed to create AudioWorkletNode");
+        return;
+    }
+
+    doLoadPlayerWave(myWavePlayer, buffers);//array of arrays of Float32Arrays, [[L1,R1],[L2,R2]] or [[M1,null],[M2,null]] 
+}
+
+
+export function stopAudio() {
     if (audioContext) {
         audioContext.close();
         myWavePlayer.disconnect();
@@ -69,7 +86,6 @@ export function shutDownMushra() {
         //cancelAnimationFrame(getfftFrameCall());
         //clearFFTFrameCall();
     }
-
 }
 
 export function doSetSampleRateReporting(isReporting) {
@@ -78,15 +94,9 @@ export function doSetSampleRateReporting(isReporting) {
 
 
 let waveLabels = [];
-export async function startAudio(sampleRate, buffers, labels, fftId=null) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
-    myWavePlayer = await createMyAudioProcessor(sampleRate, fftId);
-    if (!myWavePlayer) {
-        console.error("Failed to create AudioWorkletNode");
-        return;
-    }
-
-    doLoadPlayerWave(myWavePlayer, buffers);//array of arrays of Float32Arrays, [[L1,R1],[L2,R2]] or [[M1,null],[M2,null]]
-
+export async function enableMusraAndStartAudio(sampleRate, buffers, labels, fftId=null) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
+    await startAudio(sampleRate, buffers, fftId)
+    if (!myWavePlayer) return;
     enableSliders(); 
     waveLabels = labels;
     results = [];
@@ -134,10 +144,13 @@ async function createMyAudioProcessor(sampleRate, fftId) {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-const reportButton = document.getElementById('reportMushra')
+const reportButton = document.getElementById('reportMushra') //debug only
 if (reportButton) reportButton.addEventListener('click', function() {
     reportMushra()
-  });
+});
+function reportMushra() {
+    logStatus(myWavePlayer);
+}
 
 document.getElementById('nextMushra').addEventListener('click', function() {    
     results.push({mapping,values});
