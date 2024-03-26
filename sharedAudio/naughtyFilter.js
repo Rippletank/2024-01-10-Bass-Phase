@@ -13,7 +13,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-import {buildBlackmanHarrisWindow} from './oversampling.js'
+import {buildBlackmanHarrisWindow,generateKaiserSincKernel_fromParams} from './oversampling.js'
 import {getFFTFunctionNoPhase, getFFTFunctionRealAndImag, getInverseFFTFunction } from './basicFFT.js';
 
 
@@ -84,6 +84,11 @@ function getFIRFilter(iirParams) {
   }
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Mushra related filters
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 //From Robert Bristow-Johnson's Audio EQ Cookbook -  see below for further references
 export function do12dbFilter(buffer, sampleRate, cutoffFrequency) {
   var w0 = 2 * Math.PI * cutoffFrequency / sampleRate;
@@ -122,6 +127,33 @@ export function doLinearLowpass(buffer, sampleRate, cutoffFrequency) {
     buffer[i] = outputBuffer[i];
   }
 }
+
+let HSRFilterF = 0;
+let HSRFilter = null;
+const HSRFilterCut =100;
+const HSRFilterTransition = 1000;
+export function doHighSampleRateMix(referenceBuffer, sourceBuffer, sampleRate, refLevel, filteredLevel, hpFrequency){
+    let fn =hpFrequency/sampleRate;
+    if (!HSRFilter || HSRFilterF != fn){
+      HSRFilterF = fn;
+      HSRFilter = generateKaiserSincKernel_fromParams(fn, HSRFilterCut, HSRFilterTransition/sampleRate);
+    }
+
+    let filtered = new Float32Array(sourceBuffer.length + HSRFilter.length - 1);
+    convolve(sourceBuffer,  filtered, HSRFilter, 1);
+
+    let filteredOffset = (HSRFilter.length-1)/2;
+
+    for(let i = 0; i<sourceBuffer.length; i++){
+        let r =i<referenceBuffer.length? referenceBuffer[i] : 0;
+        let fi = i+filteredOffset;
+        let f = fi<filtered.length? filtered[i+filteredOffset] : 0  ;
+        let s = sourceBuffer[i] - f;
+        sourceBuffer[i] = s*filteredLevel+r*refLevel;
+    }
+
+}
+
 
 
 

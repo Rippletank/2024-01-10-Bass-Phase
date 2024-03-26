@@ -1,11 +1,22 @@
 
 
-import {setMushraBufferCallback, calculateMushraBuffer} from "./workerLauncher.js";
-import {getColor, getColorA} from "./painting.js";
-
+import {getColor} from "./colors.js";
+import { 
+    initPlayerWorklet,
+    getWavePlayer, 
+    doPlaySound,
+    doPause,
+    logStatus,
+    doLoadPlayerWave,
+    setSampleRateReporting } from "./wavePlayerLauncher.js";
 
 let audioContext = null;
-let myAudioProcessor = null;
+let myWavePlayer = null;
+let analyserNode = null;
+export function getAnalyserNode(){
+    return analyserNode;
+}
+let fftCanvasId = null;
 
 
 
@@ -28,156 +39,90 @@ export function initMushra(){
 
 
 
-export function setupMushra(patches,subjectList, sampleRate, isNormToLoudest) {
+export function startMushra() {
     disableSliders();
     let start =document.getElementById('startMushra')
-    start.classList.add('blurredDisabled');
-    
-    const patchList = [[patches[0],patches[1]], [patches[2],patches[3]]]
-    calculateMushraBuffer(getInterpolatedPatches(patchList, subjectList), sampleRate, isNormToLoudest);
+    start.classList.add('blurredDisabled');    
 }
 
-const numberOfSliders=6;
-let lastInterpolations = [];
-function getInterpolatedPatches(patchList, subjectList){
-    const patches = new Array(numberOfSliders);
-    patches[0]=patchList[0];
-    patches[numberOfSliders-2]=patchList[1];
-
-    let interpolations =[];
-    let intersCount = numberOfSliders-3;
-    let intersStep = 1/(1+intersCount);
-    for(let i=1; i<=intersCount; i++){
-        interpolations.push(intersStep*i);
-    }
-
-    interpolations.forEach((x, pos)=>{
-        let newPair = [];
-        for(let i=0; i<2; i++){
-            let A = patchList[0][i]? {...patchList[0][i]} : null;
-            let B = patchList[1][i]? {...patchList[1][i]} : null;
-            if (A==null || B==null) {
-                newPair.push(null);
-                continue;
-            }
-    
-            subjectList.forEach((subject)=>{
-                A[subject] = A[subject]*(1-x)+B[subject]*x;
-            });
-            newPair.push(A);
-        }
-        patches[pos+1] = newPair;
-    });
-    lastInterpolations = interpolations;
-
-    //Work out the anchor patch - should be bad sounding - but filter alone is often not enough
-    let activePatches = patchList.reduce((acc, val)=>{   
-                                acc.push(val[0]);
-                                if (val[1]) acc.push(val[1]);
-                                return acc;
-                                },[]);
-    let hasBitDepth = activePatches.some((patch)=>patch.digitalBitDepth<25);
-    let hasNoise = activePatches.some((patch)=>patch.inharmonicNoiseLevel>-91);
-    let BadL = {...patchList[1][0]};    
-    BadL.badFilter=true;
-    if (!hasBitDepth) BadL.digitalBitDepth=10; 
-    if (hasBitDepth && !hasNoise) BadL.inharmonicNoiseLevel=-50;                         
-    
-    let BadR = null;
-    if (patchList[0][1]){
-        BadR = {...patchList[1][1]};
-        BadR.badFilter=true;
-        if (!hasBitDepth) BadR.digitalBitDepth=10; 
-        if (hasBitDepth && !hasNoise) BadR.inharmonicNoiseLevel=-50;  
-    }
-    patches[numberOfSliders-1] = [BadL, BadR];
-    return patches;
+let numberOfSliders=6;
+export function setNumberOfSliders(n){
+    numberOfSliders = n;
 }
+
 
 function playMushraSound(index) {
-    postWorkletMessage("playSound", {index:index});
+    doPlaySound(myWavePlayer, index);
 }
 
 export function reportMushra() {
-    postWorkletMessage("report", null);
+    logStatus(myWavePlayer);
 }
 
 export function shutDownMushra() {
     disableSliders();
     if (audioContext) {
         audioContext.close();
-        myAudioProcessor.disconnect();
+        myWavePlayer.disconnect();
         audioContext = null;
-        myAudioProcessor = null;
+        myWavePlayer = null;
         //cancelAnimationFrame(getfftFrameCall());
         //clearFFTFrameCall();
     }
 
 }
 
-setMushraBufferCallback((buffers)=>{
-    startAudio(buffers) 
-    results = [];
-    shuffleMappings();
-})
+export function doSetSampleRateReporting(isReporting) {
+    setSampleRateReporting(myWavePlayer, isReporting);
+}   
 
 
-async function startAudio(buffers) {
-    myAudioProcessor = await createMyAudioProcessor();
-    if (!myAudioProcessor) {
+let waveLabels = [];
+export async function startAudio(sampleRate, buffers, labels, fftId=null) {   //buffers is array of two member arrays, for stereo. Second member is null for mono
+    myWavePlayer = await createMyAudioProcessor(sampleRate, fftId);
+    if (!myWavePlayer) {
         console.error("Failed to create AudioWorkletNode");
         return;
     }
 
-    //postWorkletMessage("report", null)
-    postWorkletMessage("loadSounds", {sounds:buffers});
+    doLoadPlayerWave(myWavePlayer, buffers);//array of arrays of Float32Arrays, [[L1,R1],[L2,R2]] or [[M1,null],[M2,null]]
 
-    enableSliders()
+    enableSliders(); 
+    waveLabels = labels;
+    results = [];
+    shuffleMappings();
 }
 
-
-async function createMyAudioProcessor() {
+const fftSize = 4096*8;
+async function createMyAudioProcessor(sampleRate, fftId) {
     if (!audioContext) {
         try {
-        audioContext = new AudioContext();
-        await audioContext.resume();
-        await audioContext.audioWorklet.addModule("mushraWorklet.js");
+            audioContext = new AudioContext({sampleRate: sampleRate});
+            await audioContext.resume();
+            await initPlayerWorklet(audioContext)
         } catch (e) {
-        return null;
+            return null;
         }
-    }
-    
-    const node = new AudioWorkletNode(audioContext, "mushraPlayer",{
-        numberOfInputs: 0,
-        numberOfOutputs: 1,
-        outputChannelCount: [2]
-    
-    });
-    const srParam =  node.parameters.get("sampleRate");
-    srParam.setValueAtTime(audioContext.sampleRate, audioContext.currentTime);
-    node.port.onmessage = (event)=>{
-        switch(event.data.type){
-            case "SoundsOk":
-                enableSliders();
-                break;
-            case "max":
-                updateMinMax(event.data.data);
-                break;
-            default:
-                console.log("Message from AudioWorklet: "+event.data.type+": "+event.data.data);
-                break;
-        }
-    }
+    }    
+    const node = getWavePlayer(audioContext, enableSliders, updateMax);
+    let params = node.parameters;
+    params.get("sampleRate").setValueAtTime(audioContext.sampleRate, audioContext.currentTime);
 
-    node.connect(audioContext.destination); 
+    if(fftId){
+        //create an analyser, too
+        analyserNode = audioContext.createAnalyser();//blackman window with default smoothing 0.8
+        analyserNode.fftSize = fftSize;
+        analyserNode.smoothingTimeConstant = 0.0;
+        analyserNode.minDecibels = -120;
+        analyserNode.maxDecibels = 0;
+        node.connect(analyserNode);
+        analyserNode.connect(audioContext.destination);
+    }
+    else{
+        node.connect(audioContext.destination); 
+    }
+    
     return node;
-}
-
-
-function postWorkletMessage(name, data){
-    if (!audioContext) return;
-    let payload = {type:name, data:data};
-    if (myAudioProcessor) myAudioProcessor.port.postMessage(payload);
 }
 
 
@@ -197,7 +142,7 @@ if (reportButton) reportButton.addEventListener('click', function() {
 document.getElementById('nextMushra').addEventListener('click', function() {    
     results.push({mapping,values});
     shuffleMappings();
-    
+    showCount();
 });
 
 let isPaused=false;
@@ -212,7 +157,7 @@ pauseButton.addEventListener('click', function() {
         pauseButton.textContent = "Pause";
         pauseButton.classList.remove('active');
     }
-    postWorkletMessage("pause",isPaused);
+    doPause(myWavePlayer,isPaused);
 });
 document.getElementById('resultsMushra').addEventListener('click', function() {    
     document.getElementById('mushraModal').style.display = 'none';
@@ -256,6 +201,10 @@ function sliderFunction(scoreElement, index, value) {
     scoreElement.textContent = value;
 }
 
+function showCount(){
+    document.getElementById('mushraCount').textContent = "Test number " + (results.length+1);
+}
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  Hidden mappings and results
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -288,6 +237,7 @@ function shuffleMappings(){
     });
 }
 
+showCount();
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -409,6 +359,10 @@ function createTextReport(analysis) {
     for (let i=0; i<analysis.qualityChecks.length; i++) {
             let p = document.createElement('p');
             p.textContent = analysis.qualityChecks[i] ;
+            if (p.textContent.startsWith("Warning"))
+            {
+                p.classList.add('warning');
+            }
             div.appendChild(p);
     }
 }
@@ -417,6 +371,17 @@ function createTextReport(analysis) {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Draw Results
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let paintShowLOBF = true;
+let paintShowExpected = false;
+let doReportOnB = false;
+export function setResultsStyle(showLOBF, showExpected, reportOnB){
+    paintShowLOBF = showLOBF;
+    paintShowExpected = showExpected;
+    doReportOnB = reportOnB;
+    repaintMushra();
+}
+
 
 const resCanvas = document.getElementById("mushraResultCanvas");
 const resCtx = resCanvas.getContext("2d");
@@ -490,42 +455,46 @@ function paintResults(analysis){
         ctx.textAlign = "center";
         ctx.fillText(labels[i], columnX + columnWidth / 2, gB + 18);
     }
-    // Draw Ideal Line
-    ctx.beginPath();
-    ctx.lineWidth = columnWidth*0.8;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(0,0,128,0.1)';
-    const startY = gy0 - (100 / 100) * gyh; // Start at a value of 100
-    const endY = gy0 - (0 / 100) * gyh; // End at a value of 0
-    ctx.moveTo(gL + 0.5 * columnWidth, startY); // Start at column zero
-    ctx.lineTo(gL + (0.5 + heatMap.length - 2) * columnWidth, endY); // End at the last column (the one before the ignored one)
-    ctx.stroke();
 
-
-    //Draw quadratic fit
-    const pointsPerColumn = 5;
-    const length = (heatMap.length-2)*pointsPerColumn +1;// Ignore the last column, plot centre of first to centre of last, 
-    
-    ctx.beginPath();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(0,0,255,0.5)';
-    for (let i = 0; i < length; i++) { 
-        const x = i/pointsPerColumn;
-        const columnX = gL + (0.5+x) * columnWidth;    
-        
-        // Draw quadratic fit
-        const y = gy0 - (((fit.a * x  + fit.b) * x + fit.c) / 100) * gyh;
-        if (i==0){
-            ctx.moveTo(columnX , y);
-        }
-        else{
-            ctx.lineTo(columnX, y);
-        }
+    if (paintShowExpected){
+        // Draw Ideal Line
+        ctx.beginPath();
+        ctx.lineWidth = columnWidth*0.8;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(0,0,128,0.1)';
+        const startY = gy0 - (100 / 100) * gyh; // Start at a value of 100
+        const endY = gy0 - (0 / 100) * gyh; // End at a value of 0
+        ctx.moveTo(gL + 0.5 * columnWidth, startY); // Start at column zero
+        ctx.lineTo(gL + (0.5 + heatMap.length - 2) * columnWidth, endY); // End at the last column (the one before the ignored one)
+        ctx.stroke();
     }
-    ctx.stroke();
 
-    ctx.lineCap = 'butt';
 
+    if (paintShowLOBF){
+        //Draw quadratic fit
+        const pointsPerColumn = 5;
+        const length = (heatMap.length-2)*pointsPerColumn +1;// Ignore the last column, plot centre of first to centre of last, 
+        
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(0,0,255,0.5)';
+        for (let i = 0; i < length; i++) { 
+            const x = i/pointsPerColumn;
+            const columnX = gL + (0.5+x) * columnWidth;    
+            
+            // Draw quadratic fit
+            const y = gy0 - (((fit.a * x  + fit.b) * x + fit.c) / 100) * gyh;
+            if (i==0){
+                ctx.moveTo(columnX , y);
+            }
+            else{
+                ctx.lineTo(columnX, y);
+            }
+        }
+        ctx.stroke();
+
+        ctx.lineCap = 'butt';
+    }
 
     //Labels
     ctx.fillStyle = getColor(0,0,0);
@@ -554,7 +523,7 @@ function paintResults(analysis){
 
 let frameCall = null;
 let maxValues = [];
-function updateMinMax(maxValue){
+function updateMax(maxValue){
     const variation = 0.6 -maxValue*0.5;
     maxValues.push(maxValue*(variation+Math.random()*((1-variation)*2)));
     if (frameCall) return;
@@ -624,6 +593,7 @@ function generateReport(){
     paintResults(analysis)
     createResultsTable(analysis);
     createTextReport(analysis);
+    showResultsCount();
     lastAnalysis = analysis;
 }
 
@@ -639,7 +609,7 @@ function analyseResults(){
     });
     const means = getMeans(r);
     let analysis = {
-        labels : getLabels(),
+        labels : waveLabels,
         raw:r,
         means:means,
         heatMap:getHeatMaps(r, 200),
@@ -651,14 +621,15 @@ function analyseResults(){
     return analysis;
 }
 
-function getLabels(){
-    return [
-        "A",
-        ...lastInterpolations.map((x)=>x.toFixed(2)), 
-        "B",
-        "Anchor"];
-    }
 
+let specialResultsText="";
+export function SetSpecialResultsText(text){
+    specialResultsText = text;
+}
+
+function showResultsCount(){
+    document.getElementById('resultsCount').textContent = "Tests Taken: " + (results.length);
+}
 
 //Turn mapping and values list into one list of values in the correct order
 function unShuffleMapping(mapping, values){
@@ -710,10 +681,13 @@ function getChecks(r){
     const AnchorTooHigh=AnchorGreaterThan90/r.length;
 
     let report =[];
+    if (specialResultsText && specialResultsText.length>0) report.push(specialResultsText);
     if (r.length<3) report.push("Too few tests to be reliable.");
-    if (ATooLow>0.15) report.push("Too many low scores for A: "+(ATooLow*100).toFixed(0)+"%");
-    if (BTooHigh>0.15) report.push("Too many high score for B: "+(ATooLow*100).toFixed(0)+"%");
-    if (BTooHigh>0.25) report.push("B probably too similar to A.");
+    if (ATooLow>0.15) report.push("Too many low scores for reference A: "+(ATooLow*100).toFixed(0)+"%");
+    if (doReportOnB){
+        if (BTooHigh>0.15) report.push("Too many high score for B: "+(ATooLow*100).toFixed(0)+"%");
+        if (BTooHigh>0.25) report.push("B probably too similar to A.");
+    }
     if (AnchorTooHigh>0.15) report.push("Too many high scores for Anchor: "+(ATooLow*100).toFixed(0)+"%");
     if (AnchorTooHigh>0.25) report.push("Anchor may be too similar to do its job.");
     return report;

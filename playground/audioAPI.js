@@ -65,9 +65,9 @@ import {
     paintTHDGraph
 } from './painting.js';
 
-import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from './jitter.js';
+import { getADCJitterFactor, getDACJitterFactor, getPeriodicJitterFactor } from '../sharedAudio/jitter.js';
 
-import {fetchWaveByName, setAudioContext} from './waves.js';
+import {fetchWaveByName} from '../sharedGui/waves.js';
 
 
 let flags = {
@@ -113,14 +113,13 @@ function ensureAudioContext(){
     if (!audioContext){
         //Will throw a warning in some browsers if not triggered by a user action
         //On page start up this is called anyway to get the playback samplerate to use for buffer generation
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate:48000}); 
+        console.log('Sample rate: ' + audioContext.sampleRate + 'Hz')
         analyserNode = audioContext.createAnalyser();//blackman window with default smoothing 0.8
         analyserNode.fftSize = 4096*8;
         analyserNode.smoothingTimeConstant = 0.0;
         analyserNode.minDecibels = -90;
         analyserNode.maxDecibels = 0;
-
-        setAudioContext(audioContext);
     }
 }
 
@@ -193,6 +192,7 @@ function stop() {
         cancelAnimationFrame(getfftFrameCall());
         clearFFTFrameCall();
         fftFade('fftCanvas');
+        document.querySelectorAll('.playButton').forEach(button => button.classList.remove('selected'));
     }
 }
 
@@ -267,7 +267,7 @@ function updateBuffers(patchesToUse) {
     startBufferUpdate();
     //Allow the UI to update
     setTimeout(function() {
-        calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest, "Drums" );
+        calculateAudioBuffer( patchesToUse, sampleRate, flags.isStereo, flags.isNormToLoudest );
     },0);
 }
 
@@ -279,16 +279,21 @@ setAudioBufferCallback((bufferA, bufferB, bufferNull)=>{
     endBufferUpdate();
 });
 
+
+
+let spinner = document.querySelector('.spinner');
 let fullwaves = document.querySelectorAll('.fullwave');
 function startBufferUpdate() {
     fullwaves.forEach(canvas => {
         canvas.classList.add('blur');
     });
+    spinner.classList.add('busy');
 }
 function endBufferUpdate() {
     fullwaves.forEach(canvas => {
         canvas.classList.remove('blur');
     });
+    spinner.classList.remove('busy');
 }
 
 
@@ -583,8 +588,9 @@ function setSampledWave(name, updateBufferEvenIfInstant = true){
     };
     if (!name || name=="" || name==null){
         callback(null, true);
+        return;
     }
-    fetchWaveByName(name, callback);
+    fetchWaveByName(audioContext.sampleRate, name, callback);
 
 
 }

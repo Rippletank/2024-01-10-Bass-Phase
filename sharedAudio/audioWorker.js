@@ -21,6 +21,7 @@ import {
     
     scaleAndGetNullBuffer,
     scaleBufferList,
+    doUltraSonicMixing,
 
     getPreview,   
     getDigitalPreview, 
@@ -53,7 +54,7 @@ self.onmessage = function(event) {
                 doAudioBuffer(data.patchesToUse, data.sampleRate, data.isStereo , data.isNormToLoudest);
                 break;
             case 'getMushraBuffers':
-                doMushraBuffers(data.patchList, data.sampleRate, data.isNormToLoudest);
+                doMushraBuffers(data.patchList, data.sampleRate, data.isNormToLoudest, data.id);
                 break;
             case 'getPreview':
                 doPreview(data.referencePatch, data.filterPreviewSubject , data.sampleRate);
@@ -168,11 +169,10 @@ function doAudioBuffer(patchesToUse, sampleRate, isStereo, isNormToLoudest) {
     //console.log('Audio buffer time:', performance.now()-t);
 }
 
-function doMushraBuffers(patchList, sampleRate, isNormToLoudest) {
+function doMushraBuffers(patchList, sampleRate, isNormToLoudest, id) {
     //let t = performance.now();
 
     const fullBuffers = [];
-    let transferList = [    ];
     patchList.forEach((patchPair)=>{
         let b = getAudioBuffer(
             sampleRate, 
@@ -186,15 +186,19 @@ function doMushraBuffers(patchList, sampleRate, isNormToLoudest) {
     });
 
 
+    doUltraSonicMixing(fullBuffers, sampleRate);
+
+
     scaleBufferList(fullBuffers, sampleRate, isNormToLoudest)
 
     let buffers =[]
+    let transferList = [    ];
     fullBuffers.forEach((b)=>{ 
         buffers.push(b.buffer.data)
         b.buffer.data.forEach((b)=>transferList.push(b.buffer));
     });
 
-    self.postMessage({ type:"Mushra", buffers }, transferList);
+    self.postMessage({ type:"Mushra", buffers, id }, transferList);
     //console.log('Audio buffer time:', performance.now()-t);
 }
 

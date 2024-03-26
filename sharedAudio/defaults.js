@@ -558,10 +558,14 @@ function getTrueDefaultPatch(){
         inharmonicALevel:-91,//-91..0, in db -91 is off
         inharmonicBLevel:-91,//-91..0, in db -91 is off
         inharmonicCLevel:-91,//-91..0, in db -91 is off
+        inharmonicDLevel:-91,//-91..0, in db -91 is off -  used for high samplerate tests only
+        inharmonicELevel:-91,//-91..0, in db -91 is off -  used for high samplerate tests only
         inharmonicNoiseLevel:-91,//-91..0, in db -91 is off
         inharmonicAFrequency:1000,//Hz (for now?)
         inharmonicBSemitones:1,//semitones above root
         inharmonicBSemitones:1,//semitones above root
+        inharmonicDFrequency:1000,//Hz (for now?) -  used for high samplerate tests only
+        inharmonicEFrequency:1000,//Hz (for now?) -  used for high samplerate tests only
         inharmonicNoiseColour:0,//0=white, 1=pink
 
         naughtyFilterFreq:0.5,// 0..1 0 = off, 1 = max frequency log scale
@@ -581,6 +585,10 @@ function getTrueDefaultPatch(){
 
         attenuation:1,//0..1 final attenuation applied to the signal
         attenuationPhase:0,//0 normal phase, 1 = 180 degree phase shift
+
+        ultraSonicReferenceLevel:0,//Mix of reference into signal in Mushra - used for high samplerate tests
+        ultraSonicCutlevel:0,//Mix of reference into signal in Mushra - used for high samplerate tests
+        ultraSonicCutOff:0,//Cut off frequency of highpass filter applied before mixing in references
     }
 }
 

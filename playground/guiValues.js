@@ -18,10 +18,9 @@
 //Allows for units and non-linear scales etc
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-import { allowedOversampleTimes } from './defaults.js';
+import { allowedOversampleTimes } from '../sharedAudio/defaults.js';
 import { getCanvasTooltips } from './painting.js';
 import { repaintDetailedFFT, getTrueSampleRate } from './audioAPI.js';
-
 
 const disableGroups =[
     {
@@ -382,6 +381,18 @@ function setValueFromPatch(ve, patch){
                     patch.inharmonicCLevel, 
                     patch.inharmonicCSemitones.toFixed(0)+' semitones');
             break;
+        case "inharmonicD": //Only used in high sample rate tests
+                ve.innerHTML =
+                    toInharmonicString(
+                        patch.inharmonicDLevel, 
+                        patch.inharmonicDFrequency.toFixed(0)+'Hz');
+                break;
+        case "inharmonicE": //Only used in high sample rate tests
+                ve.innerHTML =
+                    toInharmonicString(
+                        patch.inharmonicELevel, 
+                        patch.inharmonicEFrequency.toFixed(0)+'Hz');
+                break;
         case "ultrasonic":
             ve.innerHTML =patch.oversampleTimes==0?"<b>off</b>":
                 toInharmonicString(
@@ -392,6 +403,15 @@ function setValueFromPatch(ve, patch){
                             + (allowedOversampleTimes[patch.oversampleTimes]-1) 
                                 * patch.ultrasonicFrequency)).toFixed(0)+' Hz');
             break;
+        case "ultraSonicReferenceLevel": //Only used in high sample rate tests
+                ve.textContent = toPercent(patch.ultraSonicReferenceLevel);
+                break;
+            case "ultraSonicCutlevel": //Only used in high sample rate tests
+                    ve.textContent = toPercent(patch.ultraSonicCutlevel);
+                    break;
+        case "ultraSonicCutOff": //Only used in high sample rate tests
+                ve.textContent =patch.ultraSonicCutOff==0?"off" : (patch.ultraSonicCutOff/1000).toFixed(2)+'kHz';
+                break;
     }
 }
 

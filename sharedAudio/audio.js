@@ -26,7 +26,7 @@ import { jitter, getJitterPreview } from './jitter.js';
 import { getFFTFunction, getFFTFunctionNoPhase } from './basicFFT.js';
 import { ditherSimulation, getDitherLinearityData, getDitherDynamicRange } from './dither.js';
 import {zeroLevel, sinePatch, getDefaultPatch} from './defaults.js';
-import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams, do12dbFilter, doLinearLowpass} from './naughtyFilter.js';
+import {doFilter, getPreviewImpulseResponse, convertPatchToFilterParams, do12dbFilter, doLinearLowpass, doHighSampleRateMix} from './naughtyFilter.js';
 
 
 let sampleBuffers =null;
@@ -152,7 +152,7 @@ function getAudioBuffer(
 
             
             envelopeBuffers.push(envelopeBuffer);
-            filters.push(filter);
+            if (filter)filters.push(filter);
         }
       return {
             buffer:audioBuffer,
@@ -215,6 +215,9 @@ function scaleAndGetNullBuffer(audioBufferA, audioBufferB, isNormToLoudest, patc
 
 const badFilterCutoff = 3500;//Hz
 function scaleBufferList(audioBuffers, sampleRate, isNormToLoudest){
+
+
+    
     let scale = 10000;
     audioBuffers.forEach((audioBuffer)=>{
         audioBuffer.scale =0.99 /Math.max(audioBuffer.maxValue, 0.000001);
@@ -246,6 +249,33 @@ function scaleBufferList(audioBuffers, sampleRate, isNormToLoudest){
         }
     });
 }
+
+
+function doUltraSonicMixing(fullBuffers, sampleRate){
+    let reference = fullBuffers[0].buffer;
+    for(let i=1;i<fullBuffers.length;i++){
+        let audioBuffer = fullBuffers[i].buffer;
+        for(let chan=0;chan<audioBuffer.numberOfChannels;chan++){            
+                let b = audioBuffer.data[chan];
+                let patch = fullBuffers[i].patches[chan];
+                if (!patch.ultraSonicCutOff || patch.ultraSonicCutOff==0) continue;
+                doHighSampleRateMix(
+                    reference.data[chan], 
+                    b, 
+                    sampleRate, 
+                    patch.ultraSonicReferenceLevel, 
+                    patch.ultraSonicCutlevel,
+                    patch.ultraSonicCutOff);
+            }
+        fullBuffers[i].maxValue = getBufferMax(audioBuffer);// Recalculate max values after mixing etc
+    }
+}
+
+
+
+
+
+
 
 
 
@@ -804,6 +834,16 @@ function AddInharmonics(patch, sampleRate, b, envelopeBuffer, delayN){
         let w = patch.inharmonicAFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
         mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
     }
+    if (patch.inharmonicDLevel>-91){//Ony used in Hires tests
+        let level = Math.pow(10,patch.inharmonicDLevel/20); 
+        let w = patch.inharmonicDFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
+    if (patch.inharmonicELevel>-91){//Ony used in Hires tests
+        let level = Math.pow(10,patch.inharmonicELevel/20); 
+        let w = patch.inharmonicEFrequency * 2 * Math.PI  / sampleRate;  //Plain Frequency
+        mixInSine( b, w, null,  envelopeBuffer, level ,delayN, 0);
+    }
     if (patch.inharmonicBLevel>-91){
         let level = Math.pow(10,patch.inharmonicBLevel/20); 
         let f = patch.frequency+patch.frequencyFine;
@@ -900,6 +940,7 @@ export {
     getAudioBuffer, 
     scaleAndGetNullBuffer,
     scaleBufferList,
+    doUltraSonicMixing,
     preMaxCalcStartDelay,
     preMaxFilterDelay,
 

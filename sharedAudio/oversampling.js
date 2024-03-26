@@ -511,5 +511,6 @@ export {
     generateBlackmanHarrisFilterKernel,
     generateUpsamplingPolyphaseKernels,
     upsample,
-    downsample
+    downsample,
+    convolve
 };

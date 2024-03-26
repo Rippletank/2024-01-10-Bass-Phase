@@ -66,6 +66,7 @@ select{
     color: var(--text-color);
     background-color: var(--background-color);
     border-color: var(--border-color);
+    min-width: 15em;
 }
 
 
@@ -102,6 +103,10 @@ select{
     background-color: var(--background-color);
     color: var(--text-color);
 }
+.bordered button:not(.previewButton).selected{
+    background-color: green;
+    color: white;
+}
 
 .paragraphReport{
     text-align: center;
@@ -122,6 +127,30 @@ select{
     margin-bottom: 0em !important;
 }
 
+.spinContainer {
+    flex-basis: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height:auto;
+    width: auto;
+}
+.spinner {
+    width: 25px;
+    height: 25px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    opacity: 0;
+}
+.spinner.busy {
+    animation: spin 2s linear infinite,  opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
   
 /* ************************************************* */
@@ -387,9 +416,16 @@ input[type="range"]:focus {
 .presetHeader h4{
     flex-basis: 20%;
 }
+
 .presetHeader h3{
     flex-basis: 20%;
 }
+.presetHeader h4.wide{
+    flex-basis: 90%;
+    text-align: left;
+    margin-left: 1em;
+}
+
 
 .presetHeader .center{
     flex-basis: 70%;
@@ -469,7 +505,25 @@ input[type="range"]:focus {
     border-radius: 5px;
 }
 
+/* ************************************************* */
+/*       Text colour                                 */
+/* ************************************************* */
 
+.warning_text {
+    color: rgb(209, 0, 0);
+    font-weight: bold;
+}  
+
+.centerBox {
+    margin-left:25%;
+    margin-right:25%;
+}
+.centerBox p{
+    text-align: left;
+}
+.centerBox li{
+    text-align: left;
+}
 
 
 
@@ -681,17 +735,36 @@ input[type="range"]:focus {
   
   .mushraModal {
     display: none;
-    position: fixed;
+    /* position: fixed; */
     flex-direction: column;
     max-width: 1000px;
-    max-height: 800px;
+    min-width: 600px;
+   
     width: 70%;
     height: 90%;
     top:5%;
     background-color: var(--background-color);
     z-index: 1001;
+    overflow-y: auto;
   }
 
+
+  @media(max-width: 1000px){
+    .mushraModal {
+        padding: 5px;
+        margin: 5%;
+        width: 90%;
+    }
+  }
+
+
+  @media(max-width: 800px){
+    .mushraModal {
+        padding: 0px;
+        margin: 0px;
+        width: 100%;
+    }
+  }
 
   
   .mushraModalBackground .presetHeader h3{
@@ -712,6 +785,9 @@ input[type="range"]:focus {
     padding-right: 20px;
   }
 
+  .mushraModal #resultsCount{
+    margin-top: 30px;
+  }
   .mushraModal button.active{
     background-color: #007b008e;
     color: white;
@@ -725,6 +801,24 @@ input[type="range"]:focus {
     pointer-events: none !important;
     opacity: 0.3;
   }
+
+  .mushraModal p{
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .mushraModal p.small{
+    font-size: small;
+    text-align: right;
+  }
+
+
+  #mushraResultsModal{
+    height: 90%;
+    /* overflow: scroll; */
+  }
+
+
 .vertical-slider-container {
     display: flex;
     justify-content: center;
@@ -764,6 +858,13 @@ input[type="range"]:focus {
     margin-bottom: 1em;
     width: 100px;
     height: 300px;
+  }
+
+  
+  @media(max-width: 800px){
+    .vSlideGroup {
+        width: 80px;
+    }
   }
 
   .vSlideGroup .score{
@@ -850,7 +951,10 @@ input[type="range"]:focus {
 }
 
 #mushraTableContainer{
-    margin:10px;
+    margin-left:20px ;
+    margin-right:20px;
+    margin-top: 00px;
+    margin-bottom: 20px;
 }
 
 #mushraResultsTable {
@@ -870,5 +974,11 @@ input[type="range"]:focus {
 }
 
 #mushraTextAnalysis{
-    overflow: scroll;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+#mushraTextAnalysis .warning{
+    color: red;
+    font-weight: bold;
 }

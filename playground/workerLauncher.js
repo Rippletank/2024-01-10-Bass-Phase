@@ -17,7 +17,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //THD Graph worker calls
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const THDGraphWorker = new Worker('audioWorker.js', { type: 'module' });
+const THDGraphWorker = new Worker('../sharedAudio/audioWorker.js', { type: 'module' });
 let THDGraphWorkerBusy = false;
 THDGraphWorker.onmessage = function(event) {
     const { data } = event;
@@ -65,7 +65,7 @@ function checkForCachedTHDGraph(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //THD Percent worker calls
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const THDPercentWorker = new Worker('audioWorker.js', { type: 'module' });
+const THDPercentWorker = new Worker('../sharedAudio/audioWorker.js', { type: 'module' });
 let THDPercentWorkerBusy = false;
 THDPercentWorker.onmessage = function(event) {
     THDPercentWorkerBusy=false;
@@ -112,7 +112,7 @@ function checkForCachedTHDPercent(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Detailed FFT worker calls
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const detailedFFTWorker = new Worker('audioWorker.js', { type: 'module' });
+const detailedFFTWorker = new Worker('../sharedAudio/audioWorker.js', { type: 'module' });
 let detailedFFTWorkerBusy = false;
 detailedFFTWorker.onmessage = function(event) {
     const { data } = event;
@@ -162,7 +162,7 @@ function checkForCachedDetailedFFT(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Audio Buffer worker calls
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const audioBufferWorker = new Worker('audioWorker.js', { type: 'module' });
+const audioBufferWorker = new Worker('../sharedAudio/audioWorker.js', { type: 'module' });
 let audioBufferWorkerBusy = false;
 audioBufferWorker.onmessage = function(event) {
     const { data } = event;
@@ -192,9 +192,9 @@ export function setMushraBufferCallback( callback ) {
     mushraBufferCallback = callback;
 }
 let audioBufferCached = null;
-export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest, sampleName ) {
+export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNormToLoudest ) {
     if (audioBufferWorkerBusy){
-        audioBufferCached = {patchesToUse, sampleRate, isStereo, isNormToLoudest, sampleName};
+        audioBufferCached = {patchesToUse, sampleRate, isStereo, isNormToLoudest};
         return;
     }
     audioBufferCached=null;
@@ -204,8 +204,7 @@ export function calculateAudioBuffer( patchesToUse, sampleRate, isStereo, isNorm
         patchesToUse:patchesToUse,
         sampleRate:sampleRate,
         isStereo:isStereo,
-        isNormToLoudest:isNormToLoudest,
-        sampleName:sampleName
+        isNormToLoudest:isNormToLoudest
       });
 }
 
@@ -231,8 +230,7 @@ function checkForCachedAudioBuffer(){
             audioBufferCached.patchesToUse, 
             audioBufferCached.sampleRate, 
             audioBufferCached.isStereo,
-            audioBufferCached.isNormToLoudest,
-            audioBufferCached.sampleName);
+            audioBufferCached.isNormToLoudest);
     }
     else if (mushraBufferCached){
         calculateMushraBuffer(
@@ -261,7 +259,7 @@ export function setAudioEngineSampleBuffers(buffers){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //preview worker calls
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const previewWorker = new Worker('audioWorker.js', { type: 'module' });
+const previewWorker = new Worker('../sharedAudio/audioWorker.js', { type: 'module' });
 let previewWorkerBusy = false;
 previewWorker.onmessage = function(event) {
     const { data } = event;
@@ -311,7 +309,7 @@ function checkForCachedPreview(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //digitalPreview worker calls - dither and jitter visualisations
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const digitalPreviewWorker = new Worker('audioWorker.js', { type: 'module' });
+const digitalPreviewWorker = new Worker('../sharedAudio/audioWorker.js', { type: 'module' });
 let digitalPreviewWorkerBusy = false;
 digitalPreviewWorker.onmessage = function(event) {
     const { data } = event;

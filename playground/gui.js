@@ -24,9 +24,8 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-import { getDefaultPatch, getDefaultAPatch, getDefaultBPatch, defaultTestSubjectList, getMiniPresets } from './defaults.js';
+import { getDefaultPatch, getDefaultAPatch, getDefaultBPatch, defaultTestSubjectList, getMiniPresets } from '../sharedAudio/defaults.js';
 import { 
-    toLightMode,
     fftFill, 
     getUseFFT,
     toggleUseFFT,
@@ -35,6 +34,11 @@ import {
     detailedFFTGetMinDb, 
     detailedFFTSetMinDb 
 } from './painting.js';
+
+
+import {
+    toLightMode
+} from '../sharedGui/colors.js'
 
 import {disableGroups, setValueFromPatch } from './guiValues.js';
 
@@ -60,7 +64,9 @@ import {
     startSuspendPreviewUpdates, endSuspendPreviewUpdates, getTrueSampleRate
 } from './audioAPI.js';
 
-import { setupMushra, initMushra, shutDownMushra, repaintMushra } from './mushra.js';
+import { shutDownMushra, repaintMushra, setResultsStyle } from '../sharedGui/mushra.js';
+import { doStartMushra, doInitMushra } from './badMushra.js';
+import { fetchWaveListAsync } from '../sharedGui/waves.js';
 
 
 
@@ -70,24 +76,48 @@ let flags = getFlags();
 //Buttons with specific actions
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+const playButtons =[
+    document.querySelectorAll('.PlayA'),
+    document.querySelectorAll('.PlayB'),
+    document.querySelectorAll('.PlayN'),
+    document.querySelectorAll('.playX'),
+    document.querySelectorAll('.PlayS')
+]
 //Play buttons
-document.querySelectorAll('.PlayA').forEach(el=>el.addEventListener('click', function() {
+playButtons[0].forEach(el=>el.addEventListener('click', function() {
     play(0);
+    colorPlayButtons(0);
 }));
-document.querySelectorAll('.PlayB').forEach(el=>el.addEventListener('click', function() {
+playButtons[1].forEach(el=>el.addEventListener('click', function() {
     play(1);
+    colorPlayButtons(1);
 }));
-document.querySelectorAll('.PlayN').forEach(el=>el.addEventListener('click', function() {
+playButtons[2].forEach(el=>el.addEventListener('click', function() {
     play(2);
+    colorPlayButtons(2);
 }));
-document.querySelectorAll('.PlayS').forEach(el=>el.addEventListener('click', function() {
+playButtons[4].forEach(el=>el.addEventListener('click', function() {
     stop();
 }));
 
 
+
 function play(index){
-    playAudio(index);   
+    playAudio(index);  
 }
+
+function colorPlayButtons(index){ 
+    playButtons.forEach((buttons, i)=>{
+        buttons.forEach((button)=>{
+            if (i==index) {
+                button.classList.add('selected');
+            } else {
+                button.classList.remove('selected');
+            }
+        });});
+
+}
+
 
 //load settings for all of the little green buttons
 let previewButtons = document.querySelectorAll('.previewButton');
@@ -319,6 +349,7 @@ previewButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 let body = document.body;
                 let isDarMode = toLightMode(body, body.getAttribute('data-theme') === 'dark');
+                fftFill('fftCanvas');
                 setModeText(this, isDarMode);
                 updateDisplay();
                 repaintDetailedFFT();
@@ -357,6 +388,7 @@ function updatePreviewButtonState(){
 let canvases = document.querySelectorAll('canvas');
 window.addEventListener('resize', updateCanvas);
 function updateCanvas() {
+    adjustViewport();
     canvases.forEach((canvas)=>{
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
@@ -366,6 +398,21 @@ function updateCanvas() {
     repaintDetailedFFT();
     repaintMushra();
 }
+
+function adjustViewport() {
+    var viewportMeta = document.getElementById('viewport-meta');
+    var isMobile = window.matchMedia('(max-width: 600px)').matches;
+    
+    if (isMobile) {
+        viewportMeta.setAttribute('content', 'width=600, initial-scale=1'); //basically stop it zooming in on mobile
+    } else {
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateCanvas);
+
+
 updateCanvas();
 
 const pinSVG = '<svg width="100%" height="100%" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">'
@@ -424,6 +471,13 @@ fftFill("fftCanvas");
 //Generally methods for sliders and preset buttons
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+
+
+
+
+
+
 //Ids of div sections that contain sliders and should be checked and loaded
 const commonSectionNames = [
     'CommonSettings', 
@@ -448,7 +502,6 @@ function initSliders(){
     updatePreviewButtonState();
     
     loadPatches(getDefaultPatch(),  getDefaultAPatch(), getDefaultBPatch(), null, null, defaultTestSubjectList);
-
 
     //Check at regular intervals if any sliders have changed and update display if so
     //Add time delay to batch up changes
@@ -757,7 +810,7 @@ function importCombinedPatchFromPatch(patch){
     const notesEdit = document.getElementById('notesEdit');
     notesEdit.value = patch.notes ?? "";
     
-    setSampledWave(patch.sampleWave, false);//If already loaded, will be instant so updateBufferEvenIfInstant=false - allows to avoid calculation but will do calc if fetch is needed since it will be delayed
+    doSetSampledWave(patch.sampleWave, false);//If already loaded, will be instant so updateBufferEvenIfInstant=false - allows to avoid calculation but will do calc if fetch is needed since it will be delayed
 
     loadPatches(patchC, patchA, patchB, patchAR, patchBR, patch.testSubjects ?? defaultTestSubjectList);
     updatePreviewButtonState();
@@ -846,7 +899,7 @@ function n_loadFromClipboard(loadProc) {
 //Server preset Patch list
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let serverPresetList = [];
-fetch('/presets/presetList.json')
+fetch('./presets/presetList.json')
     .then(response => response.json())
     .then(list => {
         if (!Array.isArray(list)) throw new Error('Preset list is not an array');
@@ -856,94 +909,114 @@ fetch('/presets/presetList.json')
             }
     })})
     .then(() => {
-        loadPresetListIntoDropdown('serverPresetList', serverPresetList);
+        loadPresetListIntoDropdown( serverPresetList);
+        loadParamsFromURL();
     })
     .catch((error) => {
         console.error('Error:', error);
     });
 
-function loadPresetListIntoDropdown(id, list) {
-    let select = document.getElementById(id);
-    select.innerHTML = '';
+let presetSelect = document.getElementById('serverPresetList');
+function loadPresetListIntoDropdown(list) {
+    presetSelect.innerHTML = '';
 
     let defOption = document.createElement('option');
     defOption.textContent = "Select Preset (from Server)";
     defOption.value = "";
-    select.appendChild(defOption);
+    presetSelect.appendChild(defOption);
 
     list.forEach(item => {
         let option = document.createElement('option');
         option.textContent = item.name;
         option.value = item.path;
-        select.appendChild(option);
+        presetSelect.appendChild(option);
     });
 
 
-    select.addEventListener('change', () => {
-        if (!select.value || select.value === "") return;
-        fetch(`/presets/${select.value}`)
-            .then(response => response.json())
-            .then(patch => {
-                importCombinedPatchFromPatch(patch)
-                console.log(patch);  
-            })
-            .catch((error) => {
-                console.error('Error fetching Preset List:', error);
-            });
+    presetSelect.addEventListener('change', () => {
+        if (!presetSelect.value || presetSelect.value === "") return;
+        loadPresetFromServer(presetSelect.value);
     });
 
 }
 
+function loadPresetFromServer(name){
+    fetch(`./presets/${name}`)
+    .then(response => response.json())
+    .then(patch => {
+        importCombinedPatchFromPatch(patch)
+        console.log("Patch loaded from server: " + name )
+        presetSelect.value = name;  
+    })
+    .catch((error) => {
+        console.error('Error fetching Preset List:', error);
+    });
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Wave file import 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 let serverWaveList = [];
-fetch('/waves/waveList.json')
-    .then(response => response.json())
-    .then(list => {
-        if (!Array.isArray(list)) throw new Error('Wave List is not an array');
-        list.forEach(fileName => {
-            if (fileName) {
-                serverWaveList.push(fileName);
-            }
-    })})
-    .then(() => {
-        loadWaveListIntoDropdown('serverWaveList', serverWaveList);
+let serverWavePromise =fetchWaveListAsync();
+serverWavePromise.then(newList => {
+        serverWaveList = newList;
+        loadWaveListIntoDropdown(newList);
+        loadParamsFromURL();
     })
     .catch((error) => {
         console.error('Error fetching Wave List:', error);
     });
 
 
-    function loadWaveListIntoDropdown(id, list) {
-        let select = document.getElementById(id);
-        select.innerHTML = '';
-    
-        let defOption = document.createElement('option');
-        defOption.textContent = "Select Sample wave";
-        defOption.value = "";
-        select.appendChild(defOption);
-    
-        list.forEach(item => {
-            let option = document.createElement('option');
-            option.textContent = item;
-            option.value = item;
-            select.appendChild(option);
-        });
-    
-    
-        select.addEventListener('change', () => {
-            doSetSampledWave(select.value);
-        });
-    
-    }
+let waveSelect = document.getElementById('serverWaveList');
+function loadWaveListIntoDropdown(list) {
+    waveSelect.innerHTML = '';
 
-    let lastSetWave = null;
-    function doSetSampledWave(waveName){
-        lastSetWave = waveName;
-        setSampledWave(waveName);
-    }   
+    let defOption = document.createElement('option');
+    defOption.textContent = "Select Sample wave";
+    defOption.value = "";
+    waveSelect.appendChild(defOption);
+
+    list.forEach(item => {
+        let option = document.createElement('option');
+        option.textContent = item;
+        option.value = item;
+        waveSelect.appendChild(option);
+    });
+
+
+    waveSelect.addEventListener('change', () => {
+        doSetSampledWave(waveSelect.value);
+    });
+
+}
+
+let lastSetWave = null;
+function doSetSampledWave(waveName, updateBufferEvenIfInstant = true){
+    lastSetWave = waveName;
+    setSampledWave(waveName, updateBufferEvenIfInstant);
+    waveSelect.value = waveName;
+}   
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//Load Parameters from URL
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+let params = new URLSearchParams(window.location.search);
+
+function loadParamsFromURL(){    
+    if (serverWaveList.length>0 && serverPresetList.length>0){//Wait until both lists are loaded  
+        if (params.has('preset')) {
+            let preset = `${params.get("preset")}.json`;
+            if (serverPresetList.some((p)=> p.path === preset )){
+                loadPresetFromServer(preset)
+            }
+        }
+    }
+}
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1230,7 +1303,8 @@ function setUpStereo(syncValuesFromLeftToRight){
 let abxTestChoice;
 let abxCount =0;
 let abxScore =0;
-function playABX(){    
+function playABX(){  
+    colorPlayButtons(3);  
     if (abxTestChoice === 0) {
         play(0);
     } else {
@@ -1246,7 +1320,7 @@ document.getElementById('abxTest').addEventListener('click', function() {
     playABX();
 });
 
-document.getElementById('play').addEventListener('click', function() {
+document.querySelector('.playX').addEventListener('click', function() {
     playABX();
 });
 
@@ -1296,11 +1370,11 @@ document.getElementById('mushraTest').addEventListener('click', function() {
     document.getElementById('mushraModal').style.display = 'flex';
     document.getElementById('mushraModalBackground').style.display = 'flex';
     document.getElementById('mushraResultsModal').style.display = 'none';
-    initMushra();
+    doInitMushra();
   });
   document.getElementById('startMushra').addEventListener('click', function() {
     let cachedPatches = getCachedPatches();
-    setupMushra(
+    doStartMushra(
         [
             cachedPatches.A, 
             flags.isStereo ? cachedPatches.AR : null, 
@@ -1321,8 +1395,8 @@ document.getElementById('mushraTest').addEventListener('click', function() {
         });
     });
 
-
-
+    setResultsStyle(true, true, true);
+ 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //Help pop up trigger code
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1338,6 +1412,10 @@ function helpClickHandler(event) {
     clearHelp();
     let helpPopup = this.nextElementSibling;
     helpPopup.style.display = 'block';
+    let rect = helpPopup.getBoundingClientRect();
+    if (rect.top < 0) {
+        helpPopup.style.top = 10 + 'px'; // Add 10px for a small margin
+    }
 }
 
 document.addEventListener('click', function() {

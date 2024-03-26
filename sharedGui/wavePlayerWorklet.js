@@ -4,13 +4,14 @@ class MyAudioProcessor extends AudioWorkletProcessor {
     constructor() {
       super();
 
-      console.log("MushraPlayer constructor");
+      //console.log("MushraPlayer constructor");
       this.numberOfOutputs = 0;
       this.numberOfOutputChannels = 0;
       this.outputBufferSize = 0;
 
       this.outBufferCount = 0;
       this.processCalls=0;
+
       this.playList = [];
       this.sounds = [];
 
@@ -18,8 +19,12 @@ class MyAudioProcessor extends AudioWorkletProcessor {
       this.maxCount=0;
       this.isPaused = false;
 
+      this.reportActualSampleRate=false;
+      this.sampleRateTimerNow = 0; 
+
       this.port.onmessage = (event)=>{
         const payload = event.data;
+        //this.port.postMessage({type:"Received", data:payload.type});
         switch (payload.type) {
             case "playSound":
                 //this.port.postMessage({type:"report", data:"Playing sound: "+payload.data.index});
@@ -91,7 +96,8 @@ class MyAudioProcessor extends AudioWorkletProcessor {
             }
         }
 
-      return true;
+        
+        return true;
     }
 
 
@@ -137,7 +143,7 @@ class MyAudioProcessor extends AudioWorkletProcessor {
         });
 
 
-    
+        //Report for waveform shape to GUI
         buffers.forEach((buffer)=>{
             buffer.forEach((sample)=>{
                 const s = Math.abs(sample);
@@ -147,11 +153,13 @@ class MyAudioProcessor extends AudioWorkletProcessor {
         this.maxCount+=bufferLength;
         if (this.maxCount>sampleRate/60)
         {
-            this.port.postMessage({type:"max", data: this.max});
+            this.port.postMessage({type:"max", data: {
+                max:this.max,
+                count:this.maxCount
+            }});
             this.max=0;
             this.maxCount=0;        
         }
-
     }
 
     startPlayingSound(index){
@@ -176,4 +184,4 @@ class MyAudioProcessor extends AudioWorkletProcessor {
 
   }
   
-  registerProcessor("mushraPlayer", MyAudioProcessor);
+  registerProcessor("wavePlayer", MyAudioProcessor);

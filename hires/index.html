@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
+    <title>Baryon Beach - Audio Experiments</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" type="text/css" href="../sharedGui/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <!-- <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Services</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul> -->
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Hi-res audio experimenting</h1>
+            <p>Can any signals above 20kHz produce an audible difference.</p>
+        </section>
+
+        <section class="feature">
+            <h2>Check for 96kHz sample rate</h2>
+            <p>96kHz has been set, but sample-rate-conversion may happen if the interface is being shared.</p>
+            <div id="status96k" class="spaceTop"></div>
+            <button id="start96kTest" class="cta-button">Test Interface</a>
+        </section>
+
+        
+
+
+        <section class="feature" id="showMushra">
+            <h2>Start testing</h2>
+            <p>Great, you have audio above audio range.</p>
+            <p>Now test the audibility of some high frequency content audio files.</p>
+            <button id="mushraTest" class="cta-button">Start Listening Test</button>
+        </section>
+
+        <section class="feature">
+            <div class="bordered" id="testSetup">
+                <div class="collapsible-header"><span class="header-text">Test Waves Setup</span><span class="chevron">&#x25BC;</span></div>
+                    <div class="collapsible-content">
+                        <div class="presetHeader">
+                            <h3>Test Waves Setup</h3>
+                            <div id="samplePresets" class="PresetButtons"></div>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Selection of sampled waveform to use as reference.</p>
+                            </div>
+                        </div>
+                        <div class ="previewButtons bottomSpaced">
+                            <div class="previewButtons previewL">
+                                <h4>Reference</h4>
+                            </div>
+                            <div class="previewButtons previewC">
+                                <select id="serverWaveList" title="Select Sample wave"></select>
+                            </div>
+                            <div class="previewButtons">
+                            </div>
+                        </div>
+            
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 1 - Single Tone</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>First test wave, adds a single sine wave at the specified frequency. Investigate basics of audibility and intermodulation. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicAFrequency">Sine wave 1:</label>
+                            <input type="range" id="inharmonicAFrequency" name="inharmonicAFrequency" min="10000" max="48000" step="1" value="20000" class="mid-slider" list="ticksPlus1Zero">
+                            <label for="inharmonicALevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicALevel" name="inharmonicALevel" min="-91" max="-20" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicA">-1</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Level and frequency of a sine wave, mixed in to the main sound. Frequency set directly.</div>
+                        </div>
+
+
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 2 - Double Tone</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Second test wave, adds two sine waves at the specified frequencies. Investigate more complex intermodulation components. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicDFrequency">Sine wave 1:</label>
+                            <input type="range" id="inharmonicDFrequency" name="inharmonicDFrequency" min="10000" max="48000" step="1" value="20000" class="mid-slider" list="ticksPlus1Zero">
+                            <label for="inharmonicDLevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicDLevel" name="inharmonicDLevel" min="-91" max="-20" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicD">-1</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Level and frequency of a first sine wave, mixed in to the main sound. Frequency set directly. </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicEFrequency">Sine wave 2:</label>
+                            <input type="range" id="inharmonicEFrequency" name="inharmonicEFrequency" min="10000" max="48000" step="1" value="21000" class="mid-slider" list="ticksPlus1Zero">
+                            <label for="inharmonicELevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicELevel" name="inharmonicELevel" min="-91" max="-20" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicE">-1</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Level and frequency of a second sine wave, mixed in to the main sound. Frequency set directly. </div>
+                        </div>
+            
+                        
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 3 - Noise</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Third test wave, adds noise to the signal above the ultrasonic threshold set below. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="inharmonicNoiseColour">Noise (white/pink):</label>
+                            <input type="range" id="inharmonicNoiseColour" name="inharmonicNoiseColour" min="0" max="1" step="0.1" value="0" class="mid-slider" list="ticksPlus1ZeroMinus1">
+                            <label for="inharmonicNoiseLevel"  class="flipLabel">Level:</label>
+                            <input type="range" id="inharmonicNoiseLevel" name="inharmonicNoiseLevel" min="-91" max="-10" step="1" value="-91" class="short-slider" list="ticksPlus1Zero">
+                            <output class="valueSpan" name="inharmonicNoise">off</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Amount of noise to add.</p>
+                                <p>Colour varies from white (0db) to pink (-3db).</p>
+                                <p>The level at 1Khz is about the same for each.</p>
+                                <p>Uses the main pitch envelope.</p>
+                            </div>
+                        </div>
+
+                        
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">Test Wave 4 - Saturation</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>Fourth test wave, creates harmonics using Tanh distortion of the signal, added above the ultrasonic threshold set below. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="tanhDistortion">Tanh Saturation:</label>
+                            <input type="range" id="tanhDistortion" name="tanhDistortion" min="0" max="1" step="0.01" value="0"  list="ticksPlus1Zero">
+                            <output class="valueSpan" name="tanhDistortion">0%</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Tanh distortion, commonly used in Saturation modelling</div>
+                        </div>
+
+
+                        <div class="presetHeader topSpaced">
+                            <h4 class="wide">High-Pass</h4>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">
+                                <p>The noise and distortion test waves are synthesised by high-pass filtering the added components and mixing them in with the reference sample. </p>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="ultraSonicCutOff">Frequency:</label>
+                            <input type="range" id="ultraSonicCutOff" name="ultraSonicCutOff" min="5000" max="30000" step="1000" value="22000"  list="ticksPlus1Zero">
+                            <output class="valueSpan" name="ultraSonicCutOff">0%</output>
+                            <span class="help-icon">?</span>
+                            <div class="help-popup">Cut off frequency of the high pass filter</div>
+                        </div>
+
+                    <br>
+                    <br>
+                    </div>        
+                </div>
+            </div> 
+        </section>
+
+        <section class="feature" >
+
+            <div class="bordered" id="ffts">
+                <div id="testInterface" class="collapsible-header"><span class="header-text">FFT and Test</span><span class="chevron">&#x25BC;</span></div>
+                    <div class="collapsible-content">
+                        <h2>Test your interface</h2>
+                        <div class="centerBox">
+                            <p>Connect the input of your sound interface to the output and monitor the test signal.</p>
+                            <p>You can do this by:</p>
+                            <ul>
+                                <li>Using the software mixer for the interface.</li>
+                                <li>Using a cable to connect the output to the input.</li>
+                                <li>Using an external mixer or microphone.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="presetHeader topSpaced">
+                            <h3></h3>
+                            <div class="PresetButtons">
+                                <button id="listenInterfaceTest">Play</button>
+                                <button id="stopInterfaceTest">Stop</button>
+                            </div>
+                            <h3></h3>
+                     
+                        </div>
+                        
+                        
+                        <h2>FFT of Output</h2>
+                        <div class="canvasBox">
+                            <canvas id="outputFFTCanvas"></canvas>
+                        </div>
+                        <h2>FFT of Input</h2>
+                        <div class="canvasBox">
+                            <canvas id="inputFFTCanvas"></canvas>
+                        </div>
+                        <p>For a valid test, you should see sound well over 20Khz and ideally up to 40kHz.</p>
+                    </div>        
+                </div>
+            </div>         
+        </section>
+
+        <!-- <section class="band">
+            <div class="notes">
+                <h2>Background</h2>
+                <div class="notes-content">
+                    <p>This page was created...</p>
+                </div>
+            </div>
+        </section> -->
+    </main>
+
+    <div id="mushraModalBackground" class="mushraModalBackground">
+
+
+        <!--*******************Mushra Test form********************-->
+        <div id="mushraModal" class="mushraModal bordered">
+            <div class="presetHeader">
+                <h3>MUSHRA-like Testing</h3>
+                <div class="PresetButtons">            
+                </div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>The reference has no processing applied and is a 44.1kHz sample.</p>
+                    <p>Several sounds are using the parameters below, as well as an "anchor" sound that is reduced quality.</p>
+                    <p>Rank each sound according to the criteria of the test.</p>
+                    <p>The graph is for feedback that a sound is playing but noise is deliberately added to obscure the waveforms, so they won't match.</p>
+                    <p>This is only a proof of concept and isn't meant for serious scientific research.</p>
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
+                </div>
+            </div>
+            <p>Criterion: Closest to A (no High Frequency content)</p>
+            <div class="canvasBox">
+                <canvas id="mushraOutputCanvas" width ="2000" height="100"></canvas>
+            </div>
+            <p id="mushraCount">Test</p>
+            <div class="vertical-slider-container blurredDisabled">
+                <div id="mGroup0" class="vSlideGroup">
+                    <button>A</button>
+                    <p class="score">Score</p>
+                    <div class="mScale">
+                        <p class="mValue"><span>100</span></p>
+                        <p>Excellent</p>
+                        <p class="mValue"><span>80</span></p>
+                        <p>Good</p>
+                        <p class="mValue"><span>60</span></p>
+                        <p>Fair</p>
+                        <p class="mValue"><span>40</span></p>
+                        <p>Poor</p>
+                        <p class="mValue"><span>20</span></p>
+                        <p>Bad</p>
+                        <p class="mValue"><span>0</span></p>
+                    </div>
+                </div>
+                <div id="mGroup1" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider1" class="score">100</label>
+                    <input id="mSlider1" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup2" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider2" class="score">100</label>
+                    <input id="mSlider2" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup3" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider3" class="score">100</label>
+                    <input id="mSlider3" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup4" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider4" class="score">100</label>
+                    <input id="mSlider4" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup5" class="vSlideGroup ">
+                    <button>Play</button>
+                    <label for="mSlider5" class="score">100</label>
+                    <input id="mSlider5" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+                <div id="mGroup6" class="vSlideGroup">
+                    <button>Play</button>
+                    <label for="mSlider6" class="score">100</label>
+                    <input id="mSlider6" type="range" min="0" max="100" value="50" class="vertSlider">
+                </div>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3></h3>
+                <div class="PresetButtons">                
+                    <button id="startMushra">Start</button>
+                    <button id="nextMushra">Next Test</button>
+                    <button id="pauseMushra">Pause Sound</button>
+                    <button id="resultsMushra">Show Results</button>
+                </div>
+                <h3>  </h3>
+            </div>
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button class="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
+
+        </div>
+
+
+
+        <!--*******************Mushra results analysis********************-->
+        <div id="mushraResultsModal" class="mushraModal bordered" >
+            <div class="presetHeader">
+                <h3>MUSHRA-like Testing - Results </h3>
+                <div class="PresetButtons">            
+                </div>
+                <span class="help-icon">?</span>
+                <div class="help-popup">
+                    <p>A MUSHRA inspired test, a methodology which is supposed to address some of the issues with ABX testing.</p>
+                    <p>The heat map show's where your scores were, the black dots show the mean score. </p>
+                    <p>The thin blue line is the line of best fit. The wide band shows the expected line.</p>
+                    <p>More analysis metrics are being considered....</p>
+                    <p><a href="https://en.wikipedia.org/wiki/MUSHRA">https://en.wikipedia.org/wiki/MUSHRA</a> </p>
+                    <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
+                </div>
+            </div>
+            <div class="canvasBox">
+                <canvas id="mushraResultCanvas" width ="2000" height="100"></canvas>
+            </div>
+            <p id="resultsCount"></p>
+            <div id="mushraTableContainer" >
+                <table id="mushraResultsTable">
+                    <tr>
+                        <th scope="row">Sound</th>
+                    </tr>
+                    <tr>
+                        <th scope="row">P-Value*</th>
+                    </tr>
+                    <tr>
+                        <th scope="row">Meaning</th>
+                    </tr>
+                </table>  
+                <p class="small">*Probability that "The sound is indistinguishable from reference A" (Null Hypothesis)</p>
+                <div id="mushraTextAnalysis">
+
+                </div> 
+            </div>
+            
+            <div class="presetHeader spaceTop">
+                <h3>  </h3>
+                <div class="PresetButtons">                
+                    <!-- <button id="reportMushra">report</button> -->
+                    <button class="closeMushra">Close</button>
+                </div>
+                <h3>  </h3>
+            </div>
+        </div>
+
+
+    </div>
+
+
+
+
+
+<!-- 
+    <footer>
+        <p>&copy; 2024 My Website. All rights reserved.</p> 
+    </footer> -->
+    
+    <!-- <script type="module" src="../sharedGui/wavePlayerWorklet.js"></script> -->
+    <script type="module" src="../sharedAudio/audio.js"></script>
+    <script type="module" src="gui.js"></script>
+</body>
+</html>
