@@ -21,8 +21,8 @@
 
     <main>
         <section class="hero">
-            <h1>Hi-res audio experimenting</h1>
-            <p>Can any signals above 20kHz produce an audible difference.</p>
+            <h1>96kHz Investigation</h1>
+            <p>Does content above 20kHz produce anything audible?</p>
         </section>
 
         <section class="feature">
@@ -161,7 +161,7 @@
                             <input type="range" id="ultraSonicCutOff" name="ultraSonicCutOff" min="5000" max="30000" step="1000" value="22000"  list="ticksPlus1Zero">
                             <output class="valueSpan" name="ultraSonicCutOff">0%</output>
                             <span class="help-icon">?</span>
-                            <div class="help-popup">Cut off frequency of the high pass filter</div>
+                            <div class="help-popup">Cut off frequency of the high pass filter (for noise and Saturation)</div>
                         </div>
 
                         
@@ -270,7 +270,6 @@
                     <p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf">https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1534-3-201510-I!!PDF-E.pdf</a> </p>
                 </div>
             </div>
-            <p>Criterion: Closest to A (no High Frequency content)</p>
             <div class="canvasBox">
                 <canvas id="mushraOutputCanvas" width ="2000" height="100"></canvas>
             </div>
@@ -281,15 +280,15 @@
                     <p class="score">Score</p>
                     <div class="mScale">
                         <p class="mValue"><span>100</span></p>
-                        <p>Excellent</p>
+                        <p>Identical</p>
                         <p class="mValue"><span>80</span></p>
-                        <p>Good</p>
+                        <p>Close</p>
                         <p class="mValue"><span>60</span></p>
-                        <p>Fair</p>
+                        <p>Similar</p>
                         <p class="mValue"><span>40</span></p>
-                        <p>Poor</p>
+                        <p>Distinct</p>
                         <p class="mValue"><span>20</span></p>
-                        <p>Bad</p>
+                        <p>Different</p>
                         <p class="mValue"><span>0</span></p>
                     </div>
                 </div>
@@ -324,6 +323,7 @@
                     <input id="mSlider6" type="range" min="0" max="100" value="50" class="vertSlider">
                 </div>
             </div>
+            <p>Criterion: Similarity to A (no High Frequency content)</p>
             <div class="presetHeader spaceTop">
                 <h3></h3>
                 <div class="PresetButtons">                
